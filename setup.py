@@ -14,7 +14,7 @@ packageName = "dh"
 
 # parse version from package's init file
 version = None
-versionFilename = os.path.join(os.path.dirname(os.path.realpath(__file__)), packageName, "__init__.py")
+versionFilename = os.path.join(packageName, "__init__.py")
 print(versionFilename)
 with open(versionFilename, "r") as f:
     for line in f:
@@ -34,6 +34,6 @@ setup(
     version = version,
     description = "Personal package of Daniel Haase",
     author = "Daniel Haase",
-    packages = [os.path.join(os.path.dirname(os.path.realpath(__file__)), packageName)],
+    packages = [packageName],
 )
 
