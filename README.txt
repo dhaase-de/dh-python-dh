@@ -7,4 +7,5 @@ ToDo
 ----
 
 * unit testing
+* code documentation (Sphinx)
 
