@@ -4,7 +4,7 @@ import os
 import os.path
 import re
 
-from distutils.core import setup
+import distutils.core
 
 ##
 ## preparations
@@ -38,7 +38,7 @@ for (path, packageSubdirsThirdparty, _) in os.walk(packageDirThirdparty):
 ## main call
 ##
 
-setup(
+distutils.core.setup(
     name = packageDirBase,
     version = version,
     description = "Personal package of Daniel Haase",
