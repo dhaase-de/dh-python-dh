@@ -19,15 +19,23 @@ def flatten(*args):
     >>> list(flatten(1, [2], [[3]], [4, [5]]))
     [1, 2, 3, 4, 5]
     
-    .. todo:: handle strings correctly
+    >>> list(flatten([[1], ['two'], [3.0], [None]]))
+    [1, 'two', 3.0, None]
     """
     
     for arg in args:
         try:
-            # arg is iterable
+            if isinstance(arg, str):
+                raise TypeError()
+            
+            # arg is iterable (and not a string)
             for item in arg:
                 for item2 in flatten(item):
                     yield item2
         except TypeError:
-            # x is not iterable
+            # x is not iterable (or a string)
             yield arg
+
+if __name__ == "__main__":
+    print(list(flatten(1, [2], [3, 4], [5, [6]])))
+    print(list(flatten( 1, "2", None, 3.0, int, {"x": 7} )))
