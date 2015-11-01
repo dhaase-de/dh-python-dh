@@ -13,6 +13,9 @@ DOC_DIR="$SCRIPT_DIR"/doc
 
 # clean documentation
 cd "$DOC_DIR" && make clean
+rm -f "$DOC_DIR"/source/dh*.rst
+rm -f "$DOC_DIR"/source/modules.rst
+rm -f "$DOC_DIR"/source/pylint.rst
 
 # clean bytecode
 find "$SCRIPT_DIR" -path '*/__pycache__/*.pyc' -type f -delete

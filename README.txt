@@ -27,5 +27,4 @@ ToDo (framework)
 ----------------
 
 * use `virtualenv` when installing the package to create the documentation
-* include `pylint` for code checks
 * use `nose2` instead of `nose` for testing

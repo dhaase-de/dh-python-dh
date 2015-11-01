@@ -7,6 +7,8 @@ Contents
 
    modules
 
+   pylint
+
 ToDo list
 =========
 
