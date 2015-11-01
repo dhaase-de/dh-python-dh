@@ -1,11 +1,31 @@
 Overview
 ========
 
-dh's Python package
+dh's Python3 package.
 
-ToDo
-----
+Installation
+------------
 
-* unit testing
-* code documentation (Sphinx)
+Run `install.sh` to install the package locally. Other installation
+configurations can be achieved directly via `setup.py`.
 
+Documentation
+-------------
+
+Run `makeDoc.sh` to build the HTML documentation. The result will be placed
+under `doc/build/html/index.html`. Requires Sphinx (Python3, Debian package
+`python3-sphinx`) which provides the `sphinx-apidoc` executable.
+
+Testing
+-------
+
+Use `runTest.sh` to run all unit tests (including tests in the documentation).
+Requires `nose` for Python3 (Debian package `python3-nose`), which provides the
+`nosetests3` executable.
+
+ToDo (framework)
+----------------
+
+* use `virtualenv` when installing the package to create the documentation
+* include `pylint` for code checks
+* use `nose2` instead of `nose` for testing
