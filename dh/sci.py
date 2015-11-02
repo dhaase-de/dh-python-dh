@@ -19,9 +19,9 @@ def tir(*args):
     :returns: a flattened tuple of the rounded, `int`-converted items of
               `*args`
 
-    >>> tir([1.24, -1.87])
+    >>> tir(1.24, -1.87)
     (1, -2)
-    >>> tir([1.24, [-1.87]], 2.79)
+    >>> tir([1.24, -1.87, 3.23])
     (1, -2, 3)
     """
     values = dh.utils.flatten(*args)
