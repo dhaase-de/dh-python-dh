@@ -8,6 +8,12 @@ import dh.utils
 
 
 class Test(unittest.TestCase):
+    def test_cycle(self):
+        self.assertEqual(
+            list(dh.utils.cycle((item for item in [1, "two", 3.0, None]), 6)),
+            [1, "two", 3.0, None, 1, "two"]
+        )
+
     def test_flatten(self):
         self.assertEqual(
             list(dh.utils.flatten(1, ("two",), [[3.0]], [None, [int, []]])),

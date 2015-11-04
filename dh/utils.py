@@ -3,6 +3,34 @@ General utility functions.
 """
 
 
+def cycle(x, length):
+    """
+    Cycles through the values of `x` until `length` items were yielded.
+    
+    :param x: an iterable
+    :yields: next recycled item of `x`
+    
+    >>> list(cycle([1, 2, 3], 5))
+    [1, 2, 3, 1, 2]
+    
+    >>> list(cycle((i for i in range(1, 4)), 5))
+    [1, 2, 3, 1, 2]
+    
+    .. todo:: handle non-list arguments more efficiently (avoid list() for entire `x`)
+    """
+
+    # if items can't be accessed by index, create list from x
+    if hasattr(x, "__getitem__") and hasattr(x, "__len__"):
+        xList = x
+    else:
+        xList = list(x)
+    
+    # cycle loop
+    M = len(xList)
+    N = length
+    for n in range(N):
+        yield xList[n % M]
+
 def flatten(*args):
     """
     Recursively flattens the items of all arguments into one iterable.
@@ -72,3 +100,4 @@ def which(x):
     for (index, item) in enumerate(x):
         if item:
             yield index
+
