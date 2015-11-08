@@ -3,9 +3,14 @@
 import os
 import subprocess
 
+
 def test():
     import dh.utils
-    print(list(dh.utils.cycle(range(3), 5)))
+    
+    @dh.utils.info
+    def bla(x, y): return x + y
+        
+    bla(1, 2)
 
 
 def install():

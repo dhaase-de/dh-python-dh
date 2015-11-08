@@ -15,14 +15,28 @@ def tir(*args):
     The primary use-case of this function is to pass point coordinates to
     certain OpenCV functions. It also works for NumPy arrays.
 
-    :param \\*args: objects containing numbers
-    :returns: a flattened tuple of the rounded, `int`-converted items of
-              `*args`
-
     >>> tir(1.24, -1.87)
     (1, -2)
     >>> tir([1.24, -1.87, 3.23])
     (1, -2, 3)
     """
-    values = dh.utils.flatten(*args)
-    return tuple(int(round(value)) for value in values)
+
+    items = dh.utils.flatten(*args)
+    return tuple(int(round(item)) for item in items)
+
+
+def tirr(*args):
+    """
+    As :func:`dh.sci.tir`, but reverses the order of the items.
+
+    When used to pass point coordinates to certain OpenCV functions, the item
+    reversal means reversing the order of the axes (x,y -> y,x).
+
+    >>> tirr(1.24, -1.87)
+    (-2, 1)
+    >>> tirr([1.24, -1.87, 3.23])
+    (3, -2, 1)
+    """
+
+    items = dh.utils.flatten(*args)
+    return tir(reversed(list(items)))
