@@ -208,45 +208,124 @@ def ohash(x, outputFormat="hex", byteCount=64):
 
 
 ##
+##
+##
+
+
+def tstr(string, maxlength=80, ellipsis = "..."):
+    """
+    Truncates the `string` and adds ellipsis such that the returned string has
+    at most `maxlength` characters, including the ellipsis.
+    
+    >>> tstr('The quick brown fox jumps over the lazy dog', 40)
+    'The quick brown fox jumps over the la...'
+    """
+
+    if len(string) > maxlength:
+        return string[:max(0, maxlength - len(ellipsis))] + ellipsis
+    else:
+        return string
+
+
+def ppargs(*args, **kwargs):
+    """
+    Format `*args` and `**kwargs` into one string resembling the original call.
+    
+    >>> ppargs(1, [2], x=3.0, y='four')
+    "1, [2], x=3.0, y='four'"
+    """
+
+    items = []
+    for arg in args:
+        items.append(pprint.pformat(arg))
+    for (kw, kwarg) in kwargs.items():
+        items.append(kw + "=" + pprint.pformat(kwarg))
+    return ", ".join(items)   
+
+
+##
 ## decorators
 ##
 
 
-def info(f):
+def pentex(f):
+    """
+    Decorator which prints a message when entering and exiting the decorated
+    function.
+    """
+
+    def g(*args, **kwargs):
+        print("@pentex({f}):  <enter>".format(f=f.__name__))
+        ret = f(*args, **kwargs)
+        print("@pentex({f}):  <exit>".format(f=f.__name__))
+        return ret
+    
+    # needed when stacking decorators
+    g.__name__ = f.__name__   
+    
+    return g
+
+
+def ptdiff(f):
+    """
+    Decorator which prints the time difference between entering and exiting the
+    decorated function.
+    """
+
     def g(*args, **kwargs):
         t0 = time.time()
-        res = f(*args, **kwargs)
+        ret = f(*args, **kwargs)
         t1 = time.time()
-
-        
-        # format args and result objects
-        def oformat(x):
-            P = pprint.PrettyPrinter(compact=True)
-            xStr = P.pformat(x)
-            if len(xStr) > 60:
-                xStr = "..."
-            return xStr        
-        
-        strArgs = oformat(args)
-        strKwargs = oformat(kwargs)
-        strRes = oformat(res)
-        
-        allArgs = (args, kwargs)
-        hashArgs = ohash(allArgs, "hex", 4)        
-        hashRes = ohash(res, "hex", 4)
-        
-        dt = max(0.0, t1 - t0)
-        #print("@info({f}(h({args} = <0x{hashArgs}>))) -> hash({res}) = <0x{hashRes}> took {dt} seconds".format(f = f.__name__, dt = around(dt, 3)))
-        print("@info({fName}):".format(fName = f.__name__))
-        print("  Arguments:")
-        print("    args:    {args}".format(args=strArgs))
-        print("    kwargs:  {kwargs}".format(kwargs=strKwargs))
-        print("    ohash:   {hashArgs}".format(hashArgs=hashArgs))
-        print("  Result:")
-        print("    value:   {res}".format(res=strRes, hashRes=hashRes))
-        print("    ohash:   {hashRes}".format(res=strRes, hashRes=hashRes))
-        print("  Time:      {dt} seconds".format(dt=around(dt, 3)))
-        
-        return res
+        print("@ptdiff({f}):  <{dt} seconds>".format(
+            f=f.__name__,
+            dt=around(max(0, t1 - t0), 3),
+        ))
+        return ret
+    
+    # needed when stacking decorators
+    g.__name__ = f.__name__   
+    
     return g
+
+
+def pargs(f):
+    """
+    Decorator which prints the arguments and their hash supplied to the
+    decorated function.
+    """
+    
+    def g(*args, **kwargs):
+        print("@pargs({f}):   ({argstr}) <{arghash}>".format(
+            f=f.__name__,
+            argstr=tstr(ppargs(*args, **kwargs), 40, "<... truncated>"),
+            arghash=ohash((args, kwargs), "hex", 4)
+        ))
+        return f(*args, **kwargs)
+    
+    # needed when stacking decorators
+    g.__name__ = f.__name__    
+    
+    return g
+
+
+def pret(f):
+    """
+    Decorator which prints the result and its hash returned by the decorated
+    function.
+    """
+    
+    def g(*args, **kwargs):
+        ret = f(*args, **kwargs)
+        print("@pret({f}):    {retstr} <{rethash}>".format(
+            f=f.__name__,
+            retstr=tstr(pprint.pformat(ret), 40, "<... truncated>"),
+            rethash=ohash(ret, "hex", 4)
+        ))
+        return ret
+    
+    # needed when stacking decorators
+    g.__name__ = f.__name__
+    
+    return g
+
 

@@ -2,15 +2,20 @@
 
 import os
 import subprocess
-
+import time
 
 def test():
     import dh.utils
     
-    @dh.utils.info
-    def bla(x, y): return x + y
+    @dh.utils.pentex
+    @dh.utils.pargs
+    @dh.utils.pret
+    @dh.utils.ptdiff
+    def bla(x, y):
+        time.sleep(0.345678)
+        return [x["a"] + y["b"], None]
         
-    bla(1, 2)
+    bla({"a": 1}, {"b": 2})
 
 
 def install():
