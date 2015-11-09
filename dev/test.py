@@ -7,15 +7,12 @@ import time
 def test():
     import dh.utils
     
-    @dh.utils.pentex
-    @dh.utils.pargs
-    @dh.utils.pret
-    @dh.utils.ptdiff
-    def bla(x, y):
+    @dh.utils.pall
+    def bla(x, y, *args, **kwargs):
         time.sleep(0.345678)
         return [x["a"] + y["b"], None]
         
-    bla({"a": 1}, {"b": 2})
+    bla({"a": 1}, {"b": 2}, n=1, m=2)
 
 
 def install():

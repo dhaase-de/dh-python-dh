@@ -4,6 +4,7 @@ General utility functions.
 
 import base64
 import colorsys
+import functools
 import hashlib
 import math
 import pprint
@@ -227,19 +228,21 @@ def tstr(string, maxlength=80, ellipsis = "..."):
         return string
 
 
-def ppargs(*args, **kwargs):
+def fargs(*args, **kwargs):
     """
     Format `*args` and `**kwargs` into one string resembling the original call.
     
-    >>> ppargs(1, [2], x=3.0, y='four')
+    >>> fargs(1, [2], x=3.0, y='four')
     "1, [2], x=3.0, y='four'"
+    
+    .. note: The items of `**kwargs` are sorted by their key.
     """
 
     items = []
     for arg in args:
         items.append(pprint.pformat(arg))
-    for (kw, kwarg) in kwargs.items():
-        items.append(kw + "=" + pprint.pformat(kwarg))
+    for kw in sorted(kwargs):
+        items.append(kw + "=" + pprint.pformat(kwargs[kw]))
     return ", ".join(items)   
 
 
@@ -250,28 +253,25 @@ def ppargs(*args, **kwargs):
 
 def pentex(f):
     """
-    Decorator which prints a message when entering and exiting the decorated
-    function.
+    Decorator which prints a message when entering and exiting `f`.
     """
 
+    @functools.wraps(f)
     def g(*args, **kwargs):
         print("@pentex({f}):  <enter>".format(f=f.__name__))
         ret = f(*args, **kwargs)
         print("@pentex({f}):  <exit>".format(f=f.__name__))
         return ret
     
-    # needed when stacking decorators
-    g.__name__ = f.__name__   
-    
     return g
 
 
 def ptdiff(f):
     """
-    Decorator which prints the time difference between entering and exiting the
-    decorated function.
+    Decorator which prints the time difference between entering and exiting `f`.
     """
 
+    @functools.wraps(f)
     def g(*args, **kwargs):
         t0 = time.time()
         ret = f(*args, **kwargs)
@@ -282,38 +282,32 @@ def ptdiff(f):
         ))
         return ret
     
-    # needed when stacking decorators
-    g.__name__ = f.__name__   
-    
     return g
 
 
 def pargs(f):
     """
-    Decorator which prints the arguments and their hash supplied to the
-    decorated function.
+    Decorator which prints the arguments and their hash supplied to `f`.
     """
     
+    @functools.wraps(f) 
     def g(*args, **kwargs):
         print("@pargs({f}):   ({argstr}) <{arghash}>".format(
             f=f.__name__,
-            argstr=tstr(ppargs(*args, **kwargs), 40, "<... truncated>"),
+            argstr=tstr(fargs(*args, **kwargs), 40, "<... truncated>"),
             arghash=ohash((args, kwargs), "hex", 4)
         ))
         return f(*args, **kwargs)
-    
-    # needed when stacking decorators
-    g.__name__ = f.__name__    
     
     return g
 
 
 def pret(f):
     """
-    Decorator which prints the result and its hash returned by the decorated
-    function.
+    Decorator which prints the result and its hash returned by `f`.
     """
-    
+
+    @functools.wraps(f)    
     def g(*args, **kwargs):
         ret = f(*args, **kwargs)
         print("@pret({f}):    {retstr} <{rethash}>".format(
@@ -323,9 +317,21 @@ def pret(f):
         ))
         return ret
     
-    # needed when stacking decorators
-    g.__name__ = f.__name__
-    
     return g
 
+
+def pall(f):
+    """
+    Decorator which applies the :func:`dh.utils.pentex`, :func:`dh.utils.pargs`,
+    :func:`dh.utils.pret`, and :func:`dh.utils.ptdiff` decorators on `f`.
+    """
+
+    @ptdiff
+    @pret
+    @pargs
+    @pentex
+    @functools.wraps(f)
+    def g(*args, **kwargs):
+        return f(*args, **kwargs)
+    return g
 
