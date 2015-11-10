@@ -106,7 +106,7 @@ def unique(x):
 
 def which(x):
     """
-    Yields the indices of the items which evaluate to `True`.
+    Yields the indices of the items of `x` which evaluate to `True`.
 
     >>> list(which((True, False, True, True)))
     [0, 2, 3]
@@ -126,10 +126,10 @@ def which(x):
 
 
 # adaptive round
-def around(number, significantDigitCount=3):
+def around(number, digitCount=3):
     """
-    Rounds a number to the first `significantDigitCount` digits after the
-    appearance of the first non-zero digit ("adaptive round").
+    Rounds a number to the first `digitCount` digits after the appearance of
+    the first non-zero digit ("adaptive round").
 
     >>> around(1234.56789, 3)
     1230.0
@@ -142,12 +142,12 @@ def around(number, significantDigitCount=3):
         magnitude = math.floor(math.log10(abs(number)))
     except ValueError:
         magnitude = 0
-    digitCount = int(significantDigitCount - magnitude - 1)
-    return round(number, digitCount)
+    roundDigitCount = int(digitCount - magnitude - 1)
+    return round(number, roundDigitCount)
 
 
 ##
-## hashing
+## string-related
 ##
 
 
@@ -208,24 +208,19 @@ def ohash(x, outputFormat="hex", byteCount=64):
     return hashFormatted
 
 
-##
-##
-##
-
-
-def tstr(string, maxlength=80, ellipsis = "..."):
+def tstr(s, maxLength=80, ellipsis = "..."):
     """
-    Truncates the `string` and adds ellipsis such that the returned string has
-    at most `maxlength` characters, including the ellipsis.
+    Truncates the string `s` and adds ellipsis such that the returned string
+    has at most `maxLength` characters, including the ellipsis.
     
     >>> tstr('The quick brown fox jumps over the lazy dog', 40)
     'The quick brown fox jumps over the la...'
     """
 
-    if len(string) > maxlength:
-        return string[:max(0, maxlength - len(ellipsis))] + ellipsis
+    if len(s) > maxLength:
+        return s[:max(0, maxLength - len(ellipsis))] + ellipsis
     else:
-        return string
+        return s
 
 
 def fargs(*args, **kwargs):
@@ -251,16 +246,39 @@ def fargs(*args, **kwargs):
 ##
 
 
+def _pdeco(callerName, fName, message):
+    """
+    Format and print a message, designed to be used by decorator functions such
+    as :func:`dh.utils.pentex`, :func:`dh.utils.pargs`, etc.
+    """
+    
+    print(
+        "==> @{callerName}({fName}){spaces}  --  {message}".format(
+            callerName=callerName,
+            spaces=" " * max(0, 8 - len(callerName)),
+            fName=fName,
+            message=message
+        )
+    )
+
+
 def pentex(f):
     """
     Decorator which prints a message when entering and exiting `f`.
+    
+    >>> @pentex
+    ... def f(x): return x**2
+    >>> f(2)
+    ==> @pentex(f)    --  enter
+    ==> @pentex(f)    --  exit
+    4
     """
 
     @functools.wraps(f)
     def g(*args, **kwargs):
-        print("@pentex({f}):  <enter>".format(f=f.__name__))
+        _pdeco("pentex", f.__name__, "enter")
         ret = f(*args, **kwargs)
-        print("@pentex({f}):  <exit>".format(f=f.__name__))
+        _pdeco("pentex", f.__name__, "exit")
         return ret
     
     return g
@@ -276,9 +294,8 @@ def ptdiff(f):
         t0 = time.time()
         ret = f(*args, **kwargs)
         t1 = time.time()
-        print("@ptdiff({f}):  <{dt} seconds>".format(
-            f=f.__name__,
-            dt=around(max(0, t1 - t0), 3),
+        _pdeco("ptdiff", f.__name__, "{dt} seconds".format(
+            dt=around(max(0, t1 - t0), 3)
         ))
         return ret
     
@@ -287,14 +304,40 @@ def ptdiff(f):
 
 def pargs(f):
     """
-    Decorator which prints the arguments and their hash supplied to `f`.
+    Decorator which prints the arguments supplied to `f`.
+    
+    >>> @pargs
+    ... def f(x, y): return x * y
+    >>> f(2, y=3)
+    ==> @pargs(f)     --  (2, y=3)
+    6
     """
     
     @functools.wraps(f) 
     def g(*args, **kwargs):
-        print("@pargs({f}):   ({argstr}) <{arghash}>".format(
-            f=f.__name__,
-            argstr=tstr(fargs(*args, **kwargs), 40, "<... truncated>"),
+        _pdeco("pargs", f.__name__, "({argstr})".format(
+            argstr=tstr(fargs(*args, **kwargs), 120, "<... truncated>"),
+        ))
+        return f(*args, **kwargs)
+    
+    return g
+    
+    
+def parghash(f):
+    """
+    Decorator which prints the hash value (using :func:`dh.utils.ohash`) of the
+    arguments supplied to `f`.
+    
+    >>> @parghash
+    ... def f(x, y): return x * y
+    >>> f(2, y=3)
+    ==> @parghash(f)  --  5cd54cfc
+    6
+    """
+    
+    @functools.wraps(f) 
+    def g(*args, **kwargs):
+        _pdeco("parghash", f.__name__, "{arghash}".format(
             arghash=ohash((args, kwargs), "hex", 4)
         ))
         return f(*args, **kwargs)
@@ -304,15 +347,42 @@ def pargs(f):
 
 def pret(f):
     """
-    Decorator which prints the result and its hash returned by `f`.
+    Decorator which prints the result returned by `f`.
+    
+    >>> @pret
+    ... def f(x, y): return {'sum': x + y, 'prod': x * y}
+    >>> f(2, 3)
+    ==> @pret(f)      --  {'prod': 6, 'sum': 5}
+    {'sum': 5, 'prod': 6}
     """
 
     @functools.wraps(f)    
     def g(*args, **kwargs):
         ret = f(*args, **kwargs)
-        print("@pret({f}):    {retstr} <{rethash}>".format(
-            f=f.__name__,
-            retstr=tstr(pprint.pformat(ret), 40, "<... truncated>"),
+        _pdeco("pret", f.__name__, "{retstr}".format(
+            retstr=tstr(pprint.pformat(ret), 120, "<... truncated>"),
+        ))
+        return ret
+    
+    return g
+
+
+def prethash(f):
+    """
+    Decorator which prints the hash value (using :func:`dh.utils.ohash`) of the
+    result returned by `f`.
+    
+    >>> @prethash
+    ... def f(x, y): return {'sum': x + y, 'prod': x * y}
+    >>> f(2, 3)
+    ==> @prethash(f)  --  3e4601af
+    {'sum': 5, 'prod': 6}
+    """
+
+    @functools.wraps(f)    
+    def g(*args, **kwargs):
+        ret = f(*args, **kwargs)
+        _pdeco("prethash", f.__name__, "{rethash}".format(
             rethash=ohash(ret, "hex", 4)
         ))
         return ret
@@ -326,10 +396,12 @@ def pall(f):
     :func:`dh.utils.pret`, and :func:`dh.utils.ptdiff` decorators on `f`.
     """
 
+    @pentex
     @ptdiff
+    @prethash
     @pret
     @pargs
-    @pentex
+    @parghash
     @functools.wraps(f)
     def g(*args, **kwargs):
         return f(*args, **kwargs)
