@@ -147,7 +147,7 @@ def around(number, digitCount=3):
 
 
 ##
-## string-related
+## formatting
 ##
 
 
@@ -242,14 +242,14 @@ def fargs(*args, **kwargs):
 
 
 ##
-## decorators
+## debugging
 ##
 
 
 def _pdeco(callerName, fName, message):
     """
-    Format and print a message, designed to be used by decorator functions such
-    as :func:`dh.utils.pentex`, :func:`dh.utils.pargs`, etc.
+    Formats and prints a message, designed to be used by decorator functions
+    such as :func:`dh.utils.pentex`, :func:`dh.utils.pargs`, etc.
     """
     
     print(
