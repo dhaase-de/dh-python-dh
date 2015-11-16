@@ -4,7 +4,7 @@ import os
 import subprocess
 import time
 
-def test():
+def test_decorators():
     import dh.utils
     
     @dh.utils.pall
@@ -14,6 +14,14 @@ def test():
         
     bla({"a": 1}, {"b": 2}, n=1, m=2)
 
+def test_out():
+    import dh.utils
+
+    blabla = 123
+    
+    for x in range(3):
+        for y in range(3):
+            dh.utils.out("x", "y", "blabla")
 
 def install():
     print("Installing package 'dh'...")
@@ -27,5 +35,5 @@ def install():
 
 if __name__ == "__main__":
     install()
-    test()
+    test_out()
 

@@ -6,6 +6,7 @@ import base64
 import colorsys
 import functools
 import hashlib
+import inspect
 import math
 import pprint
 import time
@@ -244,6 +245,50 @@ def fargs(*args, **kwargs):
 ##
 ## debugging
 ##
+
+
+def resolve(name):
+    """
+    Resolves the variable `name` and returns its value.
+
+    >>> x = 123
+    >>> resolve('x')
+    123
+    
+    .. warning:: The lookup process is NOT identical to Python's builtin one.
+                 Only use for debugging!
+    """
+
+    frame = inspect.currentframe().f_back
+    while frame is not None: 
+        frameVars = frame.f_locals.items()
+        for (varName, varValue) in frameVars:
+            if varName == name:
+                return varValue
+        frame = frame.f_back
+    raise RuntimeError("Can not resolve variable name '{name}'".format(name=name))
+
+
+def out(*names):
+    """
+    Prints the values of the variables specified by `*names`.
+    
+    >>> x = 123
+    >>> abcdef = 'four'
+    >>> out('x', 'abcdef')
+    x .... = 123
+    abcdef = 'four'
+    
+    .. warning:: Only use for debugging!
+    """
+    
+    # resolve variables to get the values
+    values = tuple(resolve(name) for name in names)
+
+    # formatted output
+    maxLen = max(len(name) for name in names)
+    for (name, value) in zip(names, values):
+        print(("{name:.<" + str(maxLen) + "} = {value}").format(name=name if len(name) == maxLen else name + " ", value=repr(value)))
 
 
 def _pdeco(callerName, fName, message):
