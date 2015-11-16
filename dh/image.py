@@ -1,5 +1,5 @@
 """
-Functions for scientific applications.
+Functions for image handling, image processing, and computer vision.
 """
 
 #import numpy as np
