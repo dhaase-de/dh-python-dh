@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 
+import distutils.core
 import os
 import os.path
 import re
-
-import distutils.core
 
 ##
 ## preparations
@@ -17,10 +16,9 @@ packageDirThirdparty = os.path.join(packageDirBase, "thirdparty")
 # parse version from package's init file
 version = None
 versionFilename = os.path.join(packageDirBase, "__init__.py")
-print(versionFilename)
 with open(versionFilename, "r") as f:
     for line in f:
-        versionMatch = re.search("^\s*__version__\s*=\s*\"([0-9]+\.[0-9]+\.[0-9]+)\"", line)
+        versionMatch = re.search("^\s*__version__\s*=\s*\"([0-9]+\.[0-9]+\.[0-9]+(-dev)?)\"", line)
         if versionMatch is not None:
             version = versionMatch.group(1)
             break

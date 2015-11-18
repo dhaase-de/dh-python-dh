@@ -2,11 +2,5 @@
 dh's Python3 package.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0-dev"
 
-# import modules
-import dh.image
-import dh.utils
-
-# import third party package
-import dh.thirdparty
