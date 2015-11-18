@@ -4,10 +4,12 @@ General utility functions.
 
 import base64
 import colorsys
+import errno
 import functools
 import hashlib
 import inspect
 import math
+import os
 import pprint
 import time
 
@@ -122,29 +124,30 @@ def which(x):
 
 
 ##
-## math
+## file-related
 ##
 
 
-# adaptive round
-def around(number, digitCount=3):
+def mkdir(dirname):
     """
-    Rounds a number to the first `digitCount` digits after the appearance of
-    the first non-zero digit ("adaptive round").
-
-    >>> around(1234.56789, 3)
-    1230.0
-
-    >>> around(0.00123456789, 3)
-    0.00123
+    Creates directory `dirname` if it does not exist already.
+    
+    .. seealso:: http://stackoverflow.com/a/5032238/1913780
     """
 
     try:
-        magnitude = math.floor(math.log10(abs(number)))
-    except ValueError:
-        magnitude = 0
-    roundDigitCount = int(digitCount - magnitude - 1)
-    return round(number, roundDigitCount)
+        os.makedirs(dirname)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+def mkpdir(filename):
+    """
+    Creates the parent directory of `filename` if it does not exists already.
+    """
+    
+    mkdir(os.path.dirname(filename))
 
 
 ##
@@ -240,6 +243,31 @@ def fargs(*args, **kwargs):
     for kw in sorted(kwargs):
         items.append(kw + "=" + pprint.pformat(kwargs[kw]))
     return ", ".join(items)   
+
+
+##
+## math
+##
+
+
+def around(number, digitCount=3):
+    """
+    Rounds a number to the first `digitCount` digits after the appearance of
+    the first non-zero digit ("adaptive round").
+
+    >>> around(1234.56789, 3)
+    1230.0
+
+    >>> around(0.00123456789, 3)
+    0.00123
+    """
+
+    try:
+        magnitude = math.floor(math.log10(abs(number)))
+    except ValueError:
+        magnitude = 0
+    roundDigitCount = int(digitCount - magnitude - 1)
+    return round(number, roundDigitCount)
 
 
 ##
