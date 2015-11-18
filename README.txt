@@ -28,3 +28,11 @@ ToDo (framework)
 
 * use `virtualenv` when installing the package to create the documentation
 * use `nose2` instead of `nose` for testing
+* include README.txt etc. into package
+
+ToDo (new content)
+------------------
+
+* interactive image pipeline viewer
+* progress bar
+
