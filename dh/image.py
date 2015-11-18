@@ -2,7 +2,7 @@
 Functions for image handling, image processing, and computer vision.
 """
 
-#import numpy as np
+import numpy as np
 
 import dh.utils
 
@@ -40,3 +40,43 @@ def tirr(*args):
 
     items = dh.utils.flatten(*args)
     return tir(reversed(list(items)))
+    
+    
+def hom(x):
+    """
+    Transforms `x` from Euclidean coordinates into a NumPy array of homogeneous
+    coordinates.
+    
+    >>> hom([1.24, -1.87])
+    array([ 1.24, -1.87,  1.  ])
+    """
+    
+    return np.append(np.array(x), 1.0)
+
+
+def unhom(x):
+    """
+    Transforms `x` from homogeneous coordinates into a NumPy array of Euclidean
+    coordinates.
+    
+    >>> unhom([0.62 , -0.935,  0.5])
+    array([ 1.24, -1.87])
+    """
+
+    return np.array(x[:-1]) / x[-1]
+    
+    
+def hommap(X, y):
+    """
+    Transforms `y` to homogeneous coordinates, applies the linear mapping given
+    by the matrix `X` and converts the result back to Euclidean coordinates.
+    
+    >>> M = np.eye(3)
+    >>> M[0, 2] = 1.0
+    >>> M[1, 2] = -2.0
+    >>> hommap(M, [1.24, -1.87])
+    array([ 2.24, -3.87])
+    """
+
+    return unhom(np.dot(X, hom(y)))    
+
