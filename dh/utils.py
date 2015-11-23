@@ -131,7 +131,7 @@ def which(x):
 def mkdir(dirname):
     """
     Creates directory `dirname` if it does not exist already.
-    
+
     .. seealso:: http://stackoverflow.com/a/5032238/1913780
     """
 
@@ -146,7 +146,7 @@ def mkpdir(filename):
     """
     Creates the parent directory of `filename` if it does not exists already.
     """
-    
+
     mkdir(os.path.dirname(filename))
 
 
@@ -212,11 +212,11 @@ def ohash(x, outputFormat="hex", byteCount=64):
     return hashFormatted
 
 
-def tstr(s, maxLength=80, ellipsis = "..."):
+def tstr(s, maxLength=80, ellipsis="..."):
     """
     Truncates the string `s` and adds ellipsis such that the returned string
     has at most `maxLength` characters, including the ellipsis.
-    
+
     >>> tstr('The quick brown fox jumps over the lazy dog', 40)
     'The quick brown fox jumps over the la...'
     """
@@ -230,10 +230,10 @@ def tstr(s, maxLength=80, ellipsis = "..."):
 def fargs(*args, **kwargs):
     """
     Format `*args` and `**kwargs` into one string resembling the original call.
-    
+
     >>> fargs(1, [2], x=3.0, y='four')
     "1, [2], x=3.0, y='four'"
-    
+
     .. note: The items of `**kwargs` are sorted by their key.
     """
 
@@ -242,7 +242,7 @@ def fargs(*args, **kwargs):
         items.append(pprint.pformat(arg))
     for kw in sorted(kwargs):
         items.append(kw + "=" + pprint.pformat(kwargs[kw]))
-    return ", ".join(items)   
+    return ", ".join(items)
 
 
 ##
@@ -282,13 +282,13 @@ def resolve(name):
     >>> x = 123
     >>> resolve('x')
     123
-    
+
     .. warning:: The lookup process is NOT identical to Python's builtin one.
                  Only use for debugging!
     """
 
     frame = inspect.currentframe().f_back
-    while frame is not None: 
+    while frame is not None:
         frameVars = frame.f_locals.items()
         for (varName, varValue) in frameVars:
             if varName == name:
@@ -300,16 +300,16 @@ def resolve(name):
 def out(*names):
     """
     Prints the values of the variables specified by `*names`.
-    
+
     >>> x = 123
     >>> abcdef = 'four'
     >>> out('x', 'abcdef')
     x .... = 123
     abcdef = 'four'
-    
+
     .. warning:: Only use for debugging!
     """
-    
+
     # resolve variables to get the values
     values = tuple(resolve(name) for name in names)
 
@@ -324,7 +324,7 @@ def _pdeco(callerName, fName, message):
     Formats and prints a message, designed to be used by decorator functions
     such as :func:`dh.utils.pentex`, :func:`dh.utils.pargs`, etc.
     """
-    
+
     print(
         "==> @{callerName}({fName}){spaces}  --  {message}".format(
             callerName=callerName,
@@ -338,7 +338,7 @@ def _pdeco(callerName, fName, message):
 def pentex(f):
     """
     Decorator which prints a message when entering and exiting `f`.
-    
+
     >>> @pentex
     ... def f(x): return x**2
     >>> f(2)
@@ -353,13 +353,14 @@ def pentex(f):
         ret = f(*args, **kwargs)
         _pdeco("pentex", f.__name__, "exit")
         return ret
-    
+
     return g
 
 
 def ptdiff(f):
     """
-    Decorator which prints the time difference between entering and exiting `f`.
+    Decorator which prints the time difference between entering and exiting
+    `f`.
     """
 
     @functools.wraps(f)
@@ -371,57 +372,57 @@ def ptdiff(f):
             dt=around(max(0, t1 - t0), 3)
         ))
         return ret
-    
+
     return g
 
 
 def pargs(f):
     """
     Decorator which prints the arguments supplied to `f`.
-    
+
     >>> @pargs
     ... def f(x, y): return x * y
     >>> f(2, y=3)
     ==> @pargs(f)     --  (2, y=3)
     6
     """
-    
-    @functools.wraps(f) 
+
+    @functools.wraps(f)
     def g(*args, **kwargs):
         _pdeco("pargs", f.__name__, "({argstr})".format(
             argstr=tstr(fargs(*args, **kwargs), 120, "<... truncated>"),
         ))
         return f(*args, **kwargs)
-    
+
     return g
-    
-    
+
+
 def parghash(f):
     """
     Decorator which prints the hash value (using :func:`dh.utils.ohash`) of the
     arguments supplied to `f`.
-    
+
     >>> @parghash
     ... def f(x, y): return x * y
     >>> f(2, y=3)
     ==> @parghash(f)  --  5cd54cfc
     6
     """
-    
-    @functools.wraps(f) 
+
+    @functools.wraps(f)
     def g(*args, **kwargs):
         _pdeco("parghash", f.__name__, "{arghash}".format(
             arghash=ohash((args, kwargs), "hex", 4)
         ))
         return f(*args, **kwargs)
-    
+
     return g
 
 
 def pret(f):
     """
     Decorator which prints the result returned by `f`.
-    
+
     >>> @pret
     ... def f(x, y): return {'sum': x + y, 'prod': x * y}
     >>> f(2, 3)
@@ -429,14 +430,14 @@ def pret(f):
     {'sum': 5, 'prod': 6}
     """
 
-    @functools.wraps(f)    
+    @functools.wraps(f)
     def g(*args, **kwargs):
         ret = f(*args, **kwargs)
         _pdeco("pret", f.__name__, "{retstr}".format(
             retstr=tstr(pprint.pformat(ret), 120, "<... truncated>"),
         ))
         return ret
-    
+
     return g
 
 
@@ -444,7 +445,7 @@ def prethash(f):
     """
     Decorator which prints the hash value (using :func:`dh.utils.ohash`) of the
     result returned by `f`.
-    
+
     >>> @prethash
     ... def f(x, y): return {'sum': x + y, 'prod': x * y}
     >>> f(2, 3)
@@ -452,21 +453,22 @@ def prethash(f):
     {'sum': 5, 'prod': 6}
     """
 
-    @functools.wraps(f)    
+    @functools.wraps(f)
     def g(*args, **kwargs):
         ret = f(*args, **kwargs)
         _pdeco("prethash", f.__name__, "{rethash}".format(
             rethash=ohash(ret, "hex", 4)
         ))
         return ret
-    
+
     return g
 
 
 def pall(f):
     """
-    Decorator which applies the :func:`dh.utils.pentex`, :func:`dh.utils.pargs`,
-    :func:`dh.utils.pret`, and :func:`dh.utils.ptdiff` decorators on `f`.
+    Decorator which applies the :func:`dh.utils.pentex`,
+    :func:`dh.utils.pargs`, :func:`dh.utils.pret`, and :func:`dh.utils.ptdiff`
+    decorators on `f`.
     """
 
     @pentex
@@ -479,4 +481,3 @@ def pall(f):
     def g(*args, **kwargs):
         return f(*args, **kwargs)
     return g
-
