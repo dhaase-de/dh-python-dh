@@ -4,16 +4,15 @@
 set -o errexit
 set -o nounset
 
-# get absolute path of this script
+# get important dirs of this Python package (absolute paths)
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-PACKAGE_DIR="$SCRIPT_DIR/dh/"
-DOC_DIR="$SCRIPT_DIR/doc/"
+source "$SCRIPT_DIR"/setenv.sh
 
 # install package because it will be imported by autodoc
-"$SCRIPT_DIR"/install.sh
+"$SCRIPT_DIR"/build-install.sh
 
 # create doc source files from the docstrings
-sphinx-apidoc --force -o "$DOC_DIR"/source "$PACKAGE_DIR" "$PACKAGE_DIR"/tests "$PACKAGE_DIR"/thirdparty/*/
+sphinx-apidoc --force -o "$DOC_DIR"/source "$SOURCE_DIR" "$SOURCE_DIR"/tests "$SOURCE_DIR"/thirdparty/*/
 
 # create code check report
 echo "Pylint report" > "$DOC_DIR"/source/pylint.rst
@@ -21,7 +20,7 @@ echo "=============" >> "$DOC_DIR"/source/pylint.rst
 echo "" >> "$DOC_DIR"/source/pylint.rst
 echo "Detailed messages" >> "$DOC_DIR"/source/pylint.rst
 echo "-----------------" >> "$DOC_DIR"/source/pylint.rst
-"$SCRIPT_DIR"/check.sh >> "$DOC_DIR"/source/pylint.rst || true
+"$SCRIPT_DIR"/check-pylint.sh >> "$DOC_DIR"/source/pylint.rst || true
 
 # create doc
 cd "$DOC_DIR" && make html && make singlehtml

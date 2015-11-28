@@ -1,9 +1,17 @@
 #!/usr/bin/python3
 
-import distutils.core
 import os
 import os.path
 import re
+
+try:
+    # setuptools has wheel support (command "bdist_wheel"), but is not in the standard library
+    import setuptools
+    setup = setuptools.setup
+except ImportError:
+    # fallback option without wheel support
+    import distutils.core
+    setup = distutils.core.setup
 
 ##
 ## preparations
@@ -36,7 +44,7 @@ for (path, packageSubdirsThirdparty, _) in os.walk(packageDirThirdparty):
 ## main call
 ##
 
-distutils.core.setup(
+setup(
     name = packageDirBase,
     version = version,
     description = "Personal package of Daniel Haase",

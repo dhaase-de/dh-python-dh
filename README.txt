@@ -23,16 +23,38 @@ Use `runTest.sh` to run all unit tests (including tests in the documentation).
 Requires `nose` for Python3 (Debian package `python3-nose`), which provides the
 `nosetests3` executable.
 
-ToDo (framework)
-----------------
+
+Changelog
+=========
+
+0.3.0 (dev)
+-----------
+
+* improved framework (documentation, unit tests, dev dir, scripts, ...)
+* extended `utils`
+
+0.2.0 (2015-08-31)
+------------------
+
+* first version
+
+
+ToDo
+====
+
+Framework
+---------
 
 * use `virtualenv` when installing the package to create the documentation
 * use `nose2` instead of `nose` for testing
 * include README.txt etc. into package
+* estimate coverage
 
-ToDo (new content)
-------------------
+Features
+--------
 
 * interactive image pipeline viewer
+* example data
 * progress bar
+* cache system
 
