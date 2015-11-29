@@ -27,8 +27,8 @@ Requires `nose` for Python3 (Debian package `python3-nose`), which provides the
 Changelog
 =========
 
-0.3.0 (dev)
------------
+0.3.0 (2015-11-29)
+------------------
 
 * improved framework (documentation, unit tests, dev dir, scripts, ...)
 * extended `utils`
