@@ -45,10 +45,14 @@ for (path, packageSubdirsThirdparty, _) in os.walk(packageDirThirdparty):
 ##
 
 setup(
-    name = packageDirBase,
-    version = version,
-    description = "Personal package of Daniel Haase",
-    author = "Daniel Haase",
-    packages = packages,
+    name=packageDirBase,
+    version=version,
+    description="Personal package of Daniel Haase",
+    author="Daniel Haase",
+    packages=packages,
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Topic :: Utilities",
+    ],
 )
 
