@@ -341,10 +341,9 @@ def pentex(f):
 
     >>> @pentex
     ... def f(x): return x**2
-    >>> f(2)
+    >>> res = f(2)
     ==> @pentex(f)    --  enter
     ==> @pentex(f)    --  exit
-    4
     """
 
     @functools.wraps(f)
@@ -382,9 +381,8 @@ def pargs(f):
 
     >>> @pargs
     ... def f(x, y): return x * y
-    >>> f(2, y=3)
+    >>> res = f(2, y=3)
     ==> @pargs(f)     --  (2, y=3)
-    6
     """
 
     @functools.wraps(f)
@@ -404,9 +402,8 @@ def parghash(f):
 
     >>> @parghash
     ... def f(x, y): return x * y
-    >>> f(2, y=3)
+    >>> res = f(2, y=3)
     ==> @parghash(f)  --  5cd54cfc
-    6
     """
 
     @functools.wraps(f)
@@ -425,9 +422,8 @@ def pret(f):
 
     >>> @pret
     ... def f(x, y): return {'sum': x + y, 'prod': x * y}
-    >>> f(2, 3)
+    >>> res = f(2, 3)
     ==> @pret(f)      --  {'prod': 6, 'sum': 5}
-    {'sum': 5, 'prod': 6}
     """
 
     @functools.wraps(f)
@@ -448,9 +444,8 @@ def prethash(f):
 
     >>> @prethash
     ... def f(x, y): return {'sum': x + y, 'prod': x * y}
-    >>> f(2, 3)
+    >>> res = f(2, 3)
     ==> @prethash(f)  --  3e4601af
-    {'sum': 5, 'prod': 6}
     """
 
     @functools.wraps(f)
