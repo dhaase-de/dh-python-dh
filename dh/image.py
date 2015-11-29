@@ -7,6 +7,11 @@ import numpy as np
 import dh.utils
 
 
+##
+## coordinates
+##
+
+
 def tir(*args):
     """
     The items of `*args` are flattened (via :func:`dh.utils.flatten`), rounded,
@@ -66,10 +71,10 @@ def unhom(x):
     return np.array(x[:-1]) / x[-1]
 
 
-def hommap(X, y):
+def hommap(M, x):
     """
-    Transforms `y` to homogeneous coordinates, applies the linear mapping given
-    by the matrix `X` and converts the result back to Euclidean coordinates.
+    Transforms `x` to homogeneous coordinates, applies the linear mapping given
+    by the matrix `M` and converts the result back to Euclidean coordinates.
 
     >>> M = np.eye(3)
     >>> M[0, 2] = 1.0
@@ -78,4 +83,4 @@ def hommap(X, y):
     array([ 2.24, -3.87])
     """
 
-    return unhom(np.dot(X, hom(y)))
+    return unhom(np.dot(M, hom(x)))
