@@ -47,7 +47,7 @@ for (path, packageSubdirsThirdparty, _) in os.walk(packageDirThirdparty):
 setup(
     name=packageDirBase,
     version=version,
-    description="Personal package of Daniel Haase",
+    description="Personal Python package of Daniel Haase",
     author="Daniel Haase",
     packages=packages,
     classifiers=[
