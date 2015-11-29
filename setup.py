@@ -50,9 +50,9 @@ setup(
     description="Personal Python package of Daniel Haase",
     author="Daniel Haase",
     packages=packages,
+    package_data={packageDirBase: ["data/lena.npy"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
     ],
 )
-
