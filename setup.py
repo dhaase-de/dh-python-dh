@@ -7,10 +7,12 @@ import re
 try:
     # setuptools has wheel support (command "bdist_wheel"), but is not in the standard library
     import setuptools
+    print("==> using module 'setuptools'")
     setup = setuptools.setup
 except ImportError:
     # fallback option without wheel support
     import distutils.core
+    print("==> module 'setuptools' not found, falling back to 'distutils'")
     setup = distutils.core.setup
 
 ##
@@ -50,9 +52,10 @@ setup(
     description="Personal Python package of Daniel Haase",
     author="Daniel Haase",
     packages=packages,
-    package_data={packageDir: ["data/lena.npy"]},
+    package_data={packageName: ["data/lena.npy"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
+        "Programming Language :: Python :: 3",
         "Topic :: Utilities",
     ],
 )
