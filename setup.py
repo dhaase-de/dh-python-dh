@@ -17,13 +17,14 @@ except ImportError:
 ## preparations
 ##
 
-# (relative) directories of the top-level packages
-packageDirBase = "dh"
-packageDirThirdparty = os.path.join(packageDirBase, "thirdparty")
+# package dirs
+packageName = "dh"
+packageDir = os.path.abspath(os.path.dirname(__file__))
+sourceDir = os.path.join(packageDir, packageName)
 
-# parse version from package's init file
+# parse version from package's main file
 version = None
-versionFilename = os.path.join(packageDirBase, "__init__.py")
+versionFilename = os.path.join(sourceDir, "__init__.py")
 with open(versionFilename, "r") as f:
     for line in f:
         versionMatch = re.search("^\s*__version__\s*=\s*\"([0-9]+\.[0-9]+\.[0-9]+(-dev)?)\"", line)
@@ -33,24 +34,23 @@ with open(versionFilename, "r") as f:
 if version is None:
     raise RuntimeError("Could not parse version from file '{}'".format(versionFilename))
 
-# prepare package list (list is: base package plus "thirdparty" module plus one package for each third party module)
-packages = [packageDirBase, packageDirThirdparty]
-for (path, packageSubdirsThirdparty, _) in os.walk(packageDirThirdparty):
-    for packageSubdirThirdparty in packageSubdirsThirdparty:
-        if re.search("^[^_]", packageSubdirThirdparty):
-            packages.append(os.path.join(path, packageSubdirThirdparty))
+# prepare package list (any directory under the source dir which contains an '__init__.py' file)
+packages = []
+for (absDir, _, filenames) in os.walk(sourceDir):
+    if "__init__.py" in filenames:
+        packages.append(os.path.relpath(absDir, packageDir))
 
 ##
 ## main call
 ##
 
 setup(
-    name=packageDirBase,
+    name=packageName,
     version=version,
     description="Personal Python package of Daniel Haase",
     author="Daniel Haase",
     packages=packages,
-    package_data={packageDirBase: ["data/lena.npy"]},
+    package_data={packageDir: ["data/lena.npy"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",

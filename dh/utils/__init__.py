@@ -1,8 +1,12 @@
 """
 General utility functions.
+
+Written in pure Python only using modules from the standard library to ensure
+maximum compatibility.
 """
 
 import base64
+import collections
 import colorsys
 import errno
 import functools
@@ -17,6 +21,14 @@ import time
 ##
 ## iterable-related
 ##
+
+
+def adict():
+    """
+    Dictionary with autovivification.
+    """
+
+    return collections.defaultdict(adict)
 
 
 def cycle(x, length):
@@ -126,6 +138,14 @@ def which(x):
 ##
 ## file-related
 ##
+
+
+def absdir(path):
+    """
+    Returns the absolute path of the directory name of `path`.
+    """
+
+    return os.path.abspath(os.path.dirname(path))
 
 
 def mkdir(dirname):
@@ -270,6 +290,37 @@ def around(number, digitCount=3):
     return round(number, roundDigitCount)
 
 
+def sclip(x, lower=None, upper=None):
+    """
+    Clips the scalar value `x` to the interval [`lower`, `upper`].
+
+    Each of `lower` and `upper` can be `None`, meaning no clipping.
+    The returned result has the same type as the input `x`.
+
+    >>> sclip(123.456, 0, 100)
+    100.0
+    """
+
+    xType = type(x)
+    c = x
+    if lower is not None:
+        c = xType(max(lower, c))
+    if upper is not None:
+        c = xType(min(upper, c))
+    return c
+
+
+def tinterval(x, lowerOld, upperOld, lowerNew, upperNew):
+    """
+    Transform the scalar `x` from the interval [`lowerOld`, `upperOld`] to the
+    interval [`lowerNew`, `upperNew`].
+
+    >>> tinterval(0.5, 0.0, 1.0, 1.0, 512.0)
+    256.5
+    """
+
+    return (x - lowerOld) / (upperOld - lowerOld) * (upperNew - lowerNew) + lowerNew
+
 ##
 ## debugging
 ##
@@ -383,6 +434,9 @@ def pargs(f):
     ... def f(x, y): return x * y
     >>> res = f(2, y=3)
     ==> @pargs(f)     --  (2, y=3)
+    
+    .. todo:: truncate each argument value individually (otherwise an image
+              array as first argument masks all other arguments)
     """
 
     @functools.wraps(f)
