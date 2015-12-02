@@ -29,6 +29,9 @@ class Window(tkinter.Tk):
     def show(self):
         self.mainloop()
 
+    def close(self):
+        self.destroy()
+
 
 class ImageCanvas(tkinter.Canvas):
     """
@@ -79,14 +82,7 @@ class ImageCanvas(tkinter.Canvas):
         """
 
         # convert to 8 bit NumPy image
-        if I.dtype == "uint8":
-            J = I.copy()
-        elif I.dtype == "uint8":
-            J = (I.astype("float32") / 257.0).astype("uint8")
-        elif np.issubdtype(I.dtype, "float"):
-            J = (I * 255.0).astype("uint8")
-        else:
-            raise ValueError("Invalid image type '{dtype}'".format(dtype=I.dtype))
+        J = dh.image.convert(I, "uint8")
 
         # convert to PIL image
         L = PIL.Image.fromarray(J)

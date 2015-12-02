@@ -156,6 +156,48 @@ def imshow(I, normalization="none", backends=("plt", "skimage"), **kwargs):
 
 
 ##
+## conversion
+##
+
+
+def trange(dtype):
+    """
+    Returns the range (min, max) of valid intensity values for an image of
+    NumPy type string `dtype`.
+
+    Allowed types are `'uint8'`, `'uint16'`, and any float type (e.g.,
+    `'float32'`, `'float64'`).
+
+    >>> trange('uint8')
+    (0, 255)
+    >>> trange('float32')
+    (0.0, 1.0)
+    """
+
+    if dtype == "uint8":
+        return (0, 255)
+    elif dtype == "uint16":
+        return (0, 65535)
+    elif np.issubdtype(dtype, "float"):
+        return (0.0, 1.0)
+    else:
+        raise ValueError("Invalid image type '{dtype}'".format(dtype=dtype))
+
+
+def convert(I, dtype):
+    """
+    Converts image `I` to NumPy type given by the string `dtype` and scales the
+    intensity values accordingly.
+    """
+
+    if I.dtype == dtype:
+        return I.copy()
+    else:
+        scale = trange(dtype)[1] / trange(I.dtype)[1]
+        return (I.astype("float32") * scale).astype(dtype)
+
+
+##
 ## coordinates
 ##
 

@@ -12,12 +12,16 @@ class _ViewerWindow(dh.gui.tk.Window):
             title="Viewer",
             minSize=(250, 250),
         )
-    
-    def initWidgets(self):   
+
+    def initWidgets(self):
+        # key bindings
+        self.bind("<Escape>", lambda _: self.close())
+        self.bind("<q>", lambda _: self.close())
+
         # main frame
         self.mainFrame = tkinter.ttk.Frame(self)
         self.mainFrame.pack(fill=tkinter.BOTH, expand=tkinter.YES)
-        
+
         # filter frame
         self.filterFrame = tkinter.ttk.Frame(self.mainFrame)
         self.filterFrame.pack(side=tkinter.LEFT, anchor=tkinter.N, padx = 10, pady = 10)
@@ -55,3 +59,6 @@ class Viewer():
         self.initGui()
         self.gui.draw(I)
         self.showGui()
+
+    def close(self):
+        self.gui.close()
