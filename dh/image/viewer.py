@@ -1,42 +1,57 @@
 import tkinter
 import tkinter.ttk
 
-import dh.gui
+import dh.gui.tk
 import dh.image
 #import dh.utils
 
 
+class _ViewerWindow(dh.gui.tk.Window):
+    def __init__(self):
+        super(_ViewerWindow, self).__init__(
+            title="Viewer",
+            minSize=(250, 250),
+        )
+    
+    def initWidgets(self):   
+        # main frame
+        self.mainFrame = tkinter.ttk.Frame(self)
+        self.mainFrame.pack(fill=tkinter.BOTH, expand=tkinter.YES)
+        
+        # filter frame
+        self.filterFrame = tkinter.ttk.Frame(self.mainFrame)
+        self.filterFrame.pack(side=tkinter.LEFT, anchor=tkinter.N, padx = 10, pady = 10)
+        tkinter.ttk.Button(self.filterFrame, text="+").pack()
+
+        # image canvas
+        self.imageCanvas = dh.gui.tk.ImageCanvas(self.mainFrame)
+        self.imageCanvas.pack(side=tkinter.LEFT, anchor=tkinter.N, fill=tkinter.BOTH, expand=tkinter.YES)
+
+    def draw(self, I):
+        self.imageCanvas.draw(I)
+
+
 class Viewer():
     def __init__(self):
-        pass
+        self.gui = None
 
     def initGui(self):
         """
         Constructs the main window with all elements.
         """
 
-        self.gui = {}
-
         # main window
-        self.gui["root"] = tkinter.Tk()
-        self.gui["root"].minsize(250, 250)
+        self.gui = _ViewerWindow()
 
-        # image canvas
-        self.gui["imageCanvas"] = dh.gui.ImageCanvas(self.gui["root"])
-        self.gui["imageCanvas"].pack(fill=tkinter.BOTH, expand=tkinter.YES)
-
-    def runGui(self):
+    def showGui(self):
         """
         Enters GUI event loop and returns when the window is destroyed.
         """
 
-        self.gui["root"].mainloop()
+        self.gui.show()
         del self.gui
 
     def view(self, I):
-        # construct GUI
         self.initGui()
-
-        self.gui["imageCanvas"].draw(I)
-
-        self.runGui()
+        self.gui.draw(I)
+        self.showGui()
