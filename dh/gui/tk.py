@@ -54,41 +54,41 @@ class ImageCanvas(tkinter.Canvas):
         self.scale = None
         self.bind("<Configure>", self.onResize)
 
-        # image data (original image, resized image, ...)
-        self.imageData = {}
+        # store original and drawn (resized) image
+        self.original = None
+        self.drawn = None
 
     def onResize(self, event):
         """
-        Update size and redraw image.
+        Save new canvas size and redraw image.
         """
 
         self.width = event.width
         self.height = event.height
-        self.redraw()
+        self.draw()
 
-    def redraw(self):
+    def setImage(self, I):
+        self.original = I.copy()
+        self.draw()
+
+    def draw(self):
         """
-        Redraw the last image, taking the current canvas size into account.
+        Properly converts and resizes the currently set image and draws it onto
+        the canvas.
         """
 
-        try:
-            self.draw(self.imageData["original"])
-        except KeyError:
-            pass
-
-    def draw(self, I):
-        """
-        Draws the image `I` represented by a NumPy array on the canvas.
-        """
+        # return if no image is set
+        if self.original is None:
+            return
 
         # convert to 8 bit NumPy image
-        J = dh.image.convert(I, "uint8")
+        J = dh.image.convert(self.original, "uint8")
 
         # convert to PIL image
         L = PIL.Image.fromarray(J)
 
         # resize to fit canvas (but keep original aspect ratio)
-        originalImageSize = (I.shape[1], I.shape[0])
+        originalImageSize = (self.original.shape[1], self.original.shape[0])
         newCanvasSize = (self.width, self.height)
         scale = np.min(np.array(newCanvasSize) / np.array(originalImageSize))
         newImageSize = dh.image.tir(scale * np.array(originalImageSize))
@@ -104,8 +104,5 @@ class ImageCanvas(tkinter.Canvas):
         else:
             self.itemconfig(self.canvasImage, image=P)
 
-        # keep original image (for later resizing/redrawing) and a reference to the PhotoImage (to avoid garbage collection)
-        self.imageData = {
-            "original": I,
-            "drawn": P,
-        }
+        # keep reference to the PhotoImage to avoid garbage collection
+        self.drawn = P

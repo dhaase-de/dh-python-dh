@@ -55,6 +55,14 @@ import dh.utils
 ##
 
 
+def invert(I):
+    """
+    Inverts the intensities of all pixels.
+    """
+    (_, typeMax) = trange(I.dtype)
+    return (typeMax - I)
+
+
 def normalize(I, mode="minmax", **kwargs):
     """
     Normalizes the image `I`.
@@ -70,20 +78,7 @@ def normalize(I, mode="minmax", **kwargs):
         (lower, upper) = sorted((kwargs["lower"], kwargs["upper"]))
 
         # the "full" interval range depends on the image's data type
-        if I.dtype == "uint8":
-            # 8 bit image
-            lowerFull = 0
-            upperFull = 255
-        elif I.dtype == "uint8":
-            # 16 bit image
-            lowerFull = 0
-            upperFull = 65535
-        elif np.issubdtype(I.dtype, "float"):
-            # float image
-            lowerFull = 0.0
-            upperFull = 1.0
-        else:
-            raise ValueError("Unsupported data type '{dtype}'".format(dtype=str(I.dtype)))
+        (lowerFull, upperFull) = trange(I.dtype)
 
         # we temporarily work with a float image (because values outside of
         # the target interval can occur)
@@ -139,8 +134,8 @@ def imshow(I, normalization="none", backends=("plt", "skimage"), **kwargs):
     # search for available backend (thirdparty module) for image display, in given order
     if False:
         # normalize image
-        N = normalize(I, mode=normalization, **kwargs)        
-        
+        N = normalize(I, mode=normalization, **kwargs)
+
         for backend in backends:
             if (backend == "plt") and _HAVE_PLT:
                 #plt.ion()
