@@ -38,13 +38,6 @@ try:
 except ImportError:
     _HAVE_SKIMAGE = False
 
-# check if Tkinter is available
-try:
-    import tkinter
-    import tkinter.ttk
-    _HAVE_TKINTER = True
-except ImportError:
-    _HAVE_TKINTER = False
 
 import dh.image.viewer
 import dh.utils
@@ -59,13 +52,14 @@ def invert(I):
     """
     Inverts the intensities of all pixels.
     """
+
     (_, typeMax) = trange(I.dtype)
     return (typeMax - I)
 
 
 def normalize(I, mode="minmax", **kwargs):
     """
-    Normalizes the image `I`.
+    Normalizes the intensity values of the image `I`.
 
     Supported NumPy data types are `uint8`, `uint16`, and all float types.
     """

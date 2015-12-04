@@ -33,7 +33,7 @@ class _ViewerWindow(dh.gui.tk.Window):
 
         # filter frame
         self.filterFrame = tkinter.ttk.Frame(self.mainFrame)
-        self.filterFrame.pack(side=tkinter.LEFT, anchor=tkinter.N)
+        self.filterFrame.pack(side=tkinter.LEFT, anchor=tkinter.N, padx=2, pady=2)
 
         # image canvas
         self.imageCanvas = dh.gui.tk.ImageCanvas(self.mainFrame)
@@ -45,9 +45,9 @@ class _ViewerWindow(dh.gui.tk.Window):
     def updateFilterFrame(self):
         for filter in self.viewer.pipeline:
             #tkinter.ttk.Button(self.filterFrame, text=filter.name).pack()
-            filter.gui(self.filterFrame).pack(fill="x", expand=True)
+            filter.gui(self.filterFrame, self.updateImage).pack(fill="x", padx=1, pady=1, expand=True)
 
-    def updateImage(self):
+    def updateImage(self, *args, **kwargs):
         self.imageCanvas.setImage(self.viewer.applyPipeline())
 
 
@@ -117,7 +117,7 @@ class Viewer():
 
 
 ##
-## filters
+## filter framework
 ##
 
 
@@ -134,28 +134,74 @@ class Filter():
 
 
 class ImageToImageFilter(Filter):
-    def __init__(self, name, f):
+    def __init__(self, name, f, parameters = ()):
         super(ImageToImageFilter, self).__init__(name)
 
         self.f = f
+        self.parameters = parameters
+        self.parameterValues = {}
 
     def apply(self, I):
-        return self.f(I)
+        return self.f(I, **self.getParameterValues())
 
-    def gui(self, parent):
-        frame = tkinter.ttk.Frame(parent)
+    def getParameterValues(self):
+        return {parameter["name"]: self.parameterValues[parameter["name"]].get() for parameter in self.parameters}
+
+    def gui(self, parent, updateCallback):
+        """
+        Constructs and returns a GUI frame for this filter.
+        """
+
+        # master frame
+        frame = tkinter.ttk.Frame(parent, relief="raised")
+
+        # usable part of the frame
         innerFrame = tkinter.ttk.Frame(frame)
         innerFrame.pack(fill="x", expand=True, padx=6, pady=3)
+
+        # header line
         header = tkinter.ttk.Frame(innerFrame)
         header.pack(side = tkinter.TOP, fill = "x", expand = True)
-        tkinter.ttk.Label(header, text=self.name.upper(), font="Sans 10 bold", background = "white", anchor = tkinter.W, justify = tkinter.LEFT).pack(side = tkinter.LEFT, fill = "x", expand = True)
+        tkinter.ttk.Label(header, text=self.name.upper(), font="Sans 10 bold", anchor = tkinter.W, justify = tkinter.LEFT).pack(side = tkinter.LEFT, fill = "x", expand = True)
 
-        details = tkinter.ttk.Frame(innerFrame)
-        details.pack(side = tkinter.TOP)
-        tkinter.ttk.Label(details, text="Bla bla " + self.name, font="Sans 8 italic").pack(side = tkinter.LEFT)
+        # description line
+        #details = tkinter.ttk.Frame(innerFrame)
+        #details.pack(side = tkinter.TOP, fill = "x", expand = True)
+        #tkinter.ttk.Label(details, text="Bla bla " + self.name, font="Sans 8 italic", anchor = tkinter.W, justify = tkinter.LEFT).pack(side = tkinter.LEFT, fill = "x", expand = True)
 
-        #tkinter.ttk.Button(innerFrame, text=self.name).pack()
+        # parameter frame
+        parameterFrame = tkinter.ttk.Frame(innerFrame)
+        parameterFrame.pack(side = tkinter.TOP, fill = "x", expand = True)
+        for (row, parameter) in enumerate(self.parameters):
+            # parameter label
+            tkinter.ttk.Label(parameterFrame, text=parameter["label"], font="Sans 8", anchor = tkinter.W, justify = tkinter.LEFT).grid(row = row, column = 0, sticky = tkinter.W)
+
+            # checkbox
+            if parameter["type"] == "bool":
+                # create variable
+                self.parameterValues[parameter["name"]] = tkinter.IntVar()
+                element = tkinter.ttk.Checkbutton(parameterFrame, text="", variable = self.parameterValues[parameter["name"]], command = updateCallback)
+            elif parameter["type"] == "list":
+                self.parameterValues[parameter["name"]] = tkinter.StringVar()
+                element = tkinter.OptionMenu(parameterFrame, self.parameterValues[parameter["name"]], *parameter["values"], command = updateCallback)
+                element.config(width = 10)
+            else:
+                raise ValueError("Invalid filter parameter type {type}".format(parameter["type"]))
+            element.grid(row = row, column = 1, padx = 10, sticky = tkinter.W)
+
+            # set default value for parameter variable
+            if "default" in parameter.keys():
+                self.parameterValues[parameter["name"]].set(parameter["default"])
+
+            #tkinter.ttk.Scale(parameterFrame, from_=0, to=100).grid(row = n, column = 1)
+            #tkinter.ttk.Button(innerFrame, text=self.name).pack()
+
         return frame
+
+
+##
+## filters
+##
 
 
 ImageToImageFilter(
@@ -165,10 +211,27 @@ ImageToImageFilter(
 
 ImageToImageFilter(
     name="invert",
-    f=lambda I: dh.image.invert(I),
+    f=lambda I, enabled: dh.image.invert(I) if enabled else I,
+    parameters=[
+        {
+            "name": "enabled",
+            "label": "enabled",
+            "type": "bool",
+            "default": True,
+        },
+    ]
 )
 
 ImageToImageFilter(
     name="normalize",
-    f=lambda I: dh.image.normalize(I, mode="minmax"),
+    f=lambda I, mode: dh.image.normalize(I, mode=mode),
+    parameters=[
+        {
+            "name": "mode",
+            "label": "mode",
+            "type": "list",
+            "default": "minmax",
+            "values": ("none", "minmax", "percentile"),
+        },
+    ]
 )
