@@ -9,17 +9,6 @@ import subprocess
 ##
 
 
-def test_pipeline():
-    import dh.image.viewer
-    
-    p = dh.image.viewer.Pipeline()
-    print(p.nodes)
-    p.add("a")
-    print(p.nodes)
-    p.add("b")
-    print(p.nodes)
-
-
 def test_image():
     import dh.data
     import dh.image
@@ -33,8 +22,6 @@ def test_image():
     v.add(L)
     v.show()
 
-    #dh.image.imshow(dh.data.M().astype("uint8"))
-    #dh.image.imshow(dh.data.lena())
 
 ##
 ## main
@@ -53,6 +40,7 @@ def install():
     os.chdir(workingDir)
     print("done")
     print("-" * 26)
+
 
 if __name__ == "__main__":
     install()

@@ -7,6 +7,9 @@ optional (though some features might not work if they are not present).
 """
 
 import numpy as np
+import numpy.fft
+
+import dh.utils
 
 # check if OpenCV is available
 try:
@@ -39,14 +42,91 @@ except ImportError:
     _HAVE_SKIMAGE = False
 
 
-import dh.image.viewer
-import dh.utils
+##
+## type conversion
+##
+
+
+def trange(dtype):
+    """
+    Returns the range (min, max) of valid intensity values for an image of
+    NumPy type string `dtype`.
+
+    Allowed types are `'uint8'`, `'uint16'`, and any float type (e.g.,
+    `'float32'`, `'float64'`). The range for each data types follows the
+    convention of the OpenCV library.
+
+    >>> trange('uint8')
+    (0, 255)
+    >>> trange('float32')
+    (0.0, 1.0)
+    """
+
+    if dtype == "uint8":
+        return (0, 255)
+    elif dtype == "uint16":
+        return (0, 65535)
+    elif np.issubdtype(dtype, "float"):
+        return (0.0, 1.0)
+    else:
+        raise ValueError("Invalid image type '{dtype}'".format(dtype=dtype))
+
+
+def convert(I, dtype):
+    """
+    Converts image `I` to NumPy type given by the string `dtype` and scales the
+    intensity values accordingly.
+    """
+
+    if I.dtype == dtype:
+        return I.copy()
+    else:
+        scale = trange(dtype)[1] / trange(I.dtype)[1]
+        return (I.astype("float32") * scale).astype(dtype)
 
 
 ##
-## visualization
+## color conversion
 ##
 
+
+def channels(I):
+    """
+    Return the number of color channels of the image `I`.
+    """
+    
+    D = len(I.shape)
+    if D == 2:
+        return 1
+    elif D == 3:
+        return I.shape[-1]
+    else:
+        raise ValueError("Urecognized image array shape")
+
+
+def gray(I):
+    """
+    
+    """
+    
+    N = channels(I)
+    D = len(I.shape)
+    
+    if N == 1:
+        # nothing to convert, just make sure that the image shape is consistent
+        if D == 2:
+            return I
+        elif D == 3:
+            return I[:,:,0]
+    elif N == 3:
+        return np.mean(I, axis=2).astype(I.dtype)
+    
+    raise ValueError("Urecognized image array shape")
+
+
+##
+## intensity transformations
+##
 
 def invert(I):
     """
@@ -61,7 +141,7 @@ def normalize(I, mode="minmax", **kwargs):
     """
     Normalizes the intensity values of the image `I`.
 
-    Supported NumPy data types are `uint8`, `uint16`, and all float types.
+    .. seealso:: :func:`dh.image.trange` for allowed image data types.
     """
 
     if mode == "none":
@@ -99,6 +179,48 @@ def normalize(I, mode="minmax", **kwargs):
 
     else:
         raise ValueError("Invalid mode '{mode}'".format(mode=mode))
+
+
+def gamma(I, gamma, inverse=False):
+    """
+    Perform power-law conversion with exponent `gamma` (or one over `gamma` if
+    `inverse` is true) of the intensities of image `I`.
+    """
+
+    exponent = gamma if not inverse else (1.0 / gamma)
+    F = convert(I, "float")
+    G = np.power(F, exponent)
+    return convert(G, I.dtype)
+
+
+def threshold(I, theta, relative=False):
+    """
+    Apply the absolute threshold `theta` to the image `I`.
+    
+    If `relative` is true, the threshold is multiplied by the maximum possible
+    value for the given image type.
+    """
+
+    (typeMin, typeMax) = trange(I.dtype)
+    if relative:
+        theta *= typeMax
+    T = I.copy()
+    T[I <= theta] = typeMin
+    T[I > theta] = typeMax
+    return T
+
+##
+## Fourier operations
+##
+
+
+def fft(I):
+    numpy.fft.fft2
+
+
+##
+## visualization
+##
 
 
 def imstack():
@@ -142,48 +264,6 @@ def imshow(I, normalization="none", backends=("plt", "skimage"), **kwargs):
                 break
         else:
             raise RuntimeError("No backend available for image display")
-
-
-##
-## conversion
-##
-
-
-def trange(dtype):
-    """
-    Returns the range (min, max) of valid intensity values for an image of
-    NumPy type string `dtype`.
-
-    Allowed types are `'uint8'`, `'uint16'`, and any float type (e.g.,
-    `'float32'`, `'float64'`).
-
-    >>> trange('uint8')
-    (0, 255)
-    >>> trange('float32')
-    (0.0, 1.0)
-    """
-
-    if dtype == "uint8":
-        return (0, 255)
-    elif dtype == "uint16":
-        return (0, 65535)
-    elif np.issubdtype(dtype, "float"):
-        return (0.0, 1.0)
-    else:
-        raise ValueError("Invalid image type '{dtype}'".format(dtype=dtype))
-
-
-def convert(I, dtype):
-    """
-    Converts image `I` to NumPy type given by the string `dtype` and scales the
-    intensity values accordingly.
-    """
-
-    if I.dtype == dtype:
-        return I.copy()
-    else:
-        scale = trange(dtype)[1] / trange(I.dtype)[1]
-        return (I.astype("float32") * scale).astype(dtype)
 
 
 ##

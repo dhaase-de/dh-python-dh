@@ -11,6 +11,7 @@ import colorsys
 import errno
 import functools
 import hashlib
+import importlib
 import inspect
 import math
 import os
@@ -320,6 +321,24 @@ def tinterval(x, lowerOld, upperOld, lowerNew, upperNew):
     """
 
     return (x - lowerOld) / (upperOld - lowerOld) * (upperNew - lowerNew) + lowerNew
+
+
+##
+## imports
+##
+
+
+def timport(name):
+    """
+    Try to import and return the module named `name`, and return `None` on
+    failure.
+    """
+
+    try:
+        return importlib.import_module(name)
+    except ImportError:
+        return None
+
 
 ##
 ## debugging

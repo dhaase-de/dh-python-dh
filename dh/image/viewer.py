@@ -3,7 +3,6 @@ import tkinter.ttk
 
 import dh.gui.tk
 import dh.image
-#import dh.utils
 
 
 ##
@@ -16,7 +15,11 @@ class Viewer():
         self.images = []
         self.n = None
         self.pipeline = Pipeline()
+        self.pipeline.add("gray")
         self.pipeline.add("invert")
+        self.pipeline.add("normalize")
+        self.pipeline.add("gamma")
+        self.pipeline.add("threshold")
 
     def select(self, n):
         N = len(self.images)
@@ -193,36 +196,20 @@ class Node():
         tkinter.ttk.Label(header, text=self.uid, font="Sans 10 bold", anchor = tkinter.W, justify = tkinter.LEFT).pack(side = tkinter.LEFT, fill = "x", expand = True)
 
         # description line
-        #details = tkinter.ttk.Frame(innerFrame)
-        #details.pack(side = tkinter.TOP, fill = "x", expand = True)
-        #tkinter.ttk.Label(details, text="Bla bla " + self.name, font="Sans 8 italic", anchor = tkinter.W, justify = tkinter.LEFT).pack(side = tkinter.LEFT, fill = "x", expand = True)
+        if self.description is not None:
+            details = tkinter.ttk.Frame(innerFrame)
+            details.pack(side = tkinter.TOP, fill = "x", expand = True)
+            tkinter.ttk.Label(details, text=self.description, font="Sans 8 italic", anchor = tkinter.W, justify = tkinter.LEFT).pack(side = tkinter.LEFT, fill = "x", expand = True)
 
         # parameter frame
         parameterFrame = tkinter.ttk.Frame(innerFrame)
         parameterFrame.pack(side = tkinter.TOP, fill = "x", expand = True)
         for (row, parameter) in enumerate(self.parameters):
             (labelFrame, valueFrame) = parameter.gui(parent=parameterFrame, onChangeCallback=onChangeCallback)
-            labelFrame.grid(row = row, column = 0, padx = 10, sticky = tkinter.W)
+            labelFrame.grid(row = row, column = 0, padx = 0, sticky = tkinter.W)
             valueFrame.grid(row = row, column = 1, padx = 10, sticky = tkinter.W)
-            
-            # parameter label
-            #tkinter.ttk.Label(parameterFrame, text=parameter["label"], font="Sans 8", anchor = tkinter.W, justify = tkinter.LEFT).grid(row = row, column = 0, sticky = tkinter.W)
-
-            # checkbox
-            #if parameter["type"] == "bool":
-            #    # create variable
-            #    self.parameterValues[parameter["name"]] = tkinter.IntVar()
-            #    element = tkinter.ttk.Checkbutton(parameterFrame, text="", variable = self.parameterValues[parameter["name"]], command = updateCallback)
-            #elif parameter["type"] == "list":
-            #    self.parameterValues[parameter["name"]] = tkinter.StringVar()
-            #    element = tkinter.OptionMenu(parameterFrame, self.parameterValues[parameter["name"]], *parameter["values"], command = updateCallback)
-            #    element.config(width = 10)
-            #else:
-            #    raise ValueError("Invalid filter parameter type {type}".format(parameter["type"]))
-            #element.grid(row = row, column = 1, padx = 10, sticky = tkinter.W)
 
             #tkinter.ttk.Scale(parameterFrame, from_=0, to=100).grid(row = n, column = 1)
-            #tkinter.ttk.Button(innerFrame, text=self.name).pack()
 
         return frame
 
@@ -260,7 +247,7 @@ class BoolNodeParameter(NodeParameter):
     def guiValueFrame(self, parent, onChangeCallback):
         self.variable = tkinter.IntVar()
         self.variable.set(self.default)
-        return tkinter.ttk.Checkbutton(parent, text="", variable=self.variable, command=onChangeCallback)
+        return tkinter.ttk.Checkbutton(parent, text="", variable=self.variable, command=onChangeCallback, takefocus=tkinter.NO)
 
     def __call__(self):
         if self.variable is not None:
@@ -268,24 +255,70 @@ class BoolNodeParameter(NodeParameter):
         else:
             return None
 
-#class SelectNodeParameter(NodeParameter):
-#    def __init__(self, name, label=None, default=True):
-#        super().__init__(name=name, label=label, default=default)
 
-   
+class RangeNodeParameter(NodeParameter):
+    def __init__(self, name, label=None, start=0.0, end=1.0, step=0.01, default=0.0):
+        super().__init__(name=name, label=label)
+        self.start = start
+        self.end = end
+        self.step = step
+        self.default = default
+        self.slider = None
+
+    def guiValueFrame(self, parent, onChangeCallback):
+        self.slider = tkinter.ttk.Scale(parent, from_=self.start, to=self.end, command=onChangeCallback)
+        self.slider.set(self.default)
+        return self.slider
+
+    def __call__(self):
+        if self.slider is not None:
+            return self.slider.get()
+        else:
+            return None
+
+
+class SelectNodeParameter(NodeParameter):
+    def __init__(self, name, label=None, values=(), default=None):
+        super().__init__(name=name, label=label)
+        self.values = values
+        self.default = default
+        self.variable = None
+
+    def guiValueFrame(self, parent, onChangeCallback):
+        # create variable and set default value
+        self.variable = tkinter.StringVar()
+        if self.default is not None:
+            self.variable.set(self.default)
+        elif len(self.values) >= 1:
+            self.variable.set(self.values[0])
+
+        # create dropdown menu
+        select = tkinter.OptionMenu(parent, self.variable, *self.values, command=onChangeCallback)
+        select.config(width = 10)
+
+        return select
+
+    def __call__(self):
+        if self.variable is not None:
+            return self.variable.get()
+        else:
+            return None
+
+
 ##
-## filters
+## pipeline processing nodes
 ##
 
 
 Node(
     uid="source",
+    description="Original image",
     f=lambda I: I,
 )
 
 Node(
     uid="invert",
-    f=lambda I, enabled: dh.image.invert(I) if enabled else I,
+    f=lambda I, enabled: dh.image.invert(I=I) if enabled else I,
     parameters=[
         BoolNodeParameter(
             name="enabled",
@@ -294,28 +327,74 @@ Node(
     ],
 )
 
-#Node(
-#    uid="normalize",
-#    f=lambda I, mode: dh.image.normalize(I, mode=mode),
-#    parameters=[
-#        BoolNodeParameter(
-#            name="enable",
-#            default=True,
-#        ),
-#    ],
-#)
+Node(
+    uid="normalize",
+    f=dh.image.normalize,
+    parameters=[
+        SelectNodeParameter(
+            name="mode",
+            values=("none", "minmax", "percentile"),
+            default="percentile",
+        ),
+        RangeNodeParameter(
+            name="q",
+            start=0.0,
+            end=50.0,
+            step=0.1,
+            default=2.0,
+        ),
+    ],
+)
 
+Node(
+    uid="gamma",
+    description="Power-law transformation",
+    f=lambda I, gamma, inverse, enabled: dh.image.gamma(I=I, gamma=gamma, inverse=inverse) if enabled else I,
+    parameters=[
+        BoolNodeParameter(
+            name="enabled",
+            default=True,
+        ),
+        RangeNodeParameter(
+            name="gamma",
+            start=1.0,
+            end=10.0,
+            step=0.01,
+            default=1.0,
+        ),
+        BoolNodeParameter(
+            name="inverse",
+            default=False,
+        ),
+    ],
+)
 
-#ImageToImageFilter(
-#    name="normalize",
-#    f=lambda I, mode: dh.image.normalize(I, mode=mode),
-#    parameters=[
-#        {
-#            "name": "mode",
-#            "label": "mode",
-#            "type": "list",
-#            "default": "minmax",
-#            "values": ("none", "minmax", "percentile"),
-#        },
-#    ]
-#)
+Node(
+    uid="threshold",
+    description="Global threshold",
+    f=lambda I, theta, enabled: dh.image.threshold(I=I, theta=theta, relative=True) if enabled else I,
+    parameters=[
+        BoolNodeParameter(
+            name="enabled",
+            default=True,
+        ),
+        RangeNodeParameter(
+            name="theta",
+            start=0.0,
+            end=1.0,
+            step=0.01,
+            default=0.5,
+        ),
+    ],
+)
+
+Node(
+    uid="gray",
+    f=lambda I, enabled: dh.image.gray(I=I) if enabled else I,
+    parameters=[
+        BoolNodeParameter(
+            name="enabled",
+            default=True,
+        ),
+    ],
+)
