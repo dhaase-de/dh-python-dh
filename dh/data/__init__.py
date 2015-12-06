@@ -8,17 +8,25 @@ import os.path
 _DATA_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
+##
+## helpers
+##
+
+
 def _loadNpy(basename):
     import numpy as np
     return np.load(os.path.join(_DATA_DIR, basename))
 
 
-def lena():
-    """
-    The famous Lena image, widely used in image processing.
-    """
+def _loadNpz(basename):
+    import numpy as np
+    X = np.load(os.path.join(_DATA_DIR, basename))
+    return X[X.keys()[0]]
 
-    return _loadNpy("lena.npy")
+
+##
+## general data
+##
 
 
 def M(rows=3, columns=4):
@@ -32,3 +40,30 @@ def M(rows=3, columns=4):
     import numpy as np
 
     return np.array(range(rows * columns)).reshape((rows, columns))
+
+
+##
+## image data
+##
+
+
+def lena():
+    """
+    The famous Lena image, widely used in image processing.
+
+    Source: The USC-SIPI Image Database (http://sipi.usc.edu/database/).
+    """
+
+    return _loadNpz("lena.npz")
+
+
+def pal():
+    """
+    PAL image (Philips PM5544 test card).
+
+    Source:
+    https://commons.wikimedia.org/wiki/File:PM5544_with_non-PAL_signals.png.
+    The image is released into the public domain.
+    """
+
+    return _loadNpz("pal.npz")
