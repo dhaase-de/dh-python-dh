@@ -13,7 +13,7 @@ import dh.image
 
 class Window(tkinter.Tk):
     def __init__(self, title=None, minSize=None):
-        super(Window, self).__init__()
+        super().__init__()
 
         if title is not None:
             self.title(title)
@@ -33,6 +33,20 @@ class Window(tkinter.Tk):
         self.destroy()
 
 
+class StatusBar(tkinter.Frame):
+    """
+    Status bar frame.
+    """
+
+    def __init__(self, parent, text=""):
+        super().__init__(parent)
+        self.variable = tkinter.StringVar()
+        tkinter.ttk.Label(parent, textvariable=self.variable, anchor=tkinter.W, relief=tkinter.SUNKEN).pack(fill=tkinter.X)
+
+    def setText(self, text):
+        self.variable.set(text)
+
+
 class ImageCanvas(tkinter.Canvas):
     """
     Canvas which can display one image represented by a NumPy array.
@@ -43,7 +57,7 @@ class ImageCanvas(tkinter.Canvas):
 
     def __init__(self, parent, **kwargs):
         # parent class init
-        super(ImageCanvas, self).__init__(parent, **kwargs)
+        super().__init__(parent, **kwargs)
 
         # object holding the actual image (will be created on the first draw)
         self.canvasImage = None

@@ -16,10 +16,12 @@ def test_image():
 
     M = dh.data.M().astype("uint8")
     L = dh.data.lena()
+    P = dh.data.pal()
 
     v = dh.image.viewer.Viewer()
     v.add(M)
     v.add(L)
+    v.add(P)
     v.show()
 
 

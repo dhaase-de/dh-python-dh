@@ -84,10 +84,12 @@ class _ViewerWindow(dh.gui.tk.Window):
         # key bindings
         self.bind("<Escape>", lambda _: self.close())
         self.bind("<q>", lambda _: self.close())
+        self.bind("<Left>", lambda _: (self.viewer.prev(), self.updateImage()))
+        self.bind("<Right>", lambda _: (self.viewer.next(), self.updateImage()))
 
         # main frame
         self.mainFrame = tkinter.ttk.Frame(self)
-        self.mainFrame.pack(fill=tkinter.BOTH, expand=tkinter.YES)
+        self.mainFrame.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=tkinter.YES)
 
         # filter frame
         self.filterFrame = tkinter.ttk.Frame(self.mainFrame)
@@ -97,16 +99,26 @@ class _ViewerWindow(dh.gui.tk.Window):
         self.imageCanvas = dh.gui.tk.ImageCanvas(self.mainFrame)
         self.imageCanvas.pack(side=tkinter.LEFT, anchor=tkinter.N, fill=tkinter.BOTH, expand=tkinter.YES)
 
-        self.bind("<Left>", lambda _: (self.viewer.prev(), self.updateImage()))
-        self.bind("<Right>", lambda _: (self.viewer.next(), self.updateImage()))
+        # status bar
+        self.statusBar = dh.gui.tk.StatusBar(self)
+        self.statusBar.pack(side=tkinter.BOTTOM, fill=tkinter.X, expand=tkinter.YES)
 
     def updateFilterFrame(self):
         for node in self.viewer.pipeline.nodes:
-            #tkinter.ttk.Button(self.filterFrame, text=filter.name).pack()
             node.gui(parent=self.filterFrame, onChangeCallback=self.updateImage).pack(fill="x", padx=1, pady=1, expand=True)
 
     def updateImage(self, *args, **kwargs):
-        self.imageCanvas.setImage(self.viewer.applyPipeline())
+        with dh.utils.Timer() as t:
+            I = self.viewer.applyPipeline()
+        self.imageCanvas.setImage(I)
+        self.updateStatusBar("{shape}, {dtype}, {time}ms".format(
+            shape=I.shape,
+            dtype=I.dtype,
+            time=dh.utils.around(t() * 1000.0),
+        ))
+
+    def updateStatusBar(self, text):
+        self.statusBar.setText(text)
 
 
 ##
@@ -116,6 +128,7 @@ class _ViewerWindow(dh.gui.tk.Window):
 
 class Pipeline():
     def __init__(self):
+        # nodes
         self.nodes = []
         self.add("source")
 
@@ -132,7 +145,7 @@ class Pipeline():
 
         if position is None:
             position = len(self.nodes)
-            
+
         if isinstance(node, str):
             uid = node
             node = Node.instances[uid]
@@ -171,9 +184,15 @@ class Node():
         self.f = f
         self.parameters = parameters
 
+        # cache
+        self.cache = {}
+
     def __call__(self, *args, **kwargs):
         kwargs.update(self.parameterValues())
-        return self.f(*args, **kwargs)
+        key = dh.utils.ohash((args, kwargs), "hex", 64)
+        if key not in self.cache:
+            self.cache[key] = self.f(*args, **kwargs)
+        return self.cache[key]
 
     def parameterValues(self):
         return {parameter.name: parameter() for parameter in self.parameters}

@@ -345,6 +345,28 @@ def timport(name):
 ##
 
 
+def out(*names):
+    """
+    Prints the values of the variables specified by `*names`.
+
+    >>> x = 123
+    >>> abcdef = 'four'
+    >>> out('x', 'abcdef')
+    x .... = 123
+    abcdef = 'four'
+
+    .. warning:: Only use for debugging!
+    """
+
+    # resolve variables to get the values
+    values = tuple(resolve(name) for name in names)
+
+    # formatted output
+    maxLen = max(len(name) for name in names)
+    for (name, value) in zip(names, values):
+        print(("{name:.<" + str(maxLen) + "} = {value}").format(name=name if len(name) == maxLen else name + " ", value=repr(value)))
+
+
 def resolve(name):
     """
     Resolves the variable `name` and returns its value.
@@ -367,26 +389,25 @@ def resolve(name):
     raise RuntimeError("Can not resolve variable name '{name}'".format(name=name))
 
 
-def out(*names):
+class Timer():
     """
-    Prints the values of the variables specified by `*names`.
+    Context manager to measure the time between entering and exiting.
 
-    >>> x = 123
-    >>> abcdef = 'four'
-    >>> out('x', 'abcdef')
-    x .... = 123
-    abcdef = 'four'
-
-    .. warning:: Only use for debugging!
+    After exiting the `with` block, the elapsed time in seconds can be
+    obtained by calling the `Timer` instance object.
     """
 
-    # resolve variables to get the values
-    values = tuple(resolve(name) for name in names)
+    def __enter__(self):
+        self.diff = None
+        self.start = time.clock()
+        return self
 
-    # formatted output
-    maxLen = max(len(name) for name in names)
-    for (name, value) in zip(names, values):
-        print(("{name:.<" + str(maxLen) + "} = {value}").format(name=name if len(name) == maxLen else name + " ", value=repr(value)))
+    def __exit__(self, *args):
+        self.end = time.clock()
+        self.diff = max(0, self.end - self.start)
+
+    def __call__(self):
+        return self.diff
 
 
 def _pdeco(callerName, fName, message):
@@ -453,7 +474,7 @@ def pargs(f):
     ... def f(x, y): return x * y
     >>> res = f(2, y=3)
     ==> @pargs(f)     --  (2, y=3)
-    
+
     .. todo:: truncate each argument value individually (otherwise an image
               array as first argument masks all other arguments)
     """
