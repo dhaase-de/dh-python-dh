@@ -24,12 +24,33 @@ import time
 ##
 
 
-def adict():
+class aadict():
     """
-    Dictionary with autovivification.
+    Class with autovivification of attributes.
+
+    >>> d = aadict()
+    >>> d.foo.bar.xyz = 123
+    >>> d.foo.bar.xyz
+    123
     """
 
-    return collections.defaultdict(adict)
+    def __getattr__(self, attr):
+        if attr not in self.__dict__:
+            self.__dict__[attr] = aadict()
+        return self.__dict__[attr]
+
+
+def avdict():
+    """
+    Dictionary with autovivification of keys.
+
+    >>> d = avdict()
+    >>> d["foo"]["bar"]["xyz"] = 123
+    >>> d["foo"]["bar"]["xyz"]
+    123
+    """
+
+    return collections.defaultdict(avdict)
 
 
 def cycle(x, length):
