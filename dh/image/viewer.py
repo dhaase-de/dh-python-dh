@@ -409,7 +409,7 @@ Node(
 
 Node(
     uid="gray",
-    f=lambda I, enabled: dh.image.gray(I=I) if enabled else I,
+    f=lambda I, enabled: dh.image.asgray(I=I) if enabled else I,
     parameters=[
         BoolNodeParameter(
             name="enabled",

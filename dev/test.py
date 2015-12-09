@@ -17,7 +17,7 @@ def test_image():
     M = dh.data.M().astype("uint8")
     L = dh.data.lena()
     P = dh.data.pal()
-    G = dh.data.grid()
+    G = dh.data.grid(w=3)
 
     v = dh.image.viewer.Viewer()
     v.add(M)

@@ -62,7 +62,7 @@ def convert(I, dtype):
 ##
 
 
-def channels(I):
+def nchannels(I):
     """
     Return the number of color channels of the image `I`.
     """
@@ -76,32 +76,50 @@ def channels(I):
         raise ValueError("Urecognized image array shape")
 
 
-def gray(I):
+def isgray(I):
     """
-    Convert image to gray-scale mode.
+    Returns true if the image `I` is in gray-scale mode (i.e., if it has one
+    color channel).
     """
 
-    N = channels(I)
-    D = len(I.shape)
+    return (nchannels(I) == 1)
 
-    if N == 1:
+
+def iscolor(I):
+    """
+    Returns true if the image `I` is in color mode (i.e., if it has three
+    color channels).
+    """
+
+    return (nchannels(I) == 3)
+
+
+def asgray(I):
+    """
+    Convert image `I` to gray-scale mode.
+    """
+
+    if isgray(I):
         # nothing to convert, just make sure that the image shape is consistent
+        D = len(I.shape)
         if D == 2:
             return I
         elif D == 3:
-            return I[:,:,0]
-    elif N == 3:
+            return I[:, :, 0]
+    else:
         return np.mean(I, axis=2).astype(I.dtype)
 
-    raise ValueError("Urecognized image array shape")
 
-
-def color(I):
+def ascolor(I):
     """
-    Convert image to RGB mode.
+    Convert image `I` to color (RGB) mode.
     """
 
-    raise NotImplementedError()
+    if iscolor(I):
+        # nothing to convert, just make sure that the image shape is consistent
+        return I
+    else:
+        return np.dstack((I,) * 3)
 
 
 ##
