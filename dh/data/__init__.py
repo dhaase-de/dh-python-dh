@@ -47,6 +47,35 @@ def M(rows=3, columns=4):
 ##
 
 
+def grid(shape=(500, 500), d=25, w=1, dtype="uint8"):
+    """
+    Returns a binary image of size `shape` containing a regular grid with a
+    distance `d` between grid lines of width `w`.
+
+    >>> grid()[0, 0]
+    255
+
+    >>> grid()[1, 1]
+    0
+    """
+
+    import numpy as np
+    import dh.image
+
+    # empty image
+    (typeMin, typeMax) = dh.image.trange(dtype)
+    G = np.empty(shape=shape, dtype=dtype)
+    G[:, :] = typeMin
+
+    # create grid
+    for x in range(0, shape[1], d):
+        G[:, x:(x+w)] = typeMax
+    for y in range(0, shape[0], d):
+        G[y:(y+w), :] = typeMax
+
+    return G
+
+
 def lena():
     """
     The famous Lena image, widely used in image processing.

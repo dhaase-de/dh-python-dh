@@ -1,45 +1,17 @@
 """
 Functions for image handling, image processing, and computer vision.
 
-All images are represented as NumPy arrays, and so NumPy is required for this
-module. All other image-related modules (e.g., scikit-image, OpenCV) are
-optional (though some features might not work if they are not present).
+All images are represented as NumPy arrays (in the form `I[y, x]` for gray
+scale images and `I[y, x, channel]` for color images), and so NumPy (but only
+NumPy) is required for this module. Image-related functions which require
+further thirdparty modules (e.g., scikit-image, OpenCV) are optional and are
+covered in sub-modules.
 """
 
 import numpy as np
 import numpy.fft
 
 import dh.utils
-
-# check if OpenCV is available
-try:
-    import cv2
-    _HAVE_CV2 = True
-except ImportError:
-    _HAVE_CV2 = False
-
-# check if PIL is available
-try:
-    import PIL
-    import PIL.ImageTk
-    _HAVE_PIL = True
-except ImportError:
-    _HAVE_PIL = False
-
-# check if matplotlib is available
-try:
-    import matplotlib.pyplot as plt
-    _HAVE_PLT = True
-except ImportError:
-    _HAVE_PLT = False
-
-# check if scikit-image is available
-try:
-    import skimage
-    import skimage.io
-    _HAVE_SKIMAGE = True
-except ImportError:
-    _HAVE_SKIMAGE = False
 
 
 ##
@@ -204,7 +176,7 @@ def gamma(I, gamma, inverse=False):
 def threshold(I, theta, relative=False):
     """
     Apply the absolute threshold `theta` to the image `I`.
-    
+
     If `relative` is true, the threshold is multiplied by the maximum possible
     value for the given image type.
     """
