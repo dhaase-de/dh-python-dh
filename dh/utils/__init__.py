@@ -6,7 +6,6 @@ maximum compatibility.
 """
 
 import base64
-import collections
 import colorsys
 import errno
 import functools
@@ -24,33 +23,48 @@ import time
 ##
 
 
-class aadict():
+class avdict():
     """
-    Class with autovivification of attributes.
+    Class with (recursive) autovivification of attributes and items.
 
-    >>> d = aadict()
+    Attributes and items of the same name refer to the same object.
+
+    >>> d = avdict()
     >>> d.foo.bar.xyz = 123
     >>> d.foo.bar.xyz
     123
-    """
-
-    def __getattr__(self, attr):
-        if attr not in self.__dict__:
-            self.__dict__[attr] = aadict()
-        return self.__dict__[attr]
-
-
-def avdict():
-    """
-    Dictionary with autovivification of keys.
-
-    >>> d = avdict()
-    >>> d["foo"]["bar"]["xyz"] = 123
-    >>> d["foo"]["bar"]["xyz"]
+    >>> d["foo"].bar["xyz"]
     123
     """
 
-    return collections.defaultdict(avdict)
+    def __getitem__(self, key):
+        """
+        This is where the magic happens: if an attribute does not exists, it is
+        created as an instance of this class.
+        """
+
+        if key not in self.__dict__:
+            self.__dict__[key] = avdict()
+        return self.__dict__[key]
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+
+    def __getattr__(self, attr):
+        return self[attr]
+
+    def todict(self):
+        """
+        Returns a nested dictionary resembling the structure of the instance.
+        """
+
+        d = {}
+        for (key, value) in self.__dict__.items():
+            if isinstance(value, type(self)):
+                d[key] = value.todict()
+            else:
+                d[key] = value
+        return d
 
 
 def cycle(x, length):
