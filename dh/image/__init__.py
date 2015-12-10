@@ -212,8 +212,6 @@ def threshold(I, theta, relative=False):
 ##
 
 
-def fft(I):
-    numpy.fft.fft2
 
 
 ##
@@ -235,33 +233,6 @@ def pinfo(I):
     """
 
     raise NotImplementedError("TODO")
-
-
-def imshow(I, normalization="none", backends=("plt", "skimage"), **kwargs):
-    """
-    Displays the image on the screen.
-    """
-
-    viewer = dh.image.viewer.Viewer()
-    viewer.view(I)
-
-    # search for available backend (thirdparty module) for image display, in given order
-    if False:
-        # normalize image
-        N = normalize(I, mode=normalization, **kwargs)
-
-        for backend in backends:
-            if (backend == "plt") and _HAVE_PLT:
-                #plt.ion()
-                plt.imshow(N)
-                plt.show()
-                #plt.draw()
-                break
-            elif (backend == "skimage") and _HAVE_SKIMAGE:
-                skimage.io.imshow(N)
-                break
-        else:
-            raise RuntimeError("No backend available for image display")
 
 
 ##

@@ -54,7 +54,6 @@ def grid(shape=(500, 500), d=25, w=1, dtype="uint8"):
 
     >>> grid()[0, 0]
     255
-
     >>> grid()[1, 1]
     0
     """
