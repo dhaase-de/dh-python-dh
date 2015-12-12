@@ -15,11 +15,15 @@ class Viewer():
         self.images = []
         self.n = None
         self.pipeline = Pipeline()
-        self.pipeline.add("gray")
-        self.pipeline.add("invert")
-        self.pipeline.add("normalize")
-        self.pipeline.add("gamma")
-        self.pipeline.add("threshold")
+        self.pipeline.add("core.asgray")
+        #self.pipeline.add("core.invert")
+        #self.pipeline.add("core.normalize")
+        self.pipeline.add("core.fft")
+        self.pipeline.add("core.normalize")
+        self.pipeline.add("core.log")
+        #self.pipeline.add("core.gamma")
+        #self.pipeline.add("core.threshold")
+        self.pipeline.add("core.rotate")
 
     def select(self, n):
         N = len(self.images)
@@ -101,7 +105,7 @@ class _ViewerWindow(dh.gui.tk.Window):
 
         # status bar
         self.statusBar = dh.gui.tk.StatusBar(self)
-        self.statusBar.pack(side=tkinter.BOTTOM, fill=tkinter.X, expand=tkinter.YES)
+        self.statusBar.pack(side=tkinter.BOTTOM, fill=tkinter.X, expand=tkinter.NO)
 
     def updateFilterFrame(self):
         for node in self.viewer.pipeline.nodes:
@@ -130,7 +134,7 @@ class Pipeline():
     def __init__(self):
         # nodes
         self.nodes = []
-        self.add("source")
+        self.add("core.source")
 
     def __call__(self, I):
         J = I.copy()
@@ -170,7 +174,7 @@ class Node():
     # keeps references to all instances of this class
     instances = {}
 
-    def __init__(self, uid, description=None, tags=None, f=None, parameters=()):
+    def __init__(self, uid, description=None, tags=None, f=None, parameters=(), cache=False):
         # register this instance
         if uid not in type(self).instances:
             type(self).instances[uid] = self
@@ -182,17 +186,21 @@ class Node():
         self.description = description
         self.tags = tags
         self.f = f
-        self.parameters = parameters
+        self.parameters = list(parameters)
 
         # cache
+        self.useCache = cache
         self.cache = {}
 
     def __call__(self, *args, **kwargs):
         kwargs.update(self.parameterValues())
-        key = dh.utils.ohash((args, kwargs), "hex", 64)
-        if key not in self.cache:
-            self.cache[key] = self.f(*args, **kwargs)
-        return self.cache[key]
+        if self.useCache:
+            key = dh.utils.ohash((args, kwargs), "hex", 64)
+            if key not in self.cache:
+                self.cache[key] = self.f(*args, **kwargs)
+            return self.cache[key]
+        else:
+            return self.f(*args, **kwargs)
 
     def parameterValues(self):
         return {parameter.name: parameter() for parameter in self.parameters}
@@ -231,6 +239,34 @@ class Node():
             #tkinter.ttk.Scale(parameterFrame, from_=0, to=100).grid(row = n, column = 1)
 
         return frame
+
+
+class SwitchableNode(Node):
+    """
+    Processing node which automatically has one bool parameter to enable or
+    disable the processing.
+    """
+
+    def __init__(self, *args, **kwargs):
+        # parent initialization
+        super().__init__(*args, **kwargs)
+
+        # add "enabled" parameter
+        self.parameters = [
+            BoolNodeParameter(
+                name="enabled",
+                default=True,
+            )
+        ] + self.parameters
+
+        # wrap function
+        self.g = self.f
+        def f(I, enabled, **kwargs):
+            if enabled:
+                return self.g(I=I, **kwargs)
+            else:
+                return I
+        self.f = f
 
 
 class NodeParameter():
@@ -296,11 +332,21 @@ class RangeNodeParameter(NodeParameter):
             return None
 
 
-class SelectNodeParameter(NodeParameter):
+class SelectionNodeParameter(NodeParameter):
+    """
+    The parameter value can be chosen from a list of possible values.
+    """
+
     def __init__(self, name, label=None, values=(), default=None):
         super().__init__(name=name, label=label)
-        self.values = values
-        self.default = default
+        self.labels = (str(value) for value in values)
+        self.values = {str(value): value for value in values}
+        if (default is not None) and (default in values):
+            self.default = str(default)
+        elif len(values) > 0:
+            self.default = str(values[0])
+        else:
+            self.default = None
         self.variable = None
 
     def guiValueFrame(self, parent, onChangeCallback):
@@ -308,18 +354,16 @@ class SelectNodeParameter(NodeParameter):
         self.variable = tkinter.StringVar()
         if self.default is not None:
             self.variable.set(self.default)
-        elif len(self.values) >= 1:
-            self.variable.set(self.values[0])
 
         # create dropdown menu
-        select = tkinter.OptionMenu(parent, self.variable, *self.values, command=onChangeCallback)
+        select = tkinter.OptionMenu(parent, self.variable, *self.labels, command=onChangeCallback)
         select.config(width = 10)
 
         return select
 
     def __call__(self):
         if self.variable is not None:
-            return self.variable.get()
+            return self.values[self.variable.get()]
         else:
             return None
 
@@ -330,27 +374,26 @@ class SelectNodeParameter(NodeParameter):
 
 
 Node(
-    uid="source",
+    uid="core.source",
     description="Original image",
-    f=lambda I: I,
+    f=dh.image.identity,
+)
+
+SwitchableNode(
+    uid="core.asgray",
+    f=dh.image.asgray,
+)
+
+SwitchableNode(
+    uid="core.invert",
+    f=dh.image.invert,
 )
 
 Node(
-    uid="invert",
-    f=lambda I, enabled: dh.image.invert(I=I) if enabled else I,
-    parameters=[
-        BoolNodeParameter(
-            name="enabled",
-            default=True,
-        ),
-    ],
-)
-
-Node(
-    uid="normalize",
+    uid="core.normalize",
     f=dh.image.normalize,
     parameters=[
-        SelectNodeParameter(
+        SelectionNodeParameter(
             name="mode",
             values=("none", "minmax", "percentile"),
             default="percentile",
@@ -365,15 +408,16 @@ Node(
     ],
 )
 
-Node(
-    uid="gamma",
+SwitchableNode(
+    uid="core.log",
+    f=dh.image.log,
+)
+
+SwitchableNode(
+    uid="core.gamma",
     description="Power-law transformation",
-    f=lambda I, gamma, inverse, enabled: dh.image.gamma(I=I, gamma=gamma, inverse=inverse) if enabled else I,
+    f=dh.image.gamma,
     parameters=[
-        BoolNodeParameter(
-            name="enabled",
-            default=True,
-        ),
         RangeNodeParameter(
             name="gamma",
             start=1.0,
@@ -386,17 +430,14 @@ Node(
             default=False,
         ),
     ],
+    cache=True,
 )
 
-Node(
-    uid="threshold",
+SwitchableNode(
+    uid="core.threshold",
     description="Global threshold",
-    f=lambda I, theta, enabled: dh.image.threshold(I=I, theta=theta, relative=True) if enabled else I,
+    f=lambda I, theta: dh.image.threshold(I=I, theta=theta, relative=True),
     parameters=[
-        BoolNodeParameter(
-            name="enabled",
-            default=True,
-        ),
         RangeNodeParameter(
             name="theta",
             start=0.0,
@@ -407,13 +448,19 @@ Node(
     ],
 )
 
-Node(
-    uid="gray",
-    f=lambda I, enabled: dh.image.asgray(I=I) if enabled else I,
+SwitchableNode(
+    uid="core.rotate",
+    f=dh.image.rotate,
     parameters=[
-        BoolNodeParameter(
-            name="enabled",
-            default=True,
-        ),
+        SelectionNodeParameter(
+            name="degree",
+            values=(0, 90, 180, 270),
+            default=90,
+        )
     ],
+)
+
+SwitchableNode(
+    uid="core.fft",
+    f=dh.image.fft,
 )

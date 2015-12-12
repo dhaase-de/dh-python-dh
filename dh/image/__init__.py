@@ -54,7 +54,7 @@ def convert(I, dtype):
         return I.copy()
     else:
         scale = trange(dtype)[1] / trange(I.dtype)[1]
-        return (I.astype("float32") * scale).astype(dtype)
+        return (I.astype("float") * scale).astype(dtype)
 
 
 ##
@@ -123,8 +123,42 @@ def ascolor(I):
 
 
 ##
-## intensity transformations
+## transformations
 ##
+
+
+def rotate(I, degree):
+    """
+    Rotate the image `I` counter-clock-wise by the angle specified by `degree`.
+
+    Valid values for the angle are `0`, `90`, `180`, and `270`.
+    """
+
+    degree = int(degree) % 360
+    if degree not in (0, 90, 180, 270):
+        raise ValueError("Invalid rotation angle")
+    k = degree // 90
+    if k > 0:
+        return np.rot90(I, k)
+    else:
+        return I
+
+
+##
+## spatial operations
+##
+
+
+def identity(I):
+    """
+    Returns the input image `I`.
+
+    This function is useful in image processing pipelines, in cases where a
+    no-op is needed.
+    """
+
+    return I
+
 
 def invert(I):
     """
@@ -135,48 +169,19 @@ def invert(I):
     return (typeMax - I)
 
 
-def normalize(I, mode="minmax", **kwargs):
+def log(I, normalization="minmax", **kwargs):
     """
-    Normalizes the intensity values of the image `I`.
-
-    .. seealso:: :func:`dh.image.trange` for allowed image data types.
+    Perform the logarithm transform to the pixel intensities of the image `I`.
     """
 
-    if mode == "none":
-        return I
+    (typeMin, _) = trange(I.dtype)
 
-    elif mode == "interval":
-        # interval range to be spread out to the "full" interval range
-        (lower, upper) = sorted((kwargs["lower"], kwargs["upper"]))
-
-        # the "full" interval range depends on the image's data type
-        (lowerFull, upperFull) = trange(I.dtype)
-
-        # we temporarily work with a float image (because values outside of
-        # the target interval can occur)
-        T = I.astype("float32").copy()
-
-        # spread the given interval to the full range, clip outlier values
-        T = dh.utils.tinterval(T, lower, upper, lowerFull, upperFull)
-        T = np.clip(T, a_min=lowerFull, a_max=upperFull, out=T)
-
-        # return an image with the original data type
-        return T.astype(I.dtype)
-
-    elif mode == "minmax":
-        return normalize(I, mode="interval", lower=np.min(I), upper=np.max(I))
-
-    elif mode == "percentile":
-        # get percentile
-        try:
-            q = float(kwargs["q"])
-        except KeyError:
-            q = 2.0
-        q = dh.utils.sclip(q, 0.0, 50.0)
-        return normalize(I, mode="interval", lower=np.percentile(I, q), upper=np.percentile(I, 100.0 - q))
-
-    else:
-        raise ValueError("Invalid mode '{mode}'".format(mode=mode))
+    J = I.copy()
+    J[J == typeMin] = typeMin + 1
+    F = convert(J, "float")
+    L = np.log(F)
+    N = normalize(L, mode=normalization, **kwargs)
+    return convert(N, I.dtype)
 
 
 def gamma(I, gamma, inverse=False):
@@ -207,11 +212,73 @@ def threshold(I, theta, relative=False):
     T[I > theta] = typeMax
     return T
 
+
+def normalize(I, mode="minmax", **kwargs):
+    """
+    Normalizes the intensity values of the image `I`.
+
+    .. seealso:: :func:`dh.image.trange` for allowed image data types.
+    """
+
+    if mode == "none":
+        return I
+
+    elif mode == "interval":
+        # interval range to be spread out to the "full" interval range
+        (lower, upper) = sorted((kwargs["lower"], kwargs["upper"]))
+
+        # the "full" interval range depends on the image's data type
+        (lowerFull, upperFull) = trange(I.dtype)
+
+        # we temporarily work with a float image (because values outside of
+        # the target interval can occur)
+        T = I.astype("float").copy()
+
+        # spread the given interval to the full range, clip outlier values
+        T = dh.utils.tinterval(T, lower, upper, lowerFull, upperFull)
+        T = np.clip(T, a_min=lowerFull, a_max=upperFull, out=T)
+
+        # return an image with the original data type
+        return T.astype(I.dtype)
+
+    elif mode == "minmax":
+        return normalize(I, mode="interval", lower=np.min(I), upper=np.max(I))
+
+    elif mode == "percentile":
+        # get percentile
+        try:
+            q = float(kwargs["q"])
+        except KeyError:
+            q = 2.0
+        q = dh.utils.sclip(q, 0.0, 50.0)
+        return normalize(I, mode="interval", lower=np.percentile(I, q), upper=np.percentile(I, 100.0 - q))
+
+    else:
+        raise ValueError("Invalid mode '{mode}'".format(mode=mode))
+
+
 ##
-## Fourier operations
+## Frequency domain
 ##
 
 
+def fft(I):
+    F = np.fft.fftshift(np.fft.fft2(I))
+    #Re, Im
+    #Theta, Phase
+    return np.abs(F)**2
+
+
+def selffiltering():
+    raise NotImplementedError("TODO")
+
+
+def selffiltering():
+    raise NotImplementedError("TODO")
+
+
+def selffiltering():
+    raise NotImplementedError("TODO")
 
 
 ##
@@ -219,9 +286,9 @@ def threshold(I, theta, relative=False):
 ##
 
 
-def imstack():
+def imstack(Is):
     """
-    Stack images into one image.
+    Stack images `Is` into one image.
     """
 
     raise NotImplementedError("TODO")

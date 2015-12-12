@@ -21,9 +21,9 @@ def test_image():
 
     v = dh.image.viewer.Viewer()
     v.add(M)
-    v.add(L)
     v.add(P)
     v.add(G)
+    v.add(L)
 
     v.show()
 
