@@ -127,6 +127,32 @@ def ascolor(I):
 ##
 
 
+def shift(I, dx=0, dy=None):
+    """
+    Shifts the pixels of the image `I` by `dx` and `dy` along the x and y axes.
+
+    For each of `dx` and `dy`: if the value is an integer, it is interpreted
+    as the number of pixels by which to shift. If the value is a float, it is
+    interpreted as fraction of the image shape of the according axis.
+    """
+
+    # by default dy is equal to dx
+    if dy is None:
+        dy = dx
+
+    # float values are interpreted as fractions of the image shape
+    if isinstance(dx, float):
+        dx = int(I.shape[1] * dx)
+    if isinstance(dy, float):
+        dy = int(I.shape[0] * dy)
+
+    # shift
+    S = I.copy()
+    S = np.roll(S, dy, axis=0)
+    S = np.roll(S, dx, axis=1)
+    return S
+
+
 def rotate(I, degree):
     """
     Rotate the image `I` counter-clock-wise by the angle specified by `degree`.
@@ -267,6 +293,7 @@ def fft(I):
     #Re, Im
     #Theta, Phase
     return np.abs(F)**2
+    #return np.angle(F)
 
 
 def selffiltering():

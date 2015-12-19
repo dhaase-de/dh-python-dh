@@ -15,15 +15,17 @@ class Viewer():
         self.images = []
         self.n = None
         self.pipeline = Pipeline()
+        self.pipeline.add("core.convert")
         self.pipeline.add("core.asgray")
         #self.pipeline.add("core.invert")
         #self.pipeline.add("core.normalize")
+        self.pipeline.add("core.shift")
         self.pipeline.add("core.fft")
-        self.pipeline.add("core.normalize")
+        #self.pipeline.add("core.normalize")
         self.pipeline.add("core.log")
         #self.pipeline.add("core.gamma")
         #self.pipeline.add("core.threshold")
-        self.pipeline.add("core.rotate")
+        #self.pipeline.add("core.rotate")
 
     def select(self, n):
         N = len(self.images)
@@ -380,6 +382,18 @@ Node(
 )
 
 SwitchableNode(
+    uid="core.convert",
+    f=dh.image.convert,
+    parameters=[
+        SelectionNodeParameter(
+            name="dtype",
+            values=("uint8", "uint16", "float"),
+            default="uint8",
+        ),
+    ],
+)
+
+SwitchableNode(
     uid="core.asgray",
     f=dh.image.asgray,
 )
@@ -444,6 +458,27 @@ SwitchableNode(
             end=1.0,
             step=0.01,
             default=0.5,
+        ),
+    ],
+)
+
+SwitchableNode(
+    uid="core.shift",
+    f=dh.image.shift,
+    parameters=[
+        RangeNodeParameter(
+            name="dx",
+            start=0.0,
+            end=1.0,
+            step=0.01,
+            default=0.0,
+        ),
+        RangeNodeParameter(
+            name="dy",
+            start=0.0,
+            end=1.0,
+            step=0.01,
+            default=0.0,
         ),
     ],
 )
