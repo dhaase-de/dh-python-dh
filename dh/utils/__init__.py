@@ -97,6 +97,23 @@ def cycle(x, length):
         yield xList[n % M]
 
 
+def eqvalue(x):
+    """
+    Checks whether all values of the iterable `x` are identical and returns
+    that value if true, and otherwise raises a `ValueError` exception.
+
+    >>> eqvalue([1, 1, 1])
+    1
+    """
+
+    items = iter(x)
+    first = next(items)
+    for item in items:
+        if item != first:
+            raise ValueError("Values are not identical")
+    return first
+
+
 def flatten(*args):
     """
     Recursively flattens the items of `*args` into one iterable.
