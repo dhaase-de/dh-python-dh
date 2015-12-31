@@ -318,6 +318,31 @@ def fargs(*args, **kwargs):
     return ", ".join(items)
 
 
+def ftime(secs):
+    """
+    Format a time duration `secs` given in seconds into a human readable
+    string.
+
+    >>> ftime(12345)
+    '3h25m45s'
+    """
+
+    units = ("d", "h", "m", "s")
+    factors = (86400, 3600, 60, 1)
+
+    res = ""
+    if secs < 0.0:
+        secs = abs(secs)
+        res += "-"
+    for (unit, factor) in zip(units, factors):
+        value = int(math.floor(secs / factor))
+        secs -= value * factor
+        if (value > 0) or (unit == units[-1]):
+            res += "{value}{unit}".format(value=value, unit=unit)
+
+    return res
+
+
 ##
 ## math
 ##
