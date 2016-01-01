@@ -1,11 +1,12 @@
 """
 General utility functions.
 
-Written in pure Python only using modules from the standard library to ensure
+Written in pure Python, using only modules from the standard library to ensure
 maximum compatibility.
 """
 
 import base64
+import collections
 import colorsys
 import errno
 import functools
@@ -19,7 +20,7 @@ import time
 
 
 ##
-## iterable-related
+## general helpers
 ##
 
 
@@ -65,6 +66,43 @@ class avdict():
             else:
                 d[key] = value
         return d
+
+
+def fsched(f, diff, stopOnException=True, *args, **kwargs):
+    """
+    Simple scheduler which repeatedly calls a function `f` with a fixed time
+    interval `diff` (in seconds) between calls.
+
+    The scheduler stops when a function call evaluates to false, or when
+    `stopOnException` is true and the function call triggers an exception.
+    `*args` and `**kwargs` are passed to `f` for each call.
+
+    .. seealso:: `sched.scheduler` for a more flexible scheduler.
+    """
+
+    timeNext = time.time()
+    while True:
+        # sleep until next call is due and schedule next call
+        timeNow = time.time()
+        timeWait = max(timeNext - timeNow, 0.0)
+        time.sleep(timeWait)
+        timeNext = time.time() + diff
+
+        # call function
+        try:
+            res = f(*args, **kwargs)
+        except:
+            if stopOnException:
+                raise
+
+        # stop if the function return value evaluates to false
+        if not res:
+            return
+
+
+##
+## iterable-related
+##
 
 
 def cycle(x, length):
@@ -368,6 +406,119 @@ def around(number, digitCount=3):
     return round(number, roundDigitCount)
 
 
+class odiff():
+    """
+    Returns the difference between the last two values that were added
+    ("online difference").
+
+    The first difference value to be returned is specified by `firstDiff`.
+
+    >>> a = odiff(firstDiff=0)
+    >>> a.update(3)
+    0
+    >>> a.update(7)
+    4
+    >>> a.update(4)
+    -3
+    >>> a.update(45)
+    41
+    """
+
+    def __init__(self, firstDiff=None):
+        self.values = [None, None]
+        self.firstDiff = firstDiff
+        self.first = True
+
+    def update(self, value):
+        self.values[0] = self.values[1]
+        self.values[1] = value
+
+        if self.first:
+            self.first = False
+            return self.firstDiff
+        else:
+            return self.values[1] - self.values[0]
+
+
+class osum():
+    """
+    Returns the sum of all values that were added ("online sum").
+
+    The starting value of the sum is specified by `start`.
+
+    >>> s = osum()
+    >>> s.update(3)
+    3
+    >>> s.update(7)
+    10
+    >>> s.update(4)
+    14
+    >>> s.update(45)
+    59
+    """
+
+    def __init__(self, start=0):
+        self.sum = start
+
+    def update(self, value=1):
+        self.sum = self.sum + value
+        return self.sum
+
+
+def median(x):
+    """
+    Returns the median of the elements of the iterable `x`.
+
+    If the number of elements in `x` is even, the arithmetic mean of the upper
+    and lower median values is returned.
+
+    >>> median([3, 7, 4])
+    4
+
+    >>> median([3, 7, 4, 45])
+    5.5
+    """
+
+    s = sorted(x)
+    N = len(s)
+    if (N % 2) == 1:
+        return s[(N - 1) // 2]
+    else:
+        M = N // 2
+        return 0.5 * (s[M - 1] + s[M])
+
+
+class omedian():
+    """
+    Returns the median of the last `nLast` values that were added ("online
+    median").
+
+    >>> m = omedian(nLast=3)
+    >>> m.update(3)
+    3
+    >>> m.update(7)
+    5.0
+    >>> m.update(4)
+    4
+    >>> m.update(45)
+    7
+    >>> m.update(2)
+    4
+    >>> m.update(3)
+    3
+    """
+
+    def __init__(self, nLast=10):
+        self.values = collections.deque()
+        self.nLast = nLast
+
+    def update(self, value):
+        self.values.append(value)
+        if len(self.values) > self.nLast:
+            self.values.popleft()
+        return median(self.values)
+
+
 def sclip(x, lower=None, upper=None):
     """
     Clips the scalar value `x` to the interval [`lower`, `upper`].
@@ -418,7 +569,7 @@ def timport(name):
 
 
 ##
-## debugging
+## development
 ##
 
 
