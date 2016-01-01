@@ -46,6 +46,7 @@ Framework
 ---------
 
 * use `virtualenv` when installing the package to create the documentation
+* test for different Python versions (see https://pypi.python.org/pypi/tox)
 * use `nose2` instead of `nose` for testing
 * include README.txt etc. into package
 * estimate coverage
