@@ -68,20 +68,29 @@ class avdict():
         return d
 
 
-def fsched(f, diff, stopOnException=True, *args, **kwargs):
+def fsched(f, diff, timeout=None, stopOnException=True, *args, **kwargs):
     """
     Simple scheduler which repeatedly calls a function `f` with a fixed time
     interval `diff` (in seconds) between calls.
 
     The scheduler stops when a function call evaluates to false, or when
-    `stopOnException` is true and the function call triggers an exception.
-    `*args` and `**kwargs` are passed to `f` for each call.
+    `stopOnException` is true and the function call triggers an exception. If
+    `timeout` (in seconds) is specified, the scheduler will raise a
+    `RuntimeError` if it did not stop until this point. `*args` and `**kwargs`
+    are passed to `f` for each call.
 
     .. seealso:: `sched.scheduler` for a more flexible scheduler.
     """
 
-    timeNext = time.time()
+    timeNow = time.time()
+    timeNext = timeNow
+    if timeout is not None:
+        timeTimeout = timeNow + timeout
     while True:
+        # timeout?
+        if (timeout is not None) and (timeNext >= timeTimeout):
+            raise RuntimeError("Scheduler timed out")
+
         # sleep until next call is due and schedule next call
         timeNow = time.time()
         timeWait = max(timeNext - timeNow, 0.0)
