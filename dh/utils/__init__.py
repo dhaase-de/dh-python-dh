@@ -415,6 +415,26 @@ def around(number, digitCount=3):
     return round(number, roundDigitCount)
 
 
+def cumsum(x):
+    """
+    Yields the cumulative sum of the elements of `x`.
+
+    It works for any data type that supports addition (e.g., also fractions via
+    `fractions.Fraction`).
+
+    >>> list(cumsum([1, 4, 2, 3]))
+    [1, 5, 7, 10]
+    """
+
+    c = None
+    for item in x:
+        if c is None:
+            c = item
+        else:
+            c += item
+        yield c
+
+
 class odiff():
     """
     Returns the difference between the last two values that were added
