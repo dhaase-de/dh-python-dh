@@ -275,6 +275,29 @@ def mkpdir(filename):
 ##
 
 
+def numerus(count, wordSingular, wordPlural=None):
+    """
+    Return the singular `wordSingular` or the plural form `wordPlural` of a
+    noun, depending of the value of `count`.
+
+    If `wordPlural` is `None`, it equals to `wordSingular` with an appended
+    's'.
+
+    >>> numerus(1, 'car')
+    'car'
+
+    >>> numerus(2, 'car')
+    'cars'
+    """
+
+    if count == 1:
+        return wordSingular
+    else:
+        if wordPlural is None:
+            wordPlural = wordSingular + "s"
+        return wordPlural
+
+
 def ohash(x, outputFormat="hex", byteCount=64):
     """
     Hash any serializable object.
