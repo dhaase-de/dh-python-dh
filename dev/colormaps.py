@@ -6,7 +6,7 @@ import dh.image
 
 def main():
     L = dh.image.asgray(dh.data.lena())
-    C = dh.image.colorize(L, "purd", True)
+    C = dh.image.colorize(L, "magma", False)
     dh.image.imshow(C)
 
 
