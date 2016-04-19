@@ -4,14 +4,136 @@ Functions for image handling, image processing, and computer vision.
 All images are represented as NumPy arrays (in the form `I[y, x]` for gray
 scale images and `I[y, x, channel]` for color images), and so NumPy (but only
 NumPy) is required for this module. Image-related functions which require
-further thirdparty modules (e.g., scikit-image, OpenCV) are optional and are
-covered in sub-modules.
+further thirdparty modules (e.g., scikit-image, OpenCV, mahotas, PIL) are
+optional.
 """
+
+import collections
+import glob
+import json
+import os.path
 
 import numpy as np
 import numpy.fft
 
+import dh.gui
 import dh.utils
+
+
+##
+## check for optional thirdparty image processing modules
+##
+
+
+# OpenCV
+try:
+    import cv2
+    _HAVE_CV2 = True
+except ImportError:
+    _HAVE_CV2 = False
+
+# scikit-image
+try:
+    import skimage
+    _HAVE_SKIMAGE = True
+except ImportError:
+    _HAVE_SKIMAGE = False
+
+# mahotas
+try:
+    import mahotas
+    _HAVE_MAHOTAS = True
+except ImportError:
+    _HAVE_MAHOTAS = False
+
+
+##
+## load, save, show
+##
+
+
+def imread(filename, gray=True):
+    """
+    Load image from file `filename` and return NumPy array.
+
+    If `gray` is `True`, a grayscale image is returned. If `gray` is `False`,
+    then a color image is returned (in RGB order), even if the original image
+    is grayscale.
+    """
+
+    # OpenCV
+    if _HAVE_CV2:
+        # flags - if `gray` is False, the
+        flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_GRAYSCALE if gray else cv2.IMREAD_COLOR)
+
+        # read image
+        I = cv2.imread(filename=filename, flags=flags)
+
+        # BGR -> RGB
+        if not gray:
+            I = I[:,:,::-1]
+
+        return I
+
+    # scikit-image
+    #if _HAVE_SKIMAGE:
+    #    I = skimage.io.imread(fname=filename, )
+    #    return I
+
+    raise RuntimeError("Found no module for this operation")
+
+
+def imshow(I, wait=0, scale=None, windowName="imshow"):
+    """
+    Show image on the screen.
+    """
+
+    if not _HAVE_CV2:
+        raise RuntimeError("Need OpenCV module ('cv2') for this functionality")
+
+    # scale of the image
+    if scale is None:
+        (W, H) = dh.gui.screenres()
+        if (W is not None) and (H is not None):
+            scale = 0.85 * min(H / I.shape[0], W / I.shape[1])
+        else:
+            scale = 850.0 / max(I.shape)
+    interpolationType = cv2.INTER_CUBIC if scale > 1.0 else cv2.INTER_NEAREST
+
+    # resized image
+    S = cv2.resize(I, None, None, scale, scale, interpolationType)
+
+    # RGB -> BGR
+    if iscolor(S):
+        S = S[:,:,::-1]
+
+    cv2.imshow(windowName, S)
+    key = cv2.waitKey(wait)
+
+    return key
+
+
+def imwrite(filename, I):
+    """
+    Write image `I` to file `filename`.
+    """
+
+    # TODO: also cover case of .npy and .npz files
+
+    # OpenCV
+    if _HAVE_CV2:
+        # BGR -> RGB
+        if iscolor(I):
+            J = I[:,:,::-1]
+        else:
+            J = I
+
+        # write
+        cv2.imwrite(filename=filename, img=J)
+
+        return
+
+    raise RuntimeError("Found no module for this operation")
 
 
 ##
@@ -122,8 +244,90 @@ def ascolor(I):
         return np.dstack((I,) * 3)
 
 
+# path into which setup.py installs all colormap files
+_COLORMAP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "colormaps"))
+
+
+def colormap(c):
+    """
+    If `c` is a dict, it is assumed to be a valid colormap (see below) and is
+    returned. Otherwise, `c` is interpreted as colormap name (not as filename)
+    and is loaded from the colormap dir.
+
+    A colormap is a dict, where the keys are 8 bit unsigned gray values which
+    are mapped to 8 bit unsigned 3-tuples (RGB) each.
+    """
+
+    if isinstance(c, dict):
+        # `c` is already a dict and assumed to be a valid colormap
+        m = c
+    else:
+        # `c` is interpreted as colormap name, and the dict is loaded from the colormap dir
+        filename = os.path.join(_COLORMAP_DIR, "{}.{}".format(c.lower(), "json"))
+        with open(filename, "r") as f:
+            m = json.load(f)
+
+    # json stores dict keys as strings, so we must convert them to ints
+    return {int(key): tuple(value) for (key, value) in m.items()}
+
+
+def colorize(I, c="jet", bitwise=False):
+    """
+    Colorize image `I` according to the colormap `c` and return 8 bit image.
+
+    `c` can either be a colormap dict or a colormap name, see
+    :func:`dh.image.colormap`.
+
+    .. seealso:: :func:`dh.image.colormap` for how to specify `c`
+    """
+
+    # make sure that the input has only two dimensions
+    # it could also have three dimensions, with the length of the last
+    # dimension being one
+    if not isgray(I):
+        raise ValueError("Input image must be in gray scale mode")
+    J = asgray(I)
+
+    # mapping from source (one channel) to target (three channel) color
+    c = colormap(c)
+
+    # empty color image
+    C = ascolor(np.zeros_like(J))
+
+    # apply mapping defined by colormap dict
+    for (source, target) in sorted(c.items()):
+        if bitwise:
+            M = ((J & source) > 0)
+        else:
+            M = (J == source)
+        for nChannel in range(3):
+            C[:,:,nChannel][M] = target[nChannel]
+
+    return C
+
+
+def colormaps(show=True, **kwargs):
+    """
+    Creates and returns a demo image of all available colormaps.
+    """
+
+    slope = np.array([range(256)] * 32, dtype = "uint8")
+
+    filenames = glob.glob(os.path.join(_COLORMAP_DIR, "*.json"))
+    names = (os.path.splitext(os.path.basename(filename))[0] for filename in filenames)
+    Is = []
+    for name in sorted(names):
+        I = colorize(slope, name)
+        Is.append(I)
+
+    C = np.vstack(Is)
+    if show:
+        imshow(C, **kwargs)
+    return C
+
+
 ##
-## transformations
+## geometric transformations
 ##
 
 
@@ -162,7 +366,7 @@ def rotate(I, degree):
 
     degree = int(degree) % 360
     if degree not in (0, 90, 180, 270):
-        raise ValueError("Invalid rotation angle")
+        raise ValueError("Unsupported rotation angle")
     k = degree // 90
     if k > 0:
         return np.rot90(I, k)
@@ -171,7 +375,7 @@ def rotate(I, degree):
 
 
 ##
-## spatial operations
+## pixel-wise operations
 ##
 
 
@@ -284,7 +488,7 @@ def normalize(I, mode="minmax", **kwargs):
 
 
 ##
-## Frequency domain
+## frequency domain
 ##
 
 
@@ -294,14 +498,6 @@ def fft(I):
     #Theta, Phase
     return np.abs(F)**2
     #return np.angle(F)
-
-
-def selffiltering():
-    raise NotImplementedError("TODO")
-
-
-def selffiltering():
-    raise NotImplementedError("TODO")
 
 
 def selffiltering():
@@ -326,8 +522,26 @@ def pinfo(I):
     Prints info about the image `I`.
     """
 
-    raise NotImplementedError("TODO")
+    info = collections.OrderedDict()
+    info["shape"] = I.shape
+    #info["shape (squeezed)"] = I.squeeze().shape
+    info["elements"] = np.prod(I.shape)
+    info["dtype"] = I.dtype
+    info["mean"] = np.mean(I)
+    info["std"] = np.std(I)
+    info["min"] = np.min(I)
+    info["1st quartile"] = np.percentile(I, 25.0)
+    info["median"] = np.median(I)
+    info["3rd quartile"] = np.percentile(I, 75.0)
+    info["max"] = np.max(I)
+    counter = collections.Counter(I.flatten().tolist())
+    (counterArgmax, counterMax) = counter.most_common(1)[0]
+    info["mode"] = "{} ({}%)".format(counterArgmax, round(100.0 * counterMax / info["elements"], 2))
 
+    print("=" * 40)
+    maxKeyLength = max(len(key) for key in info.keys())
+    for key in info.keys():
+        print(("{key:.<" + str(maxKeyLength) + "} = {value}").format(key=(key + " ")[:maxKeyLength], value=info[key]))
 
 ##
 ## coordinates

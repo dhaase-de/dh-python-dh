@@ -52,7 +52,7 @@ setup(
     description="Personal Python package of Daniel Haase",
     author="Daniel Haase",
     packages=packages,
-    package_data={packageName: ["data/lena.npz", "data/pal.npz"]},
+    package_data={packageName: ["data/*.npy", "data/*.npz", "image/colormaps/*.json"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
