@@ -271,7 +271,7 @@ def colormap(c):
     return {int(key): tuple(value) for (key, value) in m.items()}
 
 
-def colorize(I, c="jet", bitwise=False):
+def colorize(I, c="jet", reverse=False, bitwise=False):
     """
     Colorize image `I` according to the colormap `c` and return 8 bit image.
 
@@ -286,16 +286,19 @@ def colorize(I, c="jet", bitwise=False):
     # dimension being one
     if not isgray(I):
         raise ValueError("Input image must be in gray scale mode")
-    J = asgray(I)
+    J = asgray(I).copy()
+
+    if reverse:
+        J = 255 - J
 
     # mapping from source (one channel) to target (three channel) color
-    c = colormap(c)
+    m = colormap(c)
 
     # empty color image
     C = ascolor(np.zeros_like(J))
 
     # apply mapping defined by colormap dict
-    for (source, target) in sorted(c.items()):
+    for (source, target) in sorted(m.items()):
         if bitwise:
             M = ((J & source) > 0)
         else:

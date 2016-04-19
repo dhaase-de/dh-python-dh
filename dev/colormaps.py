@@ -6,7 +6,7 @@ import dh.image
 
 def main():
     L = dh.image.asgray(dh.data.lena())
-    C = dh.image.colorize(L, "copper")
+    C = dh.image.colorize(L, "purd", True)
     dh.image.imshow(C)
 
 
