@@ -326,7 +326,11 @@ def colormaps(show=True, **kwargs):
     C = np.vstack(Is)
     if show:
         imshow(C, **kwargs)
-    return C
+
+    return {
+        "names": names,
+        "image": C,
+    }
 
 
 ##
