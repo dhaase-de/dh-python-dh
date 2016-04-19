@@ -317,7 +317,7 @@ def colormaps(show=True, **kwargs):
     slope = np.array([range(256)] * 32, dtype = "uint8")
 
     filenames = glob.glob(os.path.join(_COLORMAP_DIR, "*.json"))
-    names = (os.path.splitext(os.path.basename(filename))[0] for filename in filenames)
+    names = list(sorted(os.path.splitext(os.path.basename(filename))[0] for filename in filenames))
     Is = []
     for name in sorted(names):
         I = colorize(slope, name)
