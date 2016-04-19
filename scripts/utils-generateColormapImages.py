@@ -30,70 +30,13 @@ def generateColormapsCv2(S):
 
 def generateColormapsMatplotlib(S):
     import matplotlib.cm
-    names = (
-        "Accent",
-        "Blues",
-        "BrBG",
-        "BuGn",
-        "BuPu",
-        "Dark2",
-        "GnBu",
-        "Greens",
-        "Greys",
-        "OrRd",
-        "Oranges",
-        "PRGn",
-        "Paired",
-        "Pastel1",
-        "Pastel2",
-        "PiYG",
-        "PuBu",
-        "PuBuGn",
-        "PuOr",
-        "PuRd",
-        "Purples",
-        "RdBu",
-        "RdGy",
-        "RdPu",
-        "RdYlBu",
-        "RdYlGn",
-        "Reds",
-        "Set1",
-        "Set2",
-        "Set3",
-        "Spectral",
-        "YlGn",
-        "YlGnBu",
-        "YlOrBr",
-        "YlOrRd",
-        "autumn",
-        "binary",
-        "bone",
-        "cool",
-        "copper",
-        "flag",
-        "gist_earth",
-        "gist_gray",
-        "gist_heat",
-        "gist_ncar",
-        "gist_rainbow",
-        "gist_stern",
-        "gist_yarg",
-        "gray",
-        "hot",
-        "hsv",
-        "jet",
-        "pink",
-        "prism",
-        "spectral",
-        "spring",
-        "summer",
-        "winter",
-    )
     colormaps = {}
-    for name in names:
+    for name in dir(matplotlib.cm):
+        if name[-2:] == "_r":
+            continue
         c = getattr(matplotlib.cm, name)
-        colormaps[name.lower()] = np.round(255.0 * c(S)[:,:,:3]).astype("uint8")
+        if isinstance(c, matplotlib.colors.LinearSegmentedColormap):
+            colormaps[name.lower()] = np.round(255.0 * c(S)[:,:,:3]).astype("uint8")
     return colormaps
 
 
