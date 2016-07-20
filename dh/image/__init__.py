@@ -2,10 +2,10 @@
 Functions for image handling, image processing, and computer vision.
 
 All images are represented as NumPy arrays (in the form `I[y, x]` for gray
-scale images and `I[y, x, channel]` for color images), and so NumPy (but only
-NumPy) is required for this module. Image-related functions which require
-further thirdparty modules (e.g., scikit-image, OpenCV, mahotas, PIL) are
-optional.
+scale images and `I[y, x, channel]` for color images, with RGB channel order),
+and so NumPy (but only NumPy) is required for this module. Image-related
+functions which require further thirdparty modules (e.g., scikit-image, OpenCV,
+mahotas, PIL) are optional.
 """
 
 import collections
@@ -238,7 +238,7 @@ def ascolor(I):
     """
 
     if iscolor(I):
-        # nothing to convert, just make sure that the image shape is consistent
+        # nothing to convert
         return I
     else:
         return np.dstack((I,) * 3)
@@ -512,7 +512,7 @@ def selffiltering():
 
 
 ##
-## visualization
+## debug & visualization
 ##
 
 
@@ -549,6 +549,7 @@ def pinfo(I):
     maxKeyLength = max(len(key) for key in info.keys())
     for key in info.keys():
         print(("{key:.<" + str(maxKeyLength) + "} = {value}").format(key=(key + " ")[:maxKeyLength], value=info[key]))
+
 
 ##
 ## coordinates
