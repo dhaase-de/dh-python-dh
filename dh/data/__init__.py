@@ -8,9 +8,9 @@ import os.path
 _DATA_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
-##
-## helpers
-##
+###
+#%% helpers
+###
 
 
 def _loadNpy(basename):
@@ -24,9 +24,9 @@ def _loadNpz(basename):
     return X[X.keys()[0]]
 
 
-##
-## general data
-##
+###
+#%% general data
+###
 
 
 def M(rows=3, columns=4):
@@ -42,9 +42,9 @@ def M(rows=3, columns=4):
     return np.array(range(rows * columns)).reshape((rows, columns))
 
 
-##
-## image data
-##
+###
+#%% image data
+###
 
 
 def grid(shape=(500, 500), d=25, w=1, dtype="uint8"):
