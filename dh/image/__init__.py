@@ -20,9 +20,9 @@ import dh.gui
 import dh.utils
 
 
-##
-## check for optional thirdparty image processing modules
-##
+###
+#%% optional thirdparty modules
+###
 
 
 # OpenCV
@@ -47,9 +47,9 @@ except ImportError:
     _HAVE_MAHOTAS = False
 
 
-##
-## load, save, show
-##
+###
+#%% load, save, show
+###
 
 
 def imread(filename, gray=True):
@@ -100,14 +100,17 @@ def imshow(I, wait=0, scale=None, windowName="imshow"):
             scale = 850.0 / max(I.shape)
     interpolationType = cv2.INTER_CUBIC if scale > 1.0 else cv2.INTER_NEAREST
 
+    # convert to 8 bit
+    J = convert(I, "uint8")
+
     # resized image
-    S = cv2.resize(I, None, None, scale, scale, interpolationType)
+    J = cv2.resize(J, None, None, scale, scale, interpolationType)
 
     # RGB -> BGR
-    if iscolor(S):
-        S = S[:,:,::-1]
+    if iscolor(J):
+        J = J[:,:,::-1]
 
-    cv2.imshow(windowName, S)
+    cv2.imshow(windowName, J)
     key = cv2.waitKey(wait)
 
     return key
@@ -136,9 +139,38 @@ def imwrite(filename, I):
     raise RuntimeError("Found no module for this operation")
 
 
-##
-## type conversion
-##
+###
+#%% type conversion
+###
+
+
+def tcommon(dtypes):
+    """
+    For a given vector `dtypes` of types, returns the best type which supports
+    all ranges.
+
+    >>> tcommon(['bool', 'uint8', 'uint16'])
+    'uint16'
+    >>> tcommon(['uint8', 'bool'])
+    'uint8'
+    >>> tcommon(['uint8', 'uint8'])
+    'uint8'
+    >>> tcommon(['uint8', 'uint16'])
+    'uint16'
+    >>> tcommon(['uint8', 'float'])
+    'float'
+    """
+
+    hierarchy = ("bool", "uint8", "uint16", "float")
+    maxIndex = 0
+    for dtype in dtypes:
+        try:
+            index = hierarchy.index(dtype)
+        except ValueError:
+            raise RuntimeError("Invalid image type '{dtype}'".format(dtype=dtype))
+        maxIndex = max(maxIndex, index)
+
+    return hierarchy[maxIndex]
 
 
 def trange(dtype):
@@ -146,8 +178,8 @@ def trange(dtype):
     Returns the range (min, max) of valid intensity values for an image of
     NumPy type string `dtype`.
 
-    Allowed types are `'uint8'`, `'uint16'`, and any float type (e.g.,
-    `'float32'`, `'float64'`). The range for each data types follows the
+    Allowed types are `'bool'`, `'uint8'`, `'uint16'`, and any float type
+    (e.g., `'float32'`, `'float64'`). The range for each data types follows the
     convention of the OpenCV library.
 
     >>> trange('uint8')
@@ -156,7 +188,12 @@ def trange(dtype):
     (0.0, 1.0)
     """
 
-    if dtype == "uint8":
+    if dtype is None:
+        # np.issubdtype(None, "float") is True, therefore we have to check for this error here explicitly
+        raise ValueError("Invalid image type '{dtype}'".format(dtype=dtype))
+    elif dtype == "bool":
+        return (False, True)
+    elif dtype == "uint8":
         return (0, 255)
     elif dtype == "uint16":
         return (0, 65535)
@@ -170,6 +207,8 @@ def convert(I, dtype):
     """
     Converts image `I` to NumPy type given by the string `dtype` and scales the
     intensity values accordingly.
+
+    Returns always a copy of the data, even for equal source and target types.
     """
 
     if I.dtype == dtype:
@@ -179,9 +218,9 @@ def convert(I, dtype):
         return (I.astype("float") * scale).astype(dtype)
 
 
-##
-## color conversion
-##
+###
+#%% color conversion
+###
 
 
 def nchannels(I):
@@ -333,9 +372,9 @@ def colormaps(show=True, **kwargs):
     }
 
 
-##
-## geometric transformations
-##
+###
+#%% geometric transformations
+###
 
 
 def shift(I, dx=0, dy=None):
@@ -381,9 +420,9 @@ def rotate(I, degree):
         return I
 
 
-##
-## pixel-wise operations
-##
+###
+#%% pixel-wise operations
+###
 
 
 def identity(I):
@@ -494,9 +533,9 @@ def normalize(I, mode="minmax", **kwargs):
         raise ValueError("Invalid mode '{mode}'".format(mode=mode))
 
 
-##
-## frequency domain
-##
+###
+#%% frequency domain
+###
 
 
 def fft(I):
@@ -511,17 +550,79 @@ def selffiltering():
     raise NotImplementedError("TODO")
 
 
-##
-## debug & visualization
-##
+###
+#%% debug & visualization
+###
 
 
-def imstack(Is):
+def stack(Is, dtype=None, gray=None):
     """
-    Stack images `Is` into one image.
+    Stack images given by `Is` into one image.
+
+    `Is` must be a vector of vectors of images, defining rows and columns.
     """
 
-    raise NotImplementedError("TODO")
+    # find common data type and color mode
+    if dtype is None:
+        dtype = tcommon((I.dtype for row in Is for I in row))
+    if gray is None:
+        gray = all(isgray(I) for row in Is for I in row)
+
+    # step 1/2: construct stacked image for each row
+    Rs = []
+    width = 0
+    for row in Is:
+        # height of the row
+        rowHeight = 0
+        for I in row:
+            rowHeight = max(rowHeight, I.shape[0])
+
+        R = None
+        for I in row:
+            # convert to common data type and color mode
+            if gray:
+                J = asgray(I)
+            else:
+                J = ascolor(I)
+            J = convert(J, dtype)
+
+            # ensure that image has the height of the row
+            gap = rowHeight - J.shape[0]
+            if gap > 0:
+                if gray:
+                    Z = np.zeros(shape=(gap, J.shape[1]), dtype=dtype)
+                else:
+                    Z = np.zeros(shape=(gap, J.shape[1], 3), dtype=dtype)
+                J = np.vstack((J, Z))
+
+            # add to current row image
+            if R is None:
+                R = J
+            else:
+                R = np.hstack((R, J))
+
+        width = max(width, R.shape[1])
+        Rs.append(R)
+
+    # step 2/2: construct stacked image from the row images
+    S = None
+    for R in Rs:
+        # ensure that the row image has the width of the final image
+        gap = width - R.shape[1]
+        if gap > 0:
+            if gray:
+                Z = np.zeros(shape=(R.shape[0], gap), dtype=dtype)
+            else:
+                Z = np.zeros(shape=(R.shape[0], gap, 3), dtype=dtype)
+            R = np.hstack((R, Z))
+
+        # add to final image
+        if S is None:
+            S = R
+        else:
+            S = np.vstack((S, R))
+
+    return S
 
 
 def pinfo(I):
@@ -551,9 +652,9 @@ def pinfo(I):
         print(("{key:.<" + str(maxKeyLength) + "} = {value}").format(key=(key + " ")[:maxKeyLength], value=info[key]))
 
 
-##
-## coordinates
-##
+###
+#%% coordinates
+###
 
 
 def tir(*args):
