@@ -19,9 +19,9 @@ import pprint
 import time
 
 
-##
-## general helpers
-##
+###
+#%% general helpers
+###
 
 
 class avdict():
@@ -109,9 +109,9 @@ def fsched(f, diff, timeout=None, stopOnException=True, *args, **kwargs):
             return
 
 
-##
-## iterable-related
-##
+###
+#%% iterable-related
+###
 
 
 def cycle(x, length):
@@ -235,9 +235,9 @@ def which(x):
             yield index
 
 
-##
-## file-related
-##
+###
+#%% file-related
+###
 
 
 def absdir(path):
@@ -270,9 +270,9 @@ def mkpdir(filename):
     mkdir(os.path.dirname(filename))
 
 
-##
-## formatting
-##
+###
+#%% formatting
+###
 
 
 def numerus(count, wordSingular, wordPlural=None):
@@ -413,9 +413,9 @@ def ftime(secs):
     return res
 
 
-##
-## math
-##
+###
+#%% math
+###
 
 
 def around(number, digitCount=3):
@@ -603,9 +603,9 @@ def tinterval(x, lowerOld, upperOld, lowerNew, upperNew):
     return (x - lowerOld) / (upperOld - lowerOld) * (upperNew - lowerNew) + lowerNew
 
 
-##
-## imports
-##
+###
+#%% imports
+###
 
 
 def timport(name):
@@ -620,9 +620,9 @@ def timport(name):
         return None
 
 
-##
-## development
-##
+###
+#%% development
+###
 
 
 def out(*names):

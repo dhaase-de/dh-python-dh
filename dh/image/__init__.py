@@ -146,7 +146,7 @@ def imwrite(filename, I):
 
 def tcommon(dtypes):
     """
-    For a given vector `dtypes` of types, returns the best type which supports
+    For a given vector `dtypes` of types, returns the type which supports
     all ranges.
 
     >>> tcommon(['bool', 'uint8', 'uint16'])
