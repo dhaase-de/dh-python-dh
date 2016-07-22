@@ -20,96 +20,6 @@ import time
 
 
 ###
-#%% general helpers
-###
-
-
-class avdict():
-    """
-    Class with (recursive) autovivification of attributes and items.
-
-    Attributes and items of the same name refer to the same object.
-
-    >>> d = avdict()
-    >>> d.foo.bar.xyz = 123
-    >>> d.foo.bar.xyz
-    123
-    >>> d["foo"].bar["xyz"]
-    123
-    """
-
-    def __getitem__(self, key):
-        """
-        This is where the magic happens: if an attribute does not exists, it is
-        created as an instance of this class.
-        """
-
-        if key not in self.__dict__:
-            self.__dict__[key] = avdict()
-        return self.__dict__[key]
-
-    def __setitem__(self, key, value):
-        self.__dict__[key] = value
-
-    def __getattr__(self, attr):
-        return self[attr]
-
-    def todict(self):
-        """
-        Returns a nested dictionary resembling the structure of the instance.
-        """
-
-        d = {}
-        for (key, value) in self.__dict__.items():
-            if isinstance(value, type(self)):
-                d[key] = value.todict()
-            else:
-                d[key] = value
-        return d
-
-
-def fsched(f, diff, timeout=None, stopOnException=True, *args, **kwargs):
-    """
-    Simple scheduler which repeatedly calls a function `f` with a fixed time
-    interval `diff` (in seconds) between calls.
-
-    The scheduler stops when a function call evaluates to false, or when
-    `stopOnException` is true and the function call triggers an exception. If
-    `timeout` (in seconds) is specified, the scheduler will raise a
-    `RuntimeError` if it did not stop until this point. `*args` and `**kwargs`
-    are passed to `f` for each call.
-
-    .. seealso:: `sched.scheduler` for a more flexible scheduler.
-    """
-
-    timeNow = time.time()
-    timeNext = timeNow
-    if timeout is not None:
-        timeTimeout = timeNow + timeout
-    while True:
-        # timeout?
-        if (timeout is not None) and (timeNext >= timeTimeout):
-            raise RuntimeError("Scheduler timed out")
-
-        # sleep until next call is due and schedule next call
-        timeNow = time.time()
-        timeWait = max(timeNext - timeNow, 0.0)
-        time.sleep(timeWait)
-        timeNext = time.time() + diff
-
-        # call function
-        try:
-            res = f(*args, **kwargs)
-        except:
-            if stopOnException:
-                raise
-
-        # stop if the function return value evaluates to false
-        if not res:
-            return
-
-
-###
 #%% iterable-related
 ###
 
@@ -119,9 +29,6 @@ def cycle(x, length):
     Cycles through the values of `x` until `length` items were yielded.
 
     >>> list(cycle([1, 2, 3], 5))
-    [1, 2, 3, 1, 2]
-
-    >>> list(cycle((i for i in range(1, 4)), 5))
     [1, 2, 3, 1, 2]
 
     .. seealso:: :func:`itertools.cycle` and :func:`itertools.repeat` (they
@@ -233,41 +140,6 @@ def which(x):
     for (index, item) in enumerate(x):
         if item:
             yield index
-
-
-###
-#%% file-related
-###
-
-
-def absdir(path):
-    """
-    Returns the absolute path of the directory name of `path`.
-    """
-
-    return os.path.abspath(os.path.dirname(path))
-
-
-def mkdir(dirname):
-    """
-    Creates directory `dirname` if it does not exist already.
-
-    .. seealso:: http://stackoverflow.com/a/5032238/1913780
-    """
-
-    try:
-        os.makedirs(dirname)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-
-def mkpdir(filename):
-    """
-    Creates the parent directory of `filename` if it does not exists already.
-    """
-
-    mkdir(os.path.dirname(filename))
 
 
 ###
@@ -601,6 +473,131 @@ def tinterval(x, lowerOld, upperOld, lowerNew, upperNew):
     """
 
     return (x - lowerOld) / (upperOld - lowerOld) * (upperNew - lowerNew) + lowerNew
+
+
+###
+#%% file-related
+###
+
+
+def absdir(path):
+    """
+    Returns the absolute path of the directory name of `path`.
+    """
+
+    return os.path.abspath(os.path.dirname(path))
+
+
+def mkdir(dirname):
+    """
+    Creates directory `dirname` if it does not exist already.
+
+    .. seealso:: http://stackoverflow.com/a/5032238/1913780
+    """
+
+    try:
+        os.makedirs(dirname)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+def mkpdir(filename):
+    """
+    Creates the parent directory of `filename` if it does not exists already.
+    """
+
+    mkdir(os.path.dirname(filename))
+
+
+###
+#%% general helpers
+###
+
+
+class avdict():
+    """
+    Class with (recursive) autovivification of attributes and items.
+
+    Attributes and items of the same name refer to the same object.
+
+    >>> d = avdict()
+    >>> d.foo.bar.xyz = 123
+    >>> d.foo.bar.xyz
+    123
+    >>> d["foo"].bar["xyz"]
+    123
+    """
+
+    def __getitem__(self, key):
+        """
+        This is where the magic happens: if an attribute does not exists, it is
+        created as an instance of this class.
+        """
+
+        if key not in self.__dict__:
+            self.__dict__[key] = avdict()
+        return self.__dict__[key]
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+
+    def __getattr__(self, attr):
+        return self[attr]
+
+    def todict(self):
+        """
+        Returns a nested dictionary resembling the structure of the instance.
+        """
+
+        d = {}
+        for (key, value) in self.__dict__.items():
+            if isinstance(value, type(self)):
+                d[key] = value.todict()
+            else:
+                d[key] = value
+        return d
+
+
+def fsched(f, diff, timeout=None, stopOnException=True, *args, **kwargs):
+    """
+    Simple scheduler which repeatedly calls a function `f` with a fixed time
+    interval `diff` (in seconds) between calls.
+
+    The scheduler stops when a function call evaluates to false, or when
+    `stopOnException` is true and the function call triggers an exception. If
+    `timeout` (in seconds) is specified, the scheduler will raise a
+    `RuntimeError` if it did not stop until this point. `*args` and `**kwargs`
+    are passed to `f` for each call.
+
+    .. seealso:: `sched.scheduler` for a more flexible scheduler.
+    """
+
+    timeNow = time.time()
+    timeNext = timeNow
+    if timeout is not None:
+        timeTimeout = timeNow + timeout
+    while True:
+        # timeout?
+        if (timeout is not None) and (timeNext >= timeTimeout):
+            raise RuntimeError("Scheduler timed out")
+
+        # sleep until next call is due and schedule next call
+        timeNow = time.time()
+        timeWait = max(timeNext - timeNow, 0.0)
+        time.sleep(timeWait)
+        timeNext = time.time() + diff
+
+        # call function
+        try:
+            res = f(*args, **kwargs)
+        except:
+            if stopOnException:
+                raise
+
+        # stop if the function return value evaluates to false
+        if not res:
+            return
 
 
 ###
