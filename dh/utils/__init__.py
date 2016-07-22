@@ -143,149 +143,6 @@ def which(x):
 
 
 ###
-#%% formatting
-###
-
-
-def numerus(count, wordSingular, wordPlural=None):
-    """
-    Return the singular `wordSingular` or the plural form `wordPlural` of a
-    noun, depending of the value of `count`.
-
-    If `wordPlural` is `None`, it equals to `wordSingular` with an appended
-    's'.
-
-    >>> numerus(1, 'car')
-    'car'
-
-    >>> numerus(2, 'car')
-    'cars'
-    """
-
-    if count == 1:
-        return wordSingular
-    else:
-        if wordPlural is None:
-            wordPlural = wordSingular + "s"
-        return wordPlural
-
-
-def ohash(x, outputFormat="hex", byteCount=64):
-    """
-    Hash any serializable object.
-
-    `outputFormat` determines how to convert the hash output. It can be
-    `'raw'` (or `'bytes'`), `'base2'` (or `'bin'`), `'base10'` (or `'int'`),
-    `'base16'` (or `'hex'`), `'base32'`, or `'base64'`.
-    `byteCount` specifies the number of bytes to use from the hash output. It
-    must be in (1, 2, 4, 8, 16, 32, 64).
-
-    >>> ohash({'x': 1, 'y': 'two', 'z': [3.0, None]}, 'hex', 4)
-    'f2e79df1'
-
-    >>> ohash({'x': 1, 'y': 'two', 'z': [3.0, None]}, 'int', 2)
-    28438
-    """
-
-    # serialize the object and hash the serialization string (512 bits = 64 bytes)
-    # note pickle.dumps is not used here as it sometimes gave different results for identical objects
-    #xSerialized = pickle.dumps(x, protocol=0)
-    xSerialized = pprint.pformat(x).encode("utf-8")
-    hashBytes = hashlib.sha512(xSerialized).digest()
-
-    # reduce byte count (repeatedly XOR the two halves of the byte array until the desired length is reached)
-    if byteCount not in (1, 2, 4, 8, 16, 32, 64):
-        raise ValueError("Invalid byte count ({}), must be in (1, 2, 4, 8, 16, 32, 64)".format(byteCount))
-    while len(hashBytes) > byteCount:
-        hashBytesReduced = b""
-        for (int1, int2) in hzip(hashBytes):
-            hashBytesReduced += (int1 ^ int2).to_bytes(1, byteorder="big", signed=False)
-        hashBytes = hashBytesReduced
-
-    # format output
-    if outputFormat in ("raw", "bytes"):
-        hashFormatted = hashBytes
-    elif outputFormat in ("base2", "bin"):
-        hashFormatted = "".join(bin(hashByte)[2:].zfill(8) for hashByte in hashBytes)
-    elif outputFormat in ("base10", "int"):
-        hashFormatted = int.from_bytes(hashBytes, byteorder="big", signed=False)
-    elif outputFormat in ("base16", "hex"):
-        hashFormatted = base64.b16encode(hashBytes).decode("ascii").lower()
-    elif outputFormat in ("base32",):
-        hashFormatted = base64.b32encode(hashBytes).decode("ascii")
-    elif outputFormat in ("base64",):
-        hashFormatted = base64.b64encode(hashBytes).decode("ascii")
-    elif outputFormat in ("float", "color"):
-        hashFloat = int.from_bytes(hashBytes, byteorder="big", signed=False) / 2**(8 * byteCount)
-        if outputFormat in ("float",):
-            hashFormatted = hashFloat
-        elif outputFormat in ("color",):
-            hashFormatted = colorsys.hsv_to_rgb(hashFloat, 1.0, 1.0)
-    else:
-        raise ValueError("Invalid output format '{}'".format(outputFormat))
-
-    return hashFormatted
-
-
-def tstr(s, maxLength=80, ellipsis="..."):
-    """
-    Truncates the string `s` and adds ellipsis such that the returned string
-    has at most `maxLength` characters, including the ellipsis.
-
-    >>> tstr('The quick brown fox jumps over the lazy dog', 40)
-    'The quick brown fox jumps over the la...'
-    """
-
-    if len(s) > maxLength:
-        return s[:max(0, maxLength - len(ellipsis))] + ellipsis
-    else:
-        return s
-
-
-def fargs(*args, **kwargs):
-    """
-    Format `*args` and `**kwargs` into one string resembling the original call.
-
-    >>> fargs(1, [2], x=3.0, y='four')
-    "1, [2], x=3.0, y='four'"
-
-    .. note: The items of `**kwargs` are sorted by their key.
-    """
-
-    items = []
-    for arg in args:
-        items.append(pprint.pformat(arg))
-    for kw in sorted(kwargs):
-        items.append(kw + "=" + pprint.pformat(kwargs[kw]))
-    return ", ".join(items)
-
-
-def ftime(secs):
-    """
-    Format a time duration `secs` given in seconds into a human readable
-    string.
-
-    >>> ftime(12345)
-    '3h25m45s'
-    """
-
-    units = ("d", "h", "m", "s")
-    factors = (86400, 3600, 60, 1)
-
-    res = ""
-    if secs < 0.0:
-        secs = abs(secs)
-        res += "-"
-    for (unit, factor) in zip(units, factors):
-        value = int(math.floor(secs / factor))
-        secs -= value * factor
-        if (value > 0) or (unit == units[-1]):
-            res += "{value}{unit}".format(value=value, unit=unit)
-
-    return res
-
-
-###
 #%% math
 ###
 
@@ -473,6 +330,149 @@ def tinterval(x, lowerOld, upperOld, lowerNew, upperNew):
     """
 
     return (x - lowerOld) / (upperOld - lowerOld) * (upperNew - lowerNew) + lowerNew
+
+
+###
+#%% formatting
+###
+
+
+def numerus(count, wordSingular, wordPlural=None):
+    """
+    Return the singular `wordSingular` or the plural form `wordPlural` of a
+    noun, depending of the value of `count`.
+
+    If `wordPlural` is `None`, it equals to `wordSingular` with an appended
+    's'.
+
+    >>> numerus(1, 'car')
+    'car'
+
+    >>> numerus(2, 'car')
+    'cars'
+    """
+
+    if count == 1:
+        return wordSingular
+    else:
+        if wordPlural is None:
+            wordPlural = wordSingular + "s"
+        return wordPlural
+
+
+def ohash(x, outputFormat="hex", byteCount=64):
+    """
+    Hash any serializable object.
+
+    `outputFormat` determines how to convert the hash output. It can be
+    `'raw'` (or `'bytes'`), `'base2'` (or `'bin'`), `'base10'` (or `'int'`),
+    `'base16'` (or `'hex'`), `'base32'`, or `'base64'`.
+    `byteCount` specifies the number of bytes to use from the hash output. It
+    must be in (1, 2, 4, 8, 16, 32, 64).
+
+    >>> ohash({'x': 1, 'y': 'two', 'z': [3.0, None]}, 'hex', 4)
+    'f2e79df1'
+
+    >>> ohash({'x': 1, 'y': 'two', 'z': [3.0, None]}, 'int', 2)
+    28438
+    """
+
+    # serialize the object and hash the serialization string (512 bits = 64 bytes)
+    # note pickle.dumps is not used here as it sometimes gave different results for identical objects
+    #xSerialized = pickle.dumps(x, protocol=0)
+    xSerialized = pprint.pformat(x).encode("utf-8")
+    hashBytes = hashlib.sha512(xSerialized).digest()
+
+    # reduce byte count (repeatedly XOR the two halves of the byte array until the desired length is reached)
+    if byteCount not in (1, 2, 4, 8, 16, 32, 64):
+        raise ValueError("Invalid byte count ({}), must be in (1, 2, 4, 8, 16, 32, 64)".format(byteCount))
+    while len(hashBytes) > byteCount:
+        hashBytesReduced = b""
+        for (int1, int2) in hzip(hashBytes):
+            hashBytesReduced += (int1 ^ int2).to_bytes(1, byteorder="big", signed=False)
+        hashBytes = hashBytesReduced
+
+    # format output
+    if outputFormat in ("raw", "bytes"):
+        hashFormatted = hashBytes
+    elif outputFormat in ("base2", "bin"):
+        hashFormatted = "".join(bin(hashByte)[2:].zfill(8) for hashByte in hashBytes)
+    elif outputFormat in ("base10", "int"):
+        hashFormatted = int.from_bytes(hashBytes, byteorder="big", signed=False)
+    elif outputFormat in ("base16", "hex"):
+        hashFormatted = base64.b16encode(hashBytes).decode("ascii").lower()
+    elif outputFormat in ("base32",):
+        hashFormatted = base64.b32encode(hashBytes).decode("ascii")
+    elif outputFormat in ("base64",):
+        hashFormatted = base64.b64encode(hashBytes).decode("ascii")
+    elif outputFormat in ("float", "color"):
+        hashFloat = int.from_bytes(hashBytes, byteorder="big", signed=False) / 2**(8 * byteCount)
+        if outputFormat in ("float",):
+            hashFormatted = hashFloat
+        elif outputFormat in ("color",):
+            hashFormatted = colorsys.hsv_to_rgb(hashFloat, 1.0, 1.0)
+    else:
+        raise ValueError("Invalid output format '{}'".format(outputFormat))
+
+    return hashFormatted
+
+
+def tstr(s, maxLength=80, ellipsis="..."):
+    """
+    Truncates the string `s` and adds ellipsis such that the returned string
+    has at most `maxLength` characters, including the ellipsis.
+
+    >>> tstr('The quick brown fox jumps over the lazy dog', 40)
+    'The quick brown fox jumps over the la...'
+    """
+
+    if len(s) > maxLength:
+        return s[:max(0, maxLength - len(ellipsis))] + ellipsis
+    else:
+        return s
+
+
+def fargs(*args, **kwargs):
+    """
+    Format `*args` and `**kwargs` into one string resembling the original call.
+
+    >>> fargs(1, [2], x=3.0, y='four')
+    "1, [2], x=3.0, y='four'"
+
+    .. note: The items of `**kwargs` are sorted by their key.
+    """
+
+    items = []
+    for arg in args:
+        items.append(pprint.pformat(arg))
+    for kw in sorted(kwargs):
+        items.append(kw + "=" + pprint.pformat(kwargs[kw]))
+    return ", ".join(items)
+
+
+def ftime(secs):
+    """
+    Format a time duration `secs` given in seconds into a human readable
+    string.
+
+    >>> ftime(12345)
+    '3h25m45s'
+    """
+
+    units = ("d", "h", "m", "s")
+    factors = (86400, 3600, 60, 1)
+
+    res = ""
+    if secs < 0.0:
+        secs = abs(secs)
+        res += "-"
+    for (unit, factor) in zip(units, factors):
+        value = int(math.floor(secs / factor))
+        secs -= value * factor
+        if (value > 0) or (unit == units[-1]):
+            res += "{value}{unit}".format(value=value, unit=unit)
+
+    return res
 
 
 ###
