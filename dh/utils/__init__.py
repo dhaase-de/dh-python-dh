@@ -167,6 +167,24 @@ def around(number, digitCount=3):
     return round(number, roundDigitCount)
 
 
+def diff(x):
+    """
+    Yields the successive differences of the elements of `x`.
+
+    It works for any data type that supports subtraction (e.g., also fractions
+    via `fractions.Fraction`).
+
+    >>> list(diff([1, 4, 2, 3]))
+    [3, -2, 1]
+    """
+
+    last = None
+    for item in x:
+        if last is not None:
+            yield item - last
+        last = item
+
+
 def cumsum(x):
     """
     Yields the cumulative sum of the elements of `x`.
