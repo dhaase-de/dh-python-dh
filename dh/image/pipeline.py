@@ -1,3 +1,9 @@
+"""
+Image pipeline viewer.
+
+Note: currently under heavy construction.
+"""
+
 import tkinter
 import tkinter.ttk
 
@@ -20,7 +26,7 @@ class Viewer():
         #self.pipeline.add("core.invert")
         #self.pipeline.add("core.normalize")
         self.pipeline.add("core.shift")
-        self.pipeline.add("core.fft")
+        #self.pipeline.add("core.fft")
         #self.pipeline.add("core.normalize")
         self.pipeline.add("core.log")
         #self.pipeline.add("core.gamma")
@@ -495,7 +501,7 @@ SwitchableNode(
     ],
 )
 
-SwitchableNode(
-    uid="core.fft",
-    f=dh.image.fft,
-)
+#SwitchableNode(
+#    uid="core.fft",
+#    f=dh.image.fft,
+#)
