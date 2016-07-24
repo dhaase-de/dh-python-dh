@@ -25,26 +25,29 @@ import dh.utils
 ###
 
 
-# OpenCV
+# try to import OpenCV
 try:
     import cv2
-    _HAVE_CV2 = True
-except ImportError:
-    _HAVE_CV2 = False
+    _CV2_VERSION = cv2.__version__
+    _CV2_ERROR = None
+except ImportError as e:
+    _CV2_VERSION = None
+    _CV2_ERROR = e
 
-# scikit-image
-try:
-    import skimage
-    _HAVE_SKIMAGE = True
-except ImportError:
-    _HAVE_SKIMAGE = False
 
+# decorator for functions that need OpenCV
+def CV2(f):
+    if _CV2_VERSION is None:
+        raise RuntimeError("Module 'cv2' is needed for that operation ('{}'), but could not be imported (error: {})".format(f.__name__, _CV2_ERROR))
+
+    def g(*args, **kwargs):
+        return f(*args, **kwargs)
+
+    return g
+
+
+# skimage
 # mahotas
-try:
-    import mahotas
-    _HAVE_MAHOTAS = True
-except ImportError:
-    _HAVE_MAHOTAS = False
 
 
 ###
@@ -52,37 +55,30 @@ except ImportError:
 ###
 
 
-def imread(filename, gray=True):
+@CV2
+def imread(filename, color=False):
     """
     Load image from file `filename` and return NumPy array.
 
-    If `gray` is `True`, a grayscale image is returned. If `gray` is `False`,
+    If `color` is `False`, a grayscale image is returned. If `color` is `True`,
     then a color image is returned (in RGB order), even if the original image
     is grayscale.
     """
 
-    # OpenCV
-    if _HAVE_CV2:
-        # flags - if `gray` is False, the
-        flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_GRAYSCALE if gray else cv2.IMREAD_COLOR)
+    # flags - select grayscale or color mode
+    flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_COLOR if color else cv2.IMREAD_GRAYSCALE)
 
-        # read image
-        I = cv2.imread(filename=filename, flags=flags)
+    # read image
+    I = cv2.imread(filename=filename, flags=flags)
 
-        # BGR -> RGB
-        if not gray:
-            I = I[:,:,::-1]
+    # BGR -> RGB
+    if color:
+        I = I[:, :, ::-1]
 
-        return I
-
-    # scikit-image
-    #if _HAVE_SKIMAGE:
-    #    I = skimage.io.imread(fname=filename, )
-    #    return I
-
-    raise RuntimeError("Found no module for this operation")
+    return I
 
 
+@CV2
 def imwrite(filename, I):
     """
     Write image `I` to file `filename`.
@@ -90,29 +86,21 @@ def imwrite(filename, I):
 
     # TODO: also cover case of .npy and .npz files
 
-    # OpenCV
-    if _HAVE_CV2:
-        # BGR -> RGB
-        if iscolor(I):
-            J = I[:,:,::-1]
-        else:
-            J = I
+    # BGR -> RGB
+    if iscolor(I):
+        J = I[:, :, ::-1]
+    else:
+        J = I
 
-        # write
-        cv2.imwrite(filename=filename, img=J)
-
-        return
-
-    raise RuntimeError("Found no module for this operation")
+    # write
+    return cv2.imwrite(filename=filename, img=J)
 
 
+@CV2
 def imshow(I, wait=0, scale=None, windowName="imshow"):
     """
     Show image on the screen.
     """
-
-    if not _HAVE_CV2:
-        raise RuntimeError("Need OpenCV module ('cv2') for this functionality")
 
     # scale of the image
     if scale is None:
