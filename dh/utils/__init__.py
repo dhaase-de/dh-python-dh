@@ -1,8 +1,8 @@
 """
 General utility functions.
 
-Written in pure Python, using only modules from the standard library to ensure
-maximum compatibility.
+Written in pure Python, using only modules from the standard library and
+third-party modules included in this package to ensure maximum compatibility.
 """
 
 import base64
@@ -17,6 +17,10 @@ import math
 import os
 import pprint
 import time
+
+import dh.thirdparty.atomicwrites
+import dh.thirdparty.tabulate
+import dh.thirdparty.tqdm
 
 
 ###
@@ -97,13 +101,17 @@ def hzip(x):
     """
     Zips the first and second half of `x`.
 
+    If `x` has odd length, the last element will be ignored.
+
     >>> list(hzip([1, 2, 3, 4, 5, 6]))
+    [(1, 4), (2, 5), (3, 6)]
+
+    >>> list(hzip([1, 2, 3, 4, 5, 6, 7]))
     [(1, 4), (2, 5), (3, 6)]
     """
 
-    N = len(x)
-    M = int(N // 2)
-    return zip(x[0:M], x[M:N])
+    N = int(len(x) // 2)
+    return zip(x[:N], x[N:])
 
 
 def unique(x):
@@ -482,15 +490,45 @@ def ftime(secs):
 
     res = ""
     if secs < 0.0:
+        # add sign
         secs = abs(secs)
         res += "-"
     for (unit, factor) in zip(units, factors):
-        value = int(math.floor(secs / factor))
+        value = int(secs // factor)
         secs -= value * factor
         if (value > 0) or (unit == units[-1]):
             res += "{value}{unit}".format(value=value, unit=unit)
 
     return res
+
+
+def table(*args, **kwargs):
+    """
+    Format an iterable of iterables or a similar construct (e.g., list of
+    lists, list of dicts) into (the string of) a table.
+
+    This function is an alias of :func:`dh.thirdparty.tabulate.tabulate()`.
+    """
+
+    return dh.thirdparty.tabulate.tabulate(*args, **kwargs)
+
+
+def ptable(*args, **kwargs):
+    """
+    Prints the table formatted via the function :func:`dh.utils.table`.
+    """
+
+    print(table(*args, **kwargs))
+
+
+def pbar(*args, **kwargs):
+    """
+    Progress bar.
+
+    This function is an alias of :func:`dh.thirdparty.tqdm.tqdm()`.
+    """
+
+    return dh.thirdparty.tqdm.tqdm(*args, **kwargs)
 
 
 ###
@@ -526,6 +564,16 @@ def mkpdir(filename):
     """
 
     mkdir(os.path.dirname(filename))
+
+
+def awopen(*args, **kwargs):
+    """
+    Replacement for Python's `open` which ensures that writing is atomic.
+
+    This function is an alias for `dh.thirdparty.atomicwrites.atomic_write`.
+    """
+
+    return dh.thirdparty.atomicwrites.atomic_write(*args, **kwargs)
 
 
 ###

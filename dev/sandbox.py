@@ -1,19 +1,20 @@
 #!/usr/bin/python3
 
-import importlib
+import math
+import time
 
-
-def f():
-    import cv2
-    g()
-
-
-def g():
-    print(cv2.__version__)
+import dh.utils
 
 
 def main():
-    f()
+    rows = []
+    for nRow, row in enumerate(dh.utils.pbar(range(1250), unit="rows")):
+        rows.append({
+            "X": 9.37 + nRow * math.pi,
+            "Y": "hallo",
+        })
+        time.sleep(0.1)
+    dh.utils.ptable(rows)
 
 
 if __name__ == "__main__":
