@@ -4,7 +4,7 @@ import os
 import sys
 import tempfile
 
-__version__ = '0.1.5'
+__version__ = '1.0.0'
 
 
 PY2 = sys.version_info[0] == 2
@@ -114,16 +114,20 @@ class AtomicWriter(object):
 
     @contextlib.contextmanager
     def _open(self, get_fileobject):
+        f = None  # make sure f exists even if get_fileobject() fails
         try:
+            success = False
             with get_fileobject() as f:
                 yield f
+                self.sync(f)
             self.commit(f)
-        except:
-            try:
-                self.rollback(f)
-            except Exception:
-                pass
-            raise
+            success = True
+        finally:
+            if not success:
+                try:
+                    self.rollback(f)
+                except Exception:
+                    pass
 
     def get_fileobject(self, dir=None, **kwargs):
         '''Return the temporary file to use.'''
@@ -132,10 +136,16 @@ class AtomicWriter(object):
         return tempfile.NamedTemporaryFile(mode=self._mode, dir=dir,
                                            delete=False, **kwargs)
 
+    def sync(self, f):
+        '''responsible for clearing as many file caches as possible before
+        commit'''
+        f.flush()
+        os.fsync(f.fileno())
+
     def commit(self, f):
         '''Move the temporary file to the target location.'''
         if self._overwrite:
-            replace_atomic(f.name, self._path)  # atomic
+            replace_atomic(f.name, self._path)
         else:
             move_atomic(f.name, self._path)
 
@@ -160,4 +170,3 @@ def atomic_write(path, writer_cls=AtomicWriter, **cls_kwargs):
     :py:class:`AtomicWriter`.
     '''
     return writer_cls(path, **cls_kwargs).open()
-
