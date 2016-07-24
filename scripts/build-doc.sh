@@ -9,7 +9,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source "$SCRIPT_DIR"/setenv.sh
 
 # install package because it will be imported by autodoc
-"$SCRIPT_DIR"/build-install.sh
+#"$SCRIPT_DIR"/build-install.sh
 
 # create doc source files from the docstrings
 sphinx-apidoc --force -o "$DOC_DIR"/source "$SOURCE_DIR" "$SOURCE_DIR"/tests "$SOURCE_DIR"/thirdparty/*/
