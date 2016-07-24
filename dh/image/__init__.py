@@ -83,6 +83,29 @@ def imread(filename, gray=True):
     raise RuntimeError("Found no module for this operation")
 
 
+def imwrite(filename, I):
+    """
+    Write image `I` to file `filename`.
+    """
+
+    # TODO: also cover case of .npy and .npz files
+
+    # OpenCV
+    if _HAVE_CV2:
+        # BGR -> RGB
+        if iscolor(I):
+            J = I[:,:,::-1]
+        else:
+            J = I
+
+        # write
+        cv2.imwrite(filename=filename, img=J)
+
+        return
+
+    raise RuntimeError("Found no module for this operation")
+
+
 def imshow(I, wait=0, scale=None, windowName="imshow"):
     """
     Show image on the screen.
@@ -116,27 +139,74 @@ def imshow(I, wait=0, scale=None, windowName="imshow"):
     return key
 
 
-def imwrite(filename, I):
+def stack(Is, dtype=None, gray=None):
     """
-    Write image `I` to file `filename`.
+    Stack images given by `Is` into one image.
+
+    `Is` must be a vector of vectors of images, defining rows and columns.
     """
 
-    # TODO: also cover case of .npy and .npz files
+    # find common data type and color mode
+    if dtype is None:
+        dtype = tcommon((I.dtype for row in Is for I in row))
+    if gray is None:
+        gray = all(isgray(I) for row in Is for I in row)
 
-    # OpenCV
-    if _HAVE_CV2:
-        # BGR -> RGB
-        if iscolor(I):
-            J = I[:,:,::-1]
+    # step 1/2: construct stacked image for each row
+    Rs = []
+    width = 0
+    for row in Is:
+        # height of the row
+        rowHeight = 0
+        for I in row:
+            rowHeight = max(rowHeight, I.shape[0])
+
+        R = None
+        for I in row:
+            # convert to common data type and color mode
+            if gray:
+                J = asgray(I)
+            else:
+                J = ascolor(I)
+            J = convert(J, dtype)
+
+            # ensure that image has the height of the row
+            gap = rowHeight - J.shape[0]
+            if gap > 0:
+                if gray:
+                    Z = np.zeros(shape=(gap, J.shape[1]), dtype=dtype)
+                else:
+                    Z = np.zeros(shape=(gap, J.shape[1], 3), dtype=dtype)
+                J = np.vstack((J, Z))
+
+            # add to current row image
+            if R is None:
+                R = J
+            else:
+                R = np.hstack((R, J))
+
+        width = max(width, R.shape[1])
+        Rs.append(R)
+
+    # step 2/2: construct stacked image from the row images
+    S = None
+    for R in Rs:
+        # ensure that the row image has the width of the final image
+        gap = width - R.shape[1]
+        if gap > 0:
+            if gray:
+                Z = np.zeros(shape=(R.shape[0], gap), dtype=dtype)
+            else:
+                Z = np.zeros(shape=(R.shape[0], gap, 3), dtype=dtype)
+            R = np.hstack((R, Z))
+
+        # add to final image
+        if S is None:
+            S = R
         else:
-            J = I
+            S = np.vstack((S, R))
 
-        # write
-        cv2.imwrite(filename=filename, img=J)
-
-        return
-
-    raise RuntimeError("Found no module for this operation")
+    return S
 
 
 ###
@@ -373,54 +443,6 @@ def colormaps(show=True, **kwargs):
 
 
 ###
-#%% geometric transformations
-###
-
-
-def shift(I, dx=0, dy=None):
-    """
-    Shifts the pixels of the image `I` by `dx` and `dy` along the x and y axes.
-
-    For each of `dx` and `dy`: if the value is an integer, it is interpreted
-    as the number of pixels by which to shift. If the value is a float, it is
-    interpreted as fraction of the image shape of the according axis.
-    """
-
-    # by default dy is equal to dx
-    if dy is None:
-        dy = dx
-
-    # float values are interpreted as fractions of the image shape
-    if isinstance(dx, float):
-        dx = int(I.shape[1] * dx)
-    if isinstance(dy, float):
-        dy = int(I.shape[0] * dy)
-
-    # shift
-    S = I.copy()
-    S = np.roll(S, dy, axis=0)
-    S = np.roll(S, dx, axis=1)
-    return S
-
-
-def rotate(I, degree):
-    """
-    Rotate the image `I` counter-clock-wise by the angle specified by `degree`.
-
-    Valid values for the angle are `0`, `90`, `180`, and `270`.
-    """
-
-    degree = int(degree) % 360
-    if degree not in (0, 90, 180, 270):
-        raise ValueError("Unsupported rotation angle")
-    k = degree // 90
-    if k > 0:
-        return np.rot90(I, k)
-    else:
-        return I
-
-
-###
 #%% pixel-wise operations
 ###
 
@@ -489,6 +511,21 @@ def threshold(I, theta, relative=False):
     return T
 
 
+def clip(I, lower=None, upper=None):
+    """
+    Clips the image pixel values to the interval [`lower`, `upper`], and
+    preserves the image type.
+    """
+
+    dtype = I.dtype
+    (tLower, tUpper) = trange(dtype)
+    if lower is not None:
+        I = np.maximum(I, np.array((dh.utils.sclip(lower, tLower, tUpper),), dtype=dtype))
+    if upper is not None:
+        I = np.minimum(I, np.array((dh.utils.sclip(upper, tLower, tUpper),), dtype=dtype))
+    return I
+
+
 def normalize(I, mode="minmax", **kwargs):
     """
     Normalizes the intensity values of the image `I`.
@@ -538,118 +575,56 @@ def normalize(I, mode="minmax", **kwargs):
 ###
 
 
-def fft(I):
-    F = np.fft.fftshift(np.fft.fft2(I))
-    #Re, Im
-    #Theta, Phase
-    return np.abs(F)**2
-    #return np.angle(F)
-
-
 def selffiltering():
     raise NotImplementedError("TODO")
 
 
 ###
-#%% debug & visualization
+#%% geometric transformations
 ###
 
 
-def stack(Is, dtype=None, gray=None):
+def shift(I, dx=0, dy=None):
     """
-    Stack images given by `Is` into one image.
+    Shifts the pixels of the image `I` by `dx` and `dy` along the x and y axes.
 
-    `Is` must be a vector of vectors of images, defining rows and columns.
+    For each of `dx` and `dy`: if the value is an integer, it is interpreted
+    as the number of pixels by which to shift. If the value is a float, it is
+    interpreted as fraction of the image shape of the according axis.
     """
 
-    # find common data type and color mode
-    if dtype is None:
-        dtype = tcommon((I.dtype for row in Is for I in row))
-    if gray is None:
-        gray = all(isgray(I) for row in Is for I in row)
+    # by default dy is equal to dx
+    if dy is None:
+        dy = dx
 
-    # step 1/2: construct stacked image for each row
-    Rs = []
-    width = 0
-    for row in Is:
-        # height of the row
-        rowHeight = 0
-        for I in row:
-            rowHeight = max(rowHeight, I.shape[0])
+    # float values are interpreted as fractions of the image shape
+    if isinstance(dx, float):
+        dx = int(I.shape[1] * dx)
+    if isinstance(dy, float):
+        dy = int(I.shape[0] * dy)
 
-        R = None
-        for I in row:
-            # convert to common data type and color mode
-            if gray:
-                J = asgray(I)
-            else:
-                J = ascolor(I)
-            J = convert(J, dtype)
-
-            # ensure that image has the height of the row
-            gap = rowHeight - J.shape[0]
-            if gap > 0:
-                if gray:
-                    Z = np.zeros(shape=(gap, J.shape[1]), dtype=dtype)
-                else:
-                    Z = np.zeros(shape=(gap, J.shape[1], 3), dtype=dtype)
-                J = np.vstack((J, Z))
-
-            # add to current row image
-            if R is None:
-                R = J
-            else:
-                R = np.hstack((R, J))
-
-        width = max(width, R.shape[1])
-        Rs.append(R)
-
-    # step 2/2: construct stacked image from the row images
-    S = None
-    for R in Rs:
-        # ensure that the row image has the width of the final image
-        gap = width - R.shape[1]
-        if gap > 0:
-            if gray:
-                Z = np.zeros(shape=(R.shape[0], gap), dtype=dtype)
-            else:
-                Z = np.zeros(shape=(R.shape[0], gap, 3), dtype=dtype)
-            R = np.hstack((R, Z))
-
-        # add to final image
-        if S is None:
-            S = R
-        else:
-            S = np.vstack((S, R))
-
+    # shift
+    S = I.copy()
+    S = np.roll(S, dy, axis=0)
+    S = np.roll(S, dx, axis=1)
     return S
 
 
-def pinfo(I):
+def rotate(I, degree):
     """
-    Prints info about the image `I`.
+    Rotate the image `I` counter-clock-wise by the angle specified by `degree`.
+
+    Valid values for the angle are `0`, `90`, `180`, and `270`.
     """
 
-    info = collections.OrderedDict()
-    info["shape"] = I.shape
-    #info["shape (squeezed)"] = I.squeeze().shape
-    info["elements"] = np.prod(I.shape)
-    info["dtype"] = I.dtype
-    info["mean"] = np.mean(I)
-    info["std"] = np.std(I)
-    info["min"] = np.min(I)
-    info["1st quartile"] = np.percentile(I, 25.0)
-    info["median"] = np.median(I)
-    info["3rd quartile"] = np.percentile(I, 75.0)
-    info["max"] = np.max(I)
-    counter = collections.Counter(I.flatten().tolist())
-    (counterArgmax, counterMax) = counter.most_common(1)[0]
-    info["mode"] = "{} ({}%)".format(counterArgmax, round(100.0 * counterMax / info["elements"], 2))
-
-    print("=" * 40)
-    maxKeyLength = max(len(key) for key in info.keys())
-    for key in info.keys():
-        print(("{key:.<" + str(maxKeyLength) + "} = {value}").format(key=(key + " ")[:maxKeyLength], value=info[key]))
+    degree = int(degree) % 360
+    if degree not in (0, 90, 180, 270):
+        raise ValueError("Unsupported rotation angle")
+    k = degree // 90
+    if k > 0:
+        return np.rot90(I, k)
+    else:
+        return I
 
 
 ###
@@ -729,3 +704,50 @@ def hommap(M, x):
     """
 
     return unhom(np.dot(M, hom(x)))
+
+
+###
+#%% image-image operations
+###
+
+
+def imdiff(I, J):
+    """
+    Clipped image subtraction `I - J`.
+    """
+
+    dtype = tcommon((I.dtype, J.dtype))
+    lower, upper = trange("float")
+    convert(I, "float") - convert(J, "float")
+
+
+###
+#%% development
+###
+
+
+def pinfo(I):
+    """
+    Prints info about the image `I`.
+    """
+
+    info = collections.OrderedDict()
+    info["shape"] = I.shape
+    #info["shape (squeezed)"] = I.squeeze().shape
+    info["elements"] = np.prod(I.shape)
+    info["dtype"] = I.dtype
+    info["mean"] = np.mean(I)
+    info["std"] = np.std(I)
+    info["min"] = np.min(I)
+    info["1st quartile"] = np.percentile(I, 25.0)
+    info["median"] = np.median(I)
+    info["3rd quartile"] = np.percentile(I, 75.0)
+    info["max"] = np.max(I)
+    counter = collections.Counter(I.flatten().tolist())
+    (counterArgmax, counterMax) = counter.most_common(1)[0]
+    info["mode"] = "{} ({}%)".format(counterArgmax, round(100.0 * counterMax / info["elements"], 2))
+
+    print("=" * 40)
+    maxKeyLength = max(len(key) for key in info.keys())
+    for key in info.keys():
+        print(("{key:.<" + str(maxKeyLength) + "} = {value}").format(key=(key + " ")[:maxKeyLength], value=info[key]))
