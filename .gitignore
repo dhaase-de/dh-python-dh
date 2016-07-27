@@ -11,3 +11,6 @@ dist/
 *.rst
 !README.rst
 
+# changes to this file must not be committed - see scripts/version-setFromGit.sh
+dh/VERSION.txt
+
