@@ -2,7 +2,7 @@
 
 import os
 import os.path
-import re
+
 
 try:
     # setuptools has wheel support (command "bdist_wheel"), but is not in the standard library
@@ -19,22 +19,32 @@ except ImportError:
 ## preparations
 ##
 
+
 # package dirs
 packageName = "dh"
 packageDir = os.path.abspath(os.path.dirname(__file__))
 sourceDir = os.path.join(packageDir, packageName)
 
-# parse version from package's main file
-version = None
-versionFilename = os.path.join(sourceDir, "__init__.py")
-with open(versionFilename, "r") as f:
-    for line in f:
-        versionMatch = re.search("^\s*__version__\s*=\s*\"([0-9]+\.[0-9]+\.[0-9]+(-dev)?)\"", line)
-        if versionMatch is not None:
-            version = versionMatch.group(1)
-            break
-if version is None:
-    raise RuntimeError("Could not parse version from file '{}'".format(versionFilename))
+
+# read version number from text file
+try:
+    versionFilename = os.path.join(sourceDir, "VERSION.txt")
+    with open(versionFilename, "r") as f:
+        for line in f:
+            line = line.strip()
+            if (line == "") or (line[0] == "#"):
+                # ignore empty lines and comments
+                continue
+            else:
+                # the first valid line will be used as version number
+                version = line
+                break
+        else:
+            # end of file, version was not found
+            raise RuntimeError("Found no valid version number in file '{}'".format(versionFilename))
+except Exception as e:
+    raise RuntimeError("Failed to get version number from file '{}' (error: '{}')".format(versionFilename, e))
+
 
 # prepare package list (any directory under the source dir which contains an '__init__.py' file)
 packages = []
@@ -42,9 +52,11 @@ for (absDir, _, filenames) in os.walk(sourceDir):
     if "__init__.py" in filenames:
         packages.append(os.path.relpath(absDir, packageDir))
 
+
 ##
 ## main call
 ##
+
 
 setup(
     name=packageName,
@@ -52,7 +64,7 @@ setup(
     description="Personal Python package of Daniel Haase",
     author="Daniel Haase",
     packages=packages,
-    package_data={packageName: ["data/*.npy", "data/*.npz", "image/colormaps/*.json"]},
+    package_data={packageName: ["VERSION.txt", "data/*.npy", "data/*.npz", "image/colormaps/*.json"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
