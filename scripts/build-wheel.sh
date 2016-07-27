@@ -8,5 +8,8 @@ set -o nounset
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source "$SCRIPT_DIR"/setenv.sh
 
+# update version in file "dh/VERSION.txt"
+"$SCRIPT_DIR"/version-setFromGit.sh
+
 # run setup script
 cd "$PACKAGE_DIR" && ./setup.py bdist_wheel
