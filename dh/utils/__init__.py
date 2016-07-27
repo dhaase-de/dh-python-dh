@@ -740,23 +740,58 @@ def resolve(name):
 
 class Timer():
     """
-    Context manager to measure the time between entering and exiting.
-
-    After exiting the `with` block, the elapsed time in seconds can be
-    obtained by calling the `Timer` instance object.
+    Context manager to measure the time between entering, exiting, and certain
+    breakpoints ("splits").
     """
 
+    def __init__(self, name=None):
+        self._name = name
+
     def __enter__(self):
-        self.diff = None
-        self.start = time.clock()
+        self.start()
         return self
 
-    def __exit__(self, *args):
-        self.end = time.clock()
-        self.diff = max(0, self.end - self.start)
+    def __exit__(self, exType, exValue, exTraceback):
+        self.stop()
 
-    def __call__(self):
-        return self.diff
+    def reset(self):
+        self._splits = []
+        self._t0 = time.time()
+
+    def start(self):
+        self.reset()
+        self.split("__START__")
+
+    def stop(self):
+        self.split("__STOP__")
+
+    def split(self, name=None):
+        t = max(time.time() - self._t0, 0.0)
+        if name is None:
+            name = "__SPLIT_{}__".format(len(self._splits))
+        self._splits.append({
+            "name": name,
+            "t": t,
+        })
+
+    def __str__(self):
+        """
+        Return a string of the measured results formatted as a table.
+        """
+
+        ts = [split["t"] for split in self._splits]
+        dts = list(diff(ts))
+        #dts.append(0.0)
+
+        rows = []
+        for (splitFrom, splitTo, dt) in zip(self._splits[:-1], self._splits[1:], dts):
+            rows.append((
+                ("" if self._name is None else "{}.".format(self._name)) + splitFrom["name"],
+                 ("" if self._name is None else "{}.".format(self._name)) + splitTo["name"],
+                dt,
+                splitTo["t"],
+            ))
+        return table(rows, headers=("From", "To", "Duration [s]", "Total [s]"))
 
 
 def _pdeco(callerName, fName, message):
