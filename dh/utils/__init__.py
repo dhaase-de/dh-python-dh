@@ -516,6 +516,12 @@ def table(*args, **kwargs):
 def ptable(*args, **kwargs):
     """
     Prints the table formatted via the function :func:`dh.utils.table`.
+
+    >>> ptable([["row1", 12.34], ["row2", 5.6789]])
+    ----  -------
+    row1  12.34
+    row2   5.6789
+    ----  -------
     """
 
     print(table(*args, **kwargs))
