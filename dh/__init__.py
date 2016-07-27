@@ -9,8 +9,8 @@ from warnings import warn
 # read version number from text file
 try:
     _versionFilename = join(dirname(abspath(__file__)), "VERSION.txt")
-    with open(_versionFilename, "r") as f:
-        for line in f:
+    with open(_versionFilename, "r") as _f:
+        for line in _f:
             line = line.strip()
             if (line == "") or (line[0] == "#"):
                 # ignore empty lines and comments
@@ -31,5 +31,9 @@ finally:
     del abspath
     del dirname
     del join
-    del f
+    del warn
     del _versionFilename
+    try:
+        del _f
+    except NameError:
+        pass

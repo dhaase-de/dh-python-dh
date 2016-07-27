@@ -41,9 +41,9 @@ try:
                 break
         else:
             # end of file, version was not found
-            raise RuntimeError("Found no valid version number in file '{}'".format(versionFilename))
+            raise RuntimeError("Found no valid version number in file '{}' - run 'scripts/version-setFromGit.sh' first or use the build scripts to build/install this package".format(versionFilename))
 except Exception as e:
-    raise RuntimeError("Failed to get version number from file '{}' (error: '{}')".format(versionFilename, e))
+    raise RuntimeError("Failed to get version number from file '{}' (error: '{}') - run 'scripts/version-setFromGit.sh' first or use the build scripts to build/install this package".format(versionFilename, e))
 
 
 # prepare package list (any directory under the source dir which contains an '__init__.py' file)
