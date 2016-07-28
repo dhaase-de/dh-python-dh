@@ -32,6 +32,8 @@ cat <<EOF >"$VERSION_FILE"
 # variable should be up-to-date with the actual version.
 #
 # !!! WARNING: DO NOT EDIT, DO NOT COMMIT THIS FILE !!!
+
 $VERSION
+
 EOF
 echo "Saved version number '$VERSION' to file '$VERSION_FILE'"
