@@ -33,7 +33,7 @@ def convert():
 def imdiff():
     A = np.array([0, 1, 2, 3, 4, 255], dtype="uint8")
     B = np.array([1, 0, 2, 255, 2, 2], dtype="uint8")
-    print(dh.image.imdiff(A, B))
+    dh.image.pinfo(dh.image.imdiff(A, B))
 
 
 if __name__ == "__main__":

@@ -65,6 +65,10 @@ def imread(filename, color=False):
     is grayscale.
     """
 
+    # check if file exists
+    if not os.path.exists(filename):
+        raise RuntimeError("Image file '{}' does not exist".format(filename))
+
     # flags - select grayscale or color mode
     flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_COLOR if color else cv2.IMREAD_GRAYSCALE)
 
@@ -79,12 +83,19 @@ def imread(filename, color=False):
 
 
 @CV2
-def imwrite(filename, I):
+def imwrite(filename, I, mkpdir=True):
     """
     Write image `I` to file `filename`.
+
+    If `mkpdir` is `True`, the parent dir of the given filename is created
+    before saving the image.
     """
 
     # TODO: also cover case of .npy and .npz files
+
+    # create parent dir
+    if mkpdir:
+        dh.utils.mkpdir(filename)
 
     # BGR -> RGB
     if iscolor(I):
@@ -747,23 +758,25 @@ def pinfo(I):
     Prints info about the image `I`.
     """
 
-    info = collections.OrderedDict()
-    info["shape"] = I.shape
-    #info["shape (squeezed)"] = I.squeeze().shape
-    info["elements"] = np.prod(I.shape)
-    info["dtype"] = I.dtype
-    info["mean"] = np.mean(I)
-    info["std"] = np.std(I)
-    info["min"] = np.min(I)
-    info["1st quartile"] = np.percentile(I, 25.0)
-    info["median"] = np.median(I)
-    info["3rd quartile"] = np.percentile(I, 75.0)
-    info["max"] = np.max(I)
     counter = collections.Counter(I.flatten().tolist())
     (counterArgmax, counterMax) = counter.most_common(1)[0]
-    info["mode"] = "{} ({}%)".format(counterArgmax, round(100.0 * counterMax / info["elements"], 2))
+    #("mode", "{} ({}%)".format(counterArgmax, round(100.0 * counterMax / info["elements"], 2))),
 
-    print("=" * 40)
-    maxKeyLength = max(len(key) for key in info.keys())
-    for key in info.keys():
-        print(("{key:.<" + str(maxKeyLength) + "} = {value}").format(key=(key + " ")[:maxKeyLength], value=info[key]))
+    info = (
+        ("shape", I.shape),
+        #("elements"], np.prod(I.shape)),
+        ("dtype", I.dtype),
+        ("mean", np.mean(I)),
+        ("std", np.std(I)),
+        ("min", np.min(I)),
+        ("1st quartile", np.percentile(I, 25.0)),
+        ("median", np.median(I)),
+        ("3rd quartile", np.percentile(I, 75.0)),
+        ("max", np.max(I)),
+     )
+
+    #print("=" * 40)
+    #maxKeyLength = max(len(key) for key in info.keys())
+    #for key in info.keys():
+    #    print(("{key:.<" + str(maxKeyLength) + "} = {value}").format(key=(key + " ")[:maxKeyLength], value=info[key]))
+    dh.utils.ptable(info)
