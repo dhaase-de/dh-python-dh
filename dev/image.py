@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import numpy as np
+
 import dh.data
 import dh.image
 
@@ -23,5 +25,16 @@ def clip():
     dh.image.imshow(I, wait = 50)
 
 
+def convert():
+    A = np.array([[-12]], dtype = "float")
+    print(dh.image.convert(A, "uint8"))
+
+
+def imdiff():
+    A = np.array([0, 1, 2, 3, 4, 255], dtype="uint8")
+    B = np.array([1, 0, 2, 255, 2, 2], dtype="uint8")
+    print(dh.image.imdiff(A, B))
+
+
 if __name__ == "__main__":
-    clip()
+    imdiff()

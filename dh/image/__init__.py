@@ -202,6 +202,20 @@ def stack(Is, dtype=None, gray=None):
 ###
 
 
+def eqtype(I, J):
+    """
+    Ensure that `I` and `J` have the same NumPy type.
+
+    If both images have the same type, returns the type name as string.
+    Otherwise, a `ValueError` is raised.
+    """
+
+    if I.dtype != J.dtype:
+        raise ValueError("Images have different NumPy types ('{}', '{}')".format(I.dtype, J.dtype))
+    else:
+        return I.dtype
+
+
 def tcommon(dtypes):
     """
     For a given vector `dtypes` of types, returns the type which supports
@@ -266,14 +280,20 @@ def convert(I, dtype):
     Converts image `I` to NumPy type given by the string `dtype` and scales the
     intensity values accordingly.
 
-    Returns always a copy of the data, even for equal source and target types.
+    Intensity values are always clipped to the allowed range (even for
+    identical source and target types). Returns always a copy of the data, even
+    for equal source and target types.
     """
 
+    # clip image against its source dtype (important for floats)
+    (tLower, tUpper) = trange(I.dtype)
+    J = clip(I, tLower, tUpper)
+
     if I.dtype == dtype:
-        return I.copy()
+        return J
     else:
         scale = trange(dtype)[1] / trange(I.dtype)[1]
-        return (I.astype("float") * scale).astype(dtype)
+        return (J.astype("float") * scale).astype(dtype)
 
 
 ###
@@ -503,15 +523,18 @@ def clip(I, lower=None, upper=None):
     """
     Clips the image pixel values to the interval [`lower`, `upper`], and
     preserves the image type.
+
+    Always returns a copy of the data, even if both interval ends are `None`.
     """
 
-    dtype = I.dtype
+    J = I.copy()
+    dtype = J.dtype
     (tLower, tUpper) = trange(dtype)
     if lower is not None:
-        I = np.maximum(I, np.array((dh.utils.sclip(lower, tLower, tUpper),), dtype=dtype))
+        J = np.maximum(I, np.array((dh.utils.sclip(lower, tLower, tUpper),), dtype=dtype))
     if upper is not None:
-        I = np.minimum(I, np.array((dh.utils.sclip(upper, tLower, tUpper),), dtype=dtype))
-    return I
+        J = np.minimum(J, np.array((dh.utils.sclip(upper, tLower, tUpper),), dtype=dtype))
+    return J
 
 
 def normalize(I, mode="minmax", **kwargs):
@@ -702,11 +725,16 @@ def hommap(M, x):
 def imdiff(I, J):
     """
     Clipped image subtraction `I - J`.
+
+    Both images need to have the same NumPy type. The result image has the same
+    type as the input images and is clipped against the type's valid intensity
+    range.
     """
 
-    dtype = tcommon((I.dtype, J.dtype))
-    lower, upper = trange("float")
-    convert(I, "float") - convert(J, "float")
+    dtype = eqtype(I, J)
+    X = convert(I, "float")
+    Y = convert(J, "float")
+    return convert(X - Y, dtype)
 
 
 ###
