@@ -14,7 +14,7 @@ def stack():
     I5 = dh.data.grid([200, 200])
 
     S = dh.image.stack([[I1, I2], [I3, I4], [I5]])
-    dh.image.imshow(S)
+    dh.image.imshow(S, colormap="jet", invert=True)
 
 
 def clip():
@@ -37,4 +37,4 @@ def imdiff():
 
 
 if __name__ == "__main__":
-    imdiff()
+    stack()

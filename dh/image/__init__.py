@@ -4,7 +4,7 @@ Functions for image handling, image processing, and computer vision.
 All images are represented as NumPy arrays (in the form `I[y, x]` for gray
 scale images and `I[y, x, channel]` for color images, with RGB channel order),
 and so NumPy (but only NumPy) is required for this module. Image-related
-functions which require further thirdparty modules (e.g., scikit-image, OpenCV,
+functions which require further thirdparty modules (e.g., OpenCV, scikit-image,
 mahotas, PIL) are optional.
 """
 
@@ -14,7 +14,6 @@ import json
 import os.path
 
 import numpy as np
-import numpy.fft
 
 import dh.gui
 import dh.utils
@@ -108,7 +107,7 @@ def imwrite(filename, I, mkpdir=True):
 
 
 @CV2
-def imshow(I, wait=0, scale=None, windowName="imshow"):
+def imshow(I, wait=0, scale=None, invert=False, colormap=None, windowName="imshow"):
     """
     Show image on the screen.
     """
@@ -128,7 +127,15 @@ def imshow(I, wait=0, scale=None, windowName="imshow"):
     # resized image
     J = cv2.resize(J, None, None, scale, scale, interpolationType)
 
-    # RGB -> BGR
+    # invert
+    if invert:
+        J = dh.image.invert(J)
+
+    # apply colormap
+    if colormap is not None:
+        J = colorize(asgray(J), c=colormap)
+
+    # RGB -> BGR (for OpenCV)
     if iscolor(J):
         J = J[:,:,::-1]
 
