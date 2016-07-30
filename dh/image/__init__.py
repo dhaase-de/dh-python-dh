@@ -600,15 +600,6 @@ def normalize(I, mode="minmax", **kwargs):
 
 
 ###
-#%% frequency domain
-###
-
-
-def selffiltering():
-    raise NotImplementedError("TODO")
-
-
-###
 #%% geometric transformations
 ###
 
@@ -733,6 +724,15 @@ def hommap(M, x):
     """
 
     return unhom(np.dot(M, hom(x)))
+
+
+###
+#%% frequency domain
+###
+
+
+def selffiltering():
+    raise NotImplementedError("TODO")
 
 
 ###
