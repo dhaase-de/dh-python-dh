@@ -114,6 +114,17 @@ def hzip(x):
     return zip(x[:N], x[N:])
 
 
+def minmax(*args, **kwargs):
+    """
+    Returns a tuple containing the min and max value of the given arguments.
+
+    For a description of the allowed arguments, see the builtin functions
+    :func:`min()` and :func:`max()`.
+    """
+
+    return (min(*args, **kwargs), max(*args, **kwargs))
+
+
 def unique(x):
     """
     Yields unique values of `x`, preserving the order of the items.
@@ -326,24 +337,39 @@ class omedian():
         return median(self.values)
 
 
-def sclip(x, lower=None, upper=None):
+def sclip(x, lower=None, upper=None, keepType=False):
     """
     Clips the scalar value `x` to the interval [`lower`, `upper`].
 
-    Each of `lower` and `upper` can be `None`, meaning no clipping.
-    The returned result has the same type as the input `x`.
+    Each of `lower` and `upper` can be `None`, meaning no clipping. If
+    `keepType` is `True`, the returned result has the same type as the input
+    `x`, otherwise it has either the type of `x` (if it was not clipped) or the
+    type of the `lower` or the `upper` value which was used for clipping.
 
-    >>> sclip(123.456, 0, 100)
+    >>> sclip(-123.456, 0, 100, False)
+    0
+
+    >>> sclip(-123.456, 0, 100, True)
+    0.0
+
+    >>> sclip(123.456, 0, 100, False)
+    100
+
+    >>> sclip(123.456, 0, 100, True)
     100.0
     """
 
     xType = type(x)
     c = x
     if lower is not None:
-        c = xType(max(lower, c))
+        c = max(lower, c)
     if upper is not None:
-        c = xType(min(upper, c))
-    return c
+        c = min(upper, c)
+
+    if keepType:
+        return xType(c)
+    else:
+        return c
 
 
 def tinterval(x, lowerOld, upperOld, lowerNew, upperNew):
