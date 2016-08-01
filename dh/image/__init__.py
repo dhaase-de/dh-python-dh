@@ -50,7 +50,7 @@ def CV2(f):
 
 
 ###
-#%% load, save, show
+#%% basic operations
 ###
 
 
@@ -109,23 +109,21 @@ def imwrite(filename, I, mkpdir=True):
 @CV2
 def imshow(I, wait=0, scale=None, invert=False, colormap=None, windowName="imshow"):
     """
-    Show image on the screen.
+    Show image `I` on the screen.
     """
 
-    # scale of the image
+    # resize image
     if scale is None:
+        # try to find a good scale factor automatically
         (W, H) = dh.gui.screenres()
         if (W is not None) and (H is not None):
             scale = 0.85 * min(H / I.shape[0], W / I.shape[1])
         else:
             scale = 850.0 / max(I.shape)
-    interpolationType = cv2.INTER_CUBIC if scale > 1.0 else cv2.INTER_NEAREST
+    J = resize(I, scale)
 
     # convert to 8 bit
     J = convert(I, "uint8")
-
-    # resized image
-    J = cv2.resize(J, None, None, scale, scale, interpolationType)
 
     # invert
     if invert:
@@ -143,6 +141,20 @@ def imshow(I, wait=0, scale=None, invert=False, colormap=None, windowName="imsho
     key = cv2.waitKey(wait)
 
     return key
+
+
+@CV2
+def resize(I, scale):
+    """
+    Resize the image `I` by a factor of `scale`, while keeping the original
+    aspect ratio.
+
+    If `scale` is greater than `1.0`, cubic interpolation is used, otherwise
+    nearest-neighbor interpolation.
+    """
+
+    interpolationType = cv2.INTER_CUBIC if (scale > 1.0) else cv2.INTER_NEAREST
+    return cv2.resize(I, None, None, scale, scale, interpolationType)
 
 
 def stack(Is, dtype=None, gray=None):
@@ -216,7 +228,7 @@ def stack(Is, dtype=None, gray=None):
 
 
 ###
-#%% type conversion
+#%% data type and color mode handling
 ###
 
 
@@ -312,11 +324,6 @@ def convert(I, dtype):
     else:
         scale = trange(dtype)[1] / trange(I.dtype)[1]
         return (J.astype("float") * scale).astype(dtype)
-
-
-###
-#%% color conversion
-###
 
 
 def nchannels(I):
@@ -600,7 +607,7 @@ def normalize(I, mode="minmax", **kwargs):
 
 
 ###
-#%% geometric transformations
+#%% geometric and coordinate transformations
 ###
 
 
@@ -645,11 +652,6 @@ def rotate(I, degree):
         return np.rot90(I, k)
     else:
         return I
-
-
-###
-#%% coordinates
-###
 
 
 def tir(*args):
@@ -753,6 +755,39 @@ def imdiff(I, J):
     X = convert(I, "float")
     Y = convert(J, "float")
     return convert(X - Y, dtype)
+
+
+###
+#%% higher level operations
+###
+
+
+@CV2
+def dog(I, sigma1, sigma2, absdiff=False):
+    """
+    Difference-of-Gaussian (band-pass) filter for image `I`.
+
+    Returns the difference image between `I` filtered by a Gaussian with sigma
+    `min(sigma1, sigma2)` and `I` filtered by a Gaussian with sigma
+    `max(sigma1, sigma2)`. The result has the same data type as `I`.
+
+    If `absdiff` is `False`, the difference is signed and a difference of zero
+    results in the "middle" intensity value for `I`'s data type (e.g., `127`
+    for `uint8`). Otherwise, the absolute difference is used, where a
+    difference of zero results in the minimum intensity value for `I`'s data
+    type (e.g., `0` for `uint8`).
+    """
+
+    dtype = I.dtype
+    (sigmaL, sigmaH) = tuple(dh.utils.sclip(value, lower=0.001, upper=None) for value in dh.utils.minmax(sigma1, sigma2))
+    L = convert(cv2.GaussianBlur(I, None, sigmaL), "float")
+    H = convert(cv2.GaussianBlur(I, None, sigmaH), "float")
+
+    if absdiff:
+        D = np.abs(L - H)
+    else:
+        D = (L - H) * 0.5 + 0.5
+    return convert(D, dtype)
 
 
 ###

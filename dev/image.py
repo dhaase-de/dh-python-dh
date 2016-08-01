@@ -36,5 +36,11 @@ def imdiff():
     dh.image.pinfo(dh.image.imdiff(A, B))
 
 
+def dog():
+    I = dh.image.asgray(dh.data.lena())
+    D = dh.image.dog(I, 0.25, 3.0, False)
+    dh.image.imshow(D, wait = 20)
+
+
 if __name__ == "__main__":
-    stack()
+    dog()
