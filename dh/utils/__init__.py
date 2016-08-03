@@ -8,6 +8,7 @@ third-party modules included in this package to ensure maximum compatibility.
 import base64
 import collections
 import colorsys
+import datetime
 import errno
 import functools
 import hashlib
@@ -16,6 +17,7 @@ import inspect
 import math
 import os
 import pprint
+import shutil
 import time
 
 import dh.thirdparty.atomicwrites
@@ -528,6 +530,15 @@ def ftime(secs):
     return res
 
 
+def dtstr():
+    """
+    Returns the current timestamp string including date, time, and
+    microseconds.
+    """
+
+    return datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
+
+
 def table(*args, **kwargs):
     """
     Format an iterable of iterables or a similar construct (e.g., list of
@@ -598,11 +609,36 @@ def mkpdir(filename):
     mkdir(os.path.dirname(filename))
 
 
+def fbak(filename):
+    """
+    Backs up the file given by `filename` by creating a copy in the same dir,
+    with a timestamp added to the filename before the file extension.
+    """
+
+    t = dtstr()
+    (basename, ext) = os.path.splitext(filename)
+    filenameBak = "{}.bak-{}{}".format(basename, t, ext)
+    try:
+        shutil.copy2(filename, filenameBak)
+    except FileNotFoundError:
+        pass
+
+
+def bopen(file, *args, **kwargs):
+    """
+    Like :func:`open()`, but backs up the file before opening it.
+    """
+
+    fbak(filename=file)
+    return open(file, *args, **kwargs)
+
+
 def awopen(*args, **kwargs):
     """
-    Replacement for Python's `open` which ensures that writing is atomic.
+    Like :func:`open()`, but ensures that writing is atomic.
 
-    This function is an alias for `dh.thirdparty.atomicwrites.atomic_write`.
+    This function is an alias for
+    :func:`dh.thirdparty.atomicwrites.atomic_write()`.
     """
 
     return dh.thirdparty.atomicwrites.atomic_write(*args, **kwargs)
@@ -713,6 +749,21 @@ def timport(name):
         return importlib.import_module(name)
     except ImportError:
         return None
+
+
+###
+#%% user interaction
+###
+
+
+def qkeys():
+    """
+    Returns a tuple of key codes ('unicode code points', as returned by
+    :func:`ord()`) which correspond to key presses indicating the desire to
+    quit (`<ESC>`, `q`, `Q`).
+    """
+
+    return (27, ord("q"), ord("Q"))
 
 
 ###
