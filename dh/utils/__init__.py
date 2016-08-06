@@ -163,6 +163,66 @@ def which(x):
             yield index
 
 
+def along(x):
+    """
+    Yields the element number for each item in the iterable `x`.
+
+    >>> list(along(['a', 'b', 'c']))
+    [0, 1, 2]
+    """
+
+    for (nItem, item) in enumerate(x):
+        yield nItem
+
+
+def isnth(x, each, offset):
+    """
+    Generator which for each item of the iterable `x` returns `True` each n-th
+    time (specified by `each`) and `False` otherwise, with an offset specified
+    by `offset`.
+
+    >>> list(isnth(range(9), 3, 1))
+    [False, True, False, False, True, False, False, True, False]
+
+    .. seealso:: :func:`dh.utils.zisnth`, :func:`dh.utils.nth` for related
+                functionality.
+    """
+
+    offset = (offset % each)
+    for nItem in along(x):
+        yield ((nItem % each) == offset)
+
+
+def zisnth(x, *args, **kwargs):
+    """
+    Zips :func:`dh.utils.isnth` with the original iterable `x`, similar to
+    the builtin :func:`enumerate()`.
+
+    >>> list(zisnth(range(9), 3, 1))
+    [(False, 0), (True, 1), (False, 2), (False, 3), (True, 4), (False, 5), (False, 6), (True, 7), (False, 8)]
+
+    .. seealso:: :func:`dh.utils.isnth`, :func:`dh.utils.nth` for related
+                functionality.
+    """
+
+    return zip(isnth(x, *args, **kwargs), x)
+
+
+def nth(*args, **kwargs):
+    """
+    Generator which yields each n-th item of the iterable `x` (specified by
+    `each`), with an offset specified by `offset`.
+
+    >>> list(nth(range(9), 3, 1))
+    [1, 4, 7]
+
+    .. seealso:: :func:`dh.utils.isnth`, :func:`dh.utils.zisnth` for related
+                functionality.
+    """
+
+    return which(isnth(*args, **kwargs))
+
+
 ###
 #%% math
 ###
