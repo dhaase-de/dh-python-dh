@@ -122,6 +122,9 @@ def minmax(*args, **kwargs):
 
     For a description of the allowed arguments, see the builtin functions
     :func:`min()` and :func:`max()`.
+
+    >>> minmax([1, -2, 3, 4, 1, 0, -2, 5, 1, 0])
+    (-2, 5)
     """
 
     return (min(*args, **kwargs), max(*args, **kwargs))
@@ -661,6 +664,16 @@ def mkdir(dirname):
             raise
 
 
+def exdir(dirname):
+    """
+    Same as :func:`dh.utils.mkdir`, but returns the dirname after the dir was
+    created.
+    """
+
+    mkdir(dirname)
+    return dirname
+
+
 def mkpdir(filename):
     """
     Creates the parent directory of `filename` if it does not exists already.
@@ -821,6 +834,9 @@ def qkeys():
     Returns a tuple of key codes ('unicode code points', as returned by
     :func:`ord()`) which correspond to key presses indicating the desire to
     quit (`<ESC>`, `q`, `Q`).
+
+    >>> qkeys()
+    (27, 113, 81)
     """
 
     return (27, ord("q"), ord("Q"))
