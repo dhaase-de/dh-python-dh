@@ -39,7 +39,7 @@ def imdiff():
 def dog():
     I = dh.image.asgray(dh.data.lena())
     D = dh.image.dog(I, 0.25, 3.0, False)
-    dh.image.imshow(D, wait = 20)
+    dh.image.imshow(D, wait = 20, scale = 0.5, normalize = "percentile", q = 1.0)
 
 
 if __name__ == "__main__":

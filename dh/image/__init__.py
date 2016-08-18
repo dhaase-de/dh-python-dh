@@ -107,7 +107,7 @@ def imwrite(filename, I, mkpdir=True):
 
 
 @CV2
-def imshow(I, wait=0, scale=None, invert=False, colormap=None, windowName="imshow"):
+def imshow(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="imshow", **kwargs):
     """
     Show image `I` on the screen.
     """
@@ -121,6 +121,10 @@ def imshow(I, wait=0, scale=None, invert=False, colormap=None, windowName="imsho
         else:
             scale = 850.0 / max(I.shape)
     J = resize(I, scale)
+
+    # normalize intensity values
+    if normalize is not None:
+        J = dh.image.normalize(J, mode=normalize, **kwargs)
 
     # convert to 8 bit
     J = convert(J, "uint8")
