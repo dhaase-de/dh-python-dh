@@ -123,7 +123,7 @@ def imshow(I, wait=0, scale=None, invert=False, colormap=None, windowName="imsho
     J = resize(I, scale)
 
     # convert to 8 bit
-    J = convert(I, "uint8")
+    J = convert(J, "uint8")
 
     # invert
     if invert:
