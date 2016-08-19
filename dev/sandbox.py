@@ -19,16 +19,10 @@ def timer():
     print(t)
 
 
-def main():
-    rows = []
-    for nRow, row in enumerate(dh.utils.pbar(range(1250), unit="rows")):
-        rows.append({
-            "X": 9.37 + nRow * math.pi,
-            "Y": "hallo",
-        })
-        time.sleep(0.1)
-    dh.utils.ptable(rows)
+def avdict():
+    a = dh.utils.avdict(x = 3, y = 2)
+    print(a.y)
 
 
 if __name__ == "__main__":
-    timer()
+    avdict()

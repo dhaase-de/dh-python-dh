@@ -734,7 +734,15 @@ class avdict():
     123
     >>> d["foo"].bar["xyz"]
     123
+
+    >>> d = avdict(x = 1, y = 2)
+    >>> d.x
+    1
     """
+
+    def __init__(self, **kwargs):
+        for (key, value) in kwargs.items():
+            self[key] = value
 
     def __getitem__(self, key):
         """
