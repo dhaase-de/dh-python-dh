@@ -480,6 +480,8 @@ def fhex(x, nDigits=2, prefix="0x", upper=True):
 
     >>> fhex(255, 4, "", False)
     '00ff'
+
+    .. seealso:: http://stackoverflow.com/a/12638477/1913780
     """
 
     return "{prefix}{x:0{nDigits}{case}}".format(
