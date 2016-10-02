@@ -14,6 +14,7 @@ import functools
 import hashlib
 import importlib
 import inspect
+import itertools
 import math
 import os
 import pprint
@@ -224,6 +225,20 @@ def nth(*args, **kwargs):
     """
 
     return which(isnth(*args, **kwargs))
+
+
+def powerset(x):
+    """
+    Generator which yields each element of the powerset of the iterable `x`.
+
+    >>> list(powerset([1, 2, 3]))
+    [(), (1,), (2,), (3,), (1, 2), (1, 3), (2, 3), (1, 2, 3)]
+
+    .. seealso:: http://docs.python.org/library/itertools.html#recipes
+    """
+
+    L = list(x)
+    return itertools.chain.from_iterable(itertools.combinations(L, k) for k in range(len(L) + 1))
 
 
 ###
