@@ -469,6 +469,27 @@ def tinterval(x, lowerOld, upperOld, lowerNew, upperNew):
 ###
 
 
+def fhex(x, nDigits=2, prefix="0x", upper=True):
+    """
+    Returns a hex string of the number `x`, with a fixed number `nDigits` of
+    digits, prefixed by `prefix`. If `upper` is `True`, hex digits are
+    upper-case, otherwise lower-case.
+
+    >>> fhex(15)
+    '0x0F'
+
+    >>> fhex(255, 4, "", False)
+    '00ff'
+    """
+
+    return "{prefix}{x:0{nDigits}{case}}".format(
+        prefix=prefix,
+        x=x,
+        nDigits=nDigits,
+        case="X" if upper else "x",
+    )
+
+
 def numerus(count, wordSingular, wordPlural=None):
     """
     Return the singular `wordSingular` or the plural form `wordPlural` of a
