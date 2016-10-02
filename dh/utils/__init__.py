@@ -572,6 +572,19 @@ def ohash(x, outputFormat="hex", byteCount=64):
     return hashFormatted
 
 
+def capitalize(s):
+    """
+    Returns a capitalized version of the string `s`.
+
+    >>> capitalize("test")
+    'Test'
+
+    .. seealso:: http://stackoverflow.com/a/352513/1913780
+    """
+
+    return s[:1].upper() + s[1:]
+
+
 def tstr(s, maxLength=80, ellipsis="..."):
     """
     Truncates the string `s` and adds ellipsis such that the returned string
