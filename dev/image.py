@@ -42,5 +42,11 @@ def dog():
     dh.image.imshow(D, wait = 20, scale = 0.5, normalize = "percentile", q = 1.0)
 
 
+def resize():
+    I = dh.data.M().astype("uint8") * 20
+    R = dh.image.resize(I, 100.0)
+    dh.image.imshow(R, scale=1.0, wait=1000)
+
+
 if __name__ == "__main__":
-    dog()
+    resize()

@@ -153,11 +153,11 @@ def resize(I, scale):
     Resize the image `I` by a factor of `scale`, while keeping the original
     aspect ratio.
 
-    If `scale` is greater than `1.0`, cubic interpolation is used, otherwise
+    If `scale` is smaller than `1.0`, cubic interpolation is used, otherwise
     nearest-neighbor interpolation.
     """
 
-    interpolationType = cv2.INTER_CUBIC if (scale > 1.0) else cv2.INTER_NEAREST
+    interpolationType = cv2.INTER_CUBIC if (scale < 1.0) else cv2.INTER_NEAREST
     return cv2.resize(I, None, None, scale, scale, interpolationType)
 
 
