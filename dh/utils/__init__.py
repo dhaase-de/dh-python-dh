@@ -151,6 +151,22 @@ def unique(x):
             seen.append(item)
 
 
+def uids(x):
+    """
+    For each item in the iterable `x`, yields the position of the item in the
+    list of unique values of `x`.
+
+    >>> list(uids(["a", "b", "a", "c", "c"]))
+    [0, 1, 0, 2, 2]
+    """
+
+    U = {}
+    for item in x:
+        if item not in U:
+            U[item] = len(U)
+        yield U[item]
+
+
 def which(x):
     """
     Yields the indices of the items of `x` which evaluate to `True`.
