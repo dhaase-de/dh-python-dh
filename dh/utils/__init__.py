@@ -729,6 +729,8 @@ def mkdir(dirname):
     .. seealso:: http://stackoverflow.com/a/5032238/1913780
     """
 
+    if dirname == "":
+        return
     try:
         os.makedirs(dirname)
     except OSError as e:
