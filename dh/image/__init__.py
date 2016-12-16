@@ -128,7 +128,7 @@ def imshow(*args, **kwargs):
 
 
 @CV2
-def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="imshow", **kwargs):
+def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="show", **kwargs):
     """
     Show image `I` on the screen.
     """
@@ -172,19 +172,27 @@ def stack(Is, dtype=None, gray=None):
     """
     Stack images given by `Is` into one image.
 
-    `Is` must be a vector of vectors of images, defining rows and columns.
+    `Is` must be a vector of images (in which case the images are stacked
+    horozontally) or a vector of vectors of images, defining rows and columns.
     """
+
+    if isinstance(Is[0], np.ndarray):
+        rows = [Is]
+    elif isinstance(Is[0][0], np.ndarray):
+        rows = Is
+    else:
+        raise ValueError("Invalid argument 'Is' - must be vector of images or vector of vectors of images")
 
     # find common data type and color mode
     if dtype is None:
-        dtype = tcommon((I.dtype for row in Is for I in row))
+        dtype = tcommon((I.dtype for row in rows for I in row))
     if gray is None:
-        gray = all(isgray(I) for row in Is for I in row)
+        gray = all(isgray(I) for row in rows for I in row)
 
     # step 1/2: construct stacked image for each row
     Rs = []
     width = 0
-    for row in Is:
+    for row in rows:
         # height of the row
         rowHeight = 0
         for I in row:
