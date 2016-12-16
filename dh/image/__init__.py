@@ -50,12 +50,17 @@ def CV2(f):
 
 
 ###
-#%% basic operations
+#%% input & output
 ###
 
 
+def imread(*args, **kwargs):
+    dh.utils.deprecated("'imread' is deprecated, use 'load' instead")
+    return load(*args, **kwargs)
+
+
 @CV2
-def imread(filename, color=False):
+def load(filename, color=False):
     """
     Load image from file `filename` and return NumPy array.
 
@@ -81,8 +86,13 @@ def imread(filename, color=False):
     return I
 
 
+def imwrite(*args, **kwargs):
+    dh.utils.deprecated("'imwrite' is deprecated, use 'save' instead")
+    return save(*args, **kwargs)
+
+
 @CV2
-def imwrite(filename, I, mkpdir=True):
+def save(filename, I, mkpdir=True):
     """
     Write image `I` to file `filename`.
 
@@ -107,8 +117,18 @@ def imwrite(filename, I, mkpdir=True):
     return cv2.imwrite(filename=filename, img=J)
 
 
+###
+#%% visualization
+###
+
+
+def imshow(*args, **kwargs):
+    dh.utils.deprecated("'imshow' is deprecated, use 'show' instead")
+    return show(*args, **kwargs)
+
+
 @CV2
-def imshow(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="imshow", **kwargs):
+def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="imshow", **kwargs):
     """
     Show image `I` on the screen.
     """
@@ -146,20 +166,6 @@ def imshow(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, w
     key = cv2.waitKey(wait)
 
     return key
-
-
-@CV2
-def resize(I, scale):
-    """
-    Resize the image `I` by a factor of `scale`, while keeping the original
-    aspect ratio.
-
-    If `scale` is smaller than `1.0`, cubic interpolation is used, otherwise
-    nearest-neighbor interpolation.
-    """
-
-    interpolationType = cv2.INTER_CUBIC if (scale < 1.0) else cv2.INTER_NEAREST
-    return cv2.resize(I, None, None, scale, scale, interpolationType)
 
 
 def stack(Is, dtype=None, gray=None):
@@ -612,8 +618,22 @@ def normalize(I, mode="minmax", **kwargs):
 
 
 ###
-#%% geometric and coordinate transformations
+#%% geometric transformations
 ###
+
+
+@CV2
+def resize(I, scale):
+    """
+    Resize the image `I` by a factor of `scale`, while keeping the original
+    aspect ratio.
+
+    If `scale` is smaller than `1.0`, cubic interpolation is used, otherwise
+    nearest-neighbor interpolation.
+    """
+
+    interpolationType = cv2.INTER_CUBIC if (scale < 1.0) else cv2.INTER_NEAREST
+    return cv2.resize(I, None, None, scale, scale, interpolationType)
 
 
 def shift(I, dx=0, dy=None):
@@ -657,6 +677,11 @@ def rotate(I, degree):
         return np.rot90(I, k)
     else:
         return I
+
+
+###
+#%% cordinates
+###
 
 
 def tir(*args):

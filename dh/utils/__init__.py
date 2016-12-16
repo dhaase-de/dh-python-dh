@@ -20,6 +20,7 @@ import os
 import pprint
 import shutil
 import time
+import warnings
 
 import dh.thirdparty.atomicwrites
 import dh.thirdparty.tabulate
@@ -927,6 +928,10 @@ def qkeys():
 ###
 #%% development
 ###
+
+
+def deprecated(message):
+    warnings.warn(message, DeprecationWarning)
 
 
 def out(*names):
