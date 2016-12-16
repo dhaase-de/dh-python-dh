@@ -931,7 +931,14 @@ def qkeys():
 
 
 def deprecated(message):
-    warnings.warn(message, DeprecationWarning)
+    """
+    Raise a depracation warning with the specified `message`.
+
+    .. note: Raised `DeprecationWarning`s are ignored by default. See
+    http://stackoverflow.com/a/20960427/1913780 for details.
+    """
+
+    warnings.warn(message, DeprecationWarning, stacklevel=2)
 
 
 def out(*names):
