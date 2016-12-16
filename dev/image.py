@@ -13,8 +13,9 @@ def stack():
     I4 = dh.data.pal()
     I5 = dh.data.grid([200, 200])
 
-    S = dh.image.stack([[I1, I2], [I3, I4], [I5]])
-    dh.image.imshow(S, colormap="jet", invert=True)
+    #S = dh.image.stack([[I1, I2], [I3, I4], [I5]])
+    S = dh.image.stack([[I1, I2]])
+    dh.image.imshow(S, wait=10)
 
 
 def clip():
@@ -49,4 +50,4 @@ def resize():
 
 
 if __name__ == "__main__":
-    resize()
+    stack()
