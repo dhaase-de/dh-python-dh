@@ -90,7 +90,8 @@ def imwrite(filename, I, mkpdir=True):
     before saving the image.
     """
 
-    # TODO: also cover case of .npy and .npz files
+    if not isinstance(I, np.ndarray):
+        raise RuntimeError("Invalid image (type '{}')".format(type(I).__name__))
 
     # create parent dir
     if mkpdir:
