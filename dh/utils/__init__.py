@@ -117,18 +117,23 @@ def hzip(x):
     return zip(x[:N], x[N:])
 
 
-def minmax(*args, **kwargs):
+def minmax(x):
     """
-    Returns a tuple containing the min and max value of the given arguments.
+    Returns a tuple containing the min and max value of the iterable `x`.
 
-    For a description of the allowed arguments, see the builtin functions
-    :func:`min()` and :func:`max()`.
+    Note: this also works if `x` is a generator.
 
     >>> minmax([1, -2, 3, 4, 1, 0, -2, 5, 1, 0])
     (-2, 5)
     """
 
-    return (min(*args, **kwargs), max(*args, **kwargs))
+    (minItem, maxItem) = (None, None)
+    for item in x:
+        if (minItem is None) or (item < minItem):
+            minItem = item
+        if (maxItem is None) or (item > maxItem):
+            maxItem = item
+    return (minItem, maxItem)
 
 
 def unique(x):
