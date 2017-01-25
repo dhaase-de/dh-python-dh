@@ -36,10 +36,9 @@ except ImportError as e:
 
 # decorator for functions that need OpenCV
 def CV2(f):
-    if _CV2_VERSION is None:
-        raise RuntimeError("Module 'cv2' is needed for that operation ('{}'), but could not be imported (error: {})".format(f.__name__, _CV2_ERROR))
-
     def g(*args, **kwargs):
+        if _CV2_VERSION is None:
+            raise RuntimeError("Module 'cv2' is needed for that operation ('{}'), but could not be imported (error: {})".format(f.__name__, _CV2_ERROR))
         return f(*args, **kwargs)
 
     return g
