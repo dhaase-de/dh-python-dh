@@ -49,5 +49,14 @@ def resize():
     dh.image.imshow(R, scale=1.0, wait=1000)
 
 
+def text():
+    I = dh.data.lena()
+    I = np.random.rand(512, 512, 3)
+    I = dh.image.normalize(I, "minmax")
+    I = dh.image.text(I, "Error quantile:", position=(0.5, 0.5), anchor="cc", padding=20.0)
+    #I = dh.image.text(I, "Lena", anchor="cc")
+    dh.image.imshow(I, wait=10, scale=1.0)
+
+
 if __name__ == "__main__":
-    stack()
+    text()

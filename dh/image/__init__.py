@@ -246,6 +246,76 @@ def stack(Is, dtype=None, gray=None):
     return S
 
 
+@CV2
+def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", padding=1.0):
+    """
+    Draws the text `message` into the image `I`.
+    """
+
+    I[I.shape[0] // 2, :, :] = 255
+    I[:, I.shape[1] // 2, :] = 255
+
+    # font
+    if font == "sans":
+        fontFace = cv2.FONT_HERSHEY_DUPLEX
+    elif font == "serif":
+        fontFace = cv2.FONT_HERSHEY_TRIPLEX
+    else:
+        raise ValueError("Invalid font '{}'".format(font))
+    fontScale = scale
+    thickness= 1
+
+    # calculate width and height of the text
+    ((W, H), baseline) = cv2.getTextSize(
+        text=message,
+        fontFace=fontFace,
+        fontScale=fontScale,
+        thickness=thickness,
+    )
+
+    # base offset derived from the specified position
+    offset = np.array([dh.utils.tinterval(position[nDim], 0.0, 1.0, 0, I.shape[1 - nDim]) for nDim in range(2)])
+
+    # add padding to offset
+    padding = round(padding * baseline)
+    offset += padding
+
+    # adjust offset based on the specified anchor type
+    if not (isinstance(anchor, str) and (len(anchor) == 2) and (anchor[0] in ("l", "c", "r")) and (anchor[1] in ("t", "c", "b"))):
+        raise ValueError("Argument 'anchor' must be a string of length two (pattern: '[lcr][tcb]') , but is '{}'".format(anchor))
+    (anchorH, anchorV) = anchor
+    if anchorH == "l":
+        pass
+    elif anchorH == "c":
+        offset[0] -= W * 0.5
+    elif anchorH == "r":
+        offset[0] -= W
+    if anchorV == "t":
+        offset[1] += H
+    elif anchorV == "c":
+        offset[1] += H * 0.5
+    elif anchorV == "b":
+        pass
+
+    offset = dh.image.tir(offset)
+    I[max(0, offset[1] - H - padding):min(I.shape[0], offset[1] + max(baseline, padding)), max(0, offset[0] - padding):min(I.shape[1], offset[0] + W + padding), ...] *= 0.25
+
+    # draw text
+    cv2.putText(
+        img=I,
+        text=message,
+        org=offset,
+        fontFace=fontFace,
+        fontScale=fontScale,
+        color=(255, 255, 255),
+        thickness=thickness,
+        lineType=cv2.LINE_8,
+        bottomLeftOrigin=False,
+    )
+
+    return I
+
+
 ###
 #%% data type and color mode handling
 ###
@@ -688,7 +758,7 @@ def rotate(I, degree):
 
 
 ###
-#%% cordinates
+#%% coordinates
 ###
 
 
