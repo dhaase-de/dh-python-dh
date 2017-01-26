@@ -255,10 +255,14 @@ def stack(Is, padding=0, dtype=None, gray=None):
 def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", padding=1.0):
     """
     Draws the text `message` into the image `I`.
-    """
 
-    I[I.shape[0] // 2, :, :] = 255
-    I[:, I.shape[1] // 2, :] = 255
+    The `position` is given as 2D point in relative coordinates (i.e., with
+    coordinate ranges of [0, 1]). The `anchor` must be given as two letter
+    string,  following the pattern `[lcr][tcb]`. It specifies the horizontal
+    and vertical alignment of the text with respect to the given position. The
+    `padding` is given in (possibly non-integer) multiples of the font's
+    baseline height.
+    """
 
     # font
     if font == "sans":
@@ -268,22 +272,24 @@ def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", p
     else:
         raise ValueError("Invalid font '{}'".format(font))
     fontScale = scale
-    thickness= 1
+    fontThickness = 1
 
     # calculate width and height of the text
     ((W, H), baseline) = cv2.getTextSize(
         text=message,
         fontFace=fontFace,
         fontScale=fontScale,
-        thickness=thickness,
+        thickness=fontThickness,
     )
 
     # base offset derived from the specified position
-    offset = np.array([dh.utils.tinterval(position[nDim], 0.0, 1.0, 0, I.shape[1 - nDim]) for nDim in range(2)])
+    offset = np.array([
+        dh.utils.tinterval(position[0], 0.0, 1.0, 0, I.shape[1]),
+        dh.utils.tinterval(position[1], 0.0, 1.0, 0, I.shape[0] - baseline),
+    ])
 
     # add padding to offset
     padding = round(padding * baseline)
-    offset += padding
 
     # adjust offset based on the specified anchor type
     if not (isinstance(anchor, str) and (len(anchor) == 2) and (anchor[0] in ("l", "c", "r")) and (anchor[1] in ("t", "c", "b"))):
@@ -303,7 +309,7 @@ def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", p
         pass
 
     offset = dh.image.tir(offset)
-    I[max(0, offset[1] - H - padding):min(I.shape[0], offset[1] + max(baseline, padding)), max(0, offset[0] - padding):min(I.shape[1], offset[0] + W + padding), ...] *= 0.25
+    I[max(0, offset[1] - H - padding):min(I.shape[0], offset[1] + max(baseline, padding)), max(0, offset[0] - padding):min(I.shape[1], offset[0] + W + padding), ...] = 0
 
     # draw text
     cv2.putText(
@@ -313,7 +319,7 @@ def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", p
         fontFace=fontFace,
         fontScale=fontScale,
         color=(255, 255, 255),
-        thickness=thickness,
+        thickness=fontThickness,
         lineType=cv2.LINE_8,
         bottomLeftOrigin=False,
     )
@@ -555,14 +561,19 @@ def colormaps():
     return {name: colormap(name) for name in names}
 
 
-def cdemo(I):
+def cdemo(I=None):
     """
     Interactive demo which lets the user cycle through all available colormaps,
     applied on the given image `I`.
 
     Keys `+` and `-` navigate forwards and backwards (with cycling), and `q`
-    quits the demo.
+    quits the demo. If no image is given, a test image is used.
     """
+
+    if I is None:
+        I = np.array(list(range(256)) * 256, dtype="uint8")
+        I.shape = (256, 256)
+        I = resize(I, 2.0)
 
     cs = colormaps()
     names = sorted(cs.keys())
@@ -573,7 +584,9 @@ def cdemo(I):
     nColormap = 0
     run = True
     while run:
-        C = colorize(I, c=cs[names[nColormap]])
+        name = names[nColormap]
+        C = colorize(I, c=cs[name])
+        text(C, "{}/{}: {}".format(nColormap + 1, colormapCount, name))
         while True:
             needsUpdate = True
 

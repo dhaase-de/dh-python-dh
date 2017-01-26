@@ -51,17 +51,16 @@ def resize():
 
 def text():
     I = dh.data.lena()
-    I = np.random.rand(512, 512, 3)
-    I = dh.image.normalize(I, "minmax")
-    I = dh.image.text(I, "Error quantile:", position=(0.5, 0.5), anchor="cc", padding=20.0)
-    #I = dh.image.text(I, "Lena", anchor="cc")
+    I[I.shape[0] // 2, :, :] = 255
+    I[:, I.shape[1] // 2, :] = 255
+    I = dh.image.text(I, "Error quantile:", position=(0.5, 0.5), anchor="cc", padding=1.5)
     dh.image.imshow(I, wait=10, scale=1.0)
 
 
 def cdemo():
     I = dh.data.lena()
     I = dh.image.asgray(I)
-    dh.image.cdemo(I)
+    dh.image.cdemo()
 
 
 if __name__ == "__main__":
