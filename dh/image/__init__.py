@@ -36,10 +36,9 @@ except ImportError as e:
 
 # decorator for functions that need OpenCV
 def CV2(f):
-    if _CV2_VERSION is None:
-        raise RuntimeError("Module 'cv2' is needed for that operation ('{}'), but could not be imported (error: {})".format(f.__name__, _CV2_ERROR))
-
     def g(*args, **kwargs):
+        if _CV2_VERSION is None:
+            raise RuntimeError("Module 'cv2' is needed for that operation ('{}'), but could not be imported (error: {})".format(f.__name__, _CV2_ERROR))
         return f(*args, **kwargs)
 
     return g
@@ -168,7 +167,7 @@ def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, win
     return key
 
 
-def stack(Is, dtype=None, gray=None):
+def stack(Is, padding=0, dtype=None, gray=None):
     """
     Stack images given by `Is` into one image.
 
@@ -192,20 +191,26 @@ def stack(Is, dtype=None, gray=None):
     # step 1/2: construct stacked image for each row
     Rs = []
     width = 0
-    for row in rows:
+    for (nRow, row) in enumerate(rows):
         # height of the row
         rowHeight = 0
         for I in row:
             rowHeight = max(rowHeight, I.shape[0])
 
         R = None
-        for I in row:
+        for (nCol, I) in enumerate(row):
             # convert to common data type and color mode
             if gray:
                 J = asgray(I)
             else:
                 J = ascolor(I)
             J = convert(J, dtype)
+
+            # add padding
+            p = [[padding if nRow == 0 else 0, padding], [padding if nCol == 0 else 0, padding]]
+            if not isgray(J):
+                p.append([0, 0])
+            J = np.pad(J, p, mode="constant", constant_values=0)
 
             # ensure that image has the height of the row
             gap = rowHeight - J.shape[0]

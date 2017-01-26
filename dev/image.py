@@ -14,8 +14,8 @@ def stack():
     I5 = dh.data.grid([200, 200])
 
     #S = dh.image.stack([[I1, I2], [I3, I4], [I5]])
-    S = dh.image.stack([[I1, I2]])
-    dh.image.imshow(S, wait=10)
+    S = dh.image.stack([[I4, I4, I4], [I1, I1, I1]], padding=32)
+    dh.image.imshow(S, scale=0.3, wait=10)
 
 
 def clip():
