@@ -58,5 +58,11 @@ def text():
     dh.image.imshow(I, wait=10, scale=1.0)
 
 
+def cdemo():
+    I = dh.data.lena()
+    I = dh.image.asgray(I)
+    dh.image.cdemo(I)
+
+
 if __name__ == "__main__":
-    text()
+    cdemo()

@@ -545,28 +545,51 @@ def colorize(I, c="jet", reverse=False, bitwise=False):
     return C
 
 
-def colormaps(show=True, **kwargs):
+def colormaps():
     """
-    Creates and returns a demo image of all available colormaps.
+    Returns a dict of all available colormaps. The keys are the colormap names.
     """
-
-    slope = np.array([range(256)] * 32, dtype = "uint8")
 
     filenames = glob.glob(os.path.join(_COLORMAP_DIR, "*.json"))
     names = list(sorted(os.path.splitext(os.path.basename(filename))[0] for filename in filenames))
-    Is = []
-    for name in sorted(names):
-        I = colorize(slope, name)
-        Is.append(I)
+    return {name: colormap(name) for name in names}
 
-    C = np.vstack(Is)
-    if show:
-        imshow(C, **kwargs)
 
-    return {
-        "names": names,
-        "image": C,
-    }
+def cdemo(I):
+    """
+    Interactive demo which lets the user cycle through all available colormaps,
+    applied on the given image `I`.
+
+    Keys `+` and `-` navigate forwards and backwards (with cycling), and `q`
+    quits the demo.
+    """
+
+    cs = colormaps()
+    names = sorted(cs.keys())
+    colormapCount = len(names)
+    if colormapCount == 0:
+        raise RuntimeError("Found no colormaps")
+
+    nColormap = 0
+    run = True
+    while run:
+        C = colorize(I, c=cs[names[nColormap]])
+        while True:
+            needsUpdate = True
+
+            key = show(C, wait=10)
+            if key in dh.utils.qkeys():
+                run = False
+            elif key in (ord("+"),):
+                nColormap = (nColormap + 1) % colormapCount
+            elif key in (ord("-"),):
+                nColormap = (nColormap - 1) % colormapCount
+            else:
+                needsUpdate = False
+
+            if needsUpdate:
+                break
+
 
 
 ###
