@@ -70,7 +70,7 @@ def load(filename, color=False):
 
     # check if file exists
     if not os.path.exists(filename):
-        raise RuntimeError("Image file '{}' does not exist".format(filename))
+        raise FileNotFoundError("Image file '{}' does not exist".format(filename))
 
     # flags - select grayscale or color mode
     flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_COLOR if color else cv2.IMREAD_GRAYSCALE)
