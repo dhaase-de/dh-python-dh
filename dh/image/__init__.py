@@ -687,6 +687,11 @@ def normalize(I, mode="minmax", **kwargs):
     elif mode == "minmax":
         return normalize(I, mode="interval", lower=np.min(I), upper=np.max(I))
 
+    elif mode == "zminmax":
+        # "zero-symmetric" minmax (makes only sense for float images)
+        absmax = max(np.abs(np.min(I)), np.abs(np.max(I)))
+        return normalize(I, mode="interval", lower=-absmax, upper=absmax)
+
     elif mode == "percentile":
         # get percentile
         try:
