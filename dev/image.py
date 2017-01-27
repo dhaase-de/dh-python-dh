@@ -18,6 +18,17 @@ def stack():
     dh.image.imshow(S, scale=0.3, wait=10)
 
 
+def astack():
+    I1 = dh.data.lena()
+    I2 = dh.data.grid([350, 500])
+    I3 = dh.data.pal()
+    I4 = dh.data.grid([200, 200])
+
+    #S = dh.image.astack([I1, I2, I3, I4], padding=32)
+    S = dh.image.astack([I1] * 9, padding=32, aspect=1.77)
+    dh.image.imshow(S, scale=0.3, wait=10)
+
+
 def clip():
     I = dh.data.lena()
     dh.image.pinfo(I)
@@ -50,4 +61,4 @@ def resize():
 
 
 if __name__ == "__main__":
-    stack()
+    astack()

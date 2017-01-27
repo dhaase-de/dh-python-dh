@@ -209,7 +209,7 @@ def stack(Is, padding=0, dtype=None, gray=None):
 
             # add padding
             p = [[padding if nRow == 0 else 0, padding], [padding if nCol == 0 else 0, padding]]
-            if not isgray(J):
+            if not gray:
                 p.append([0, 0])
             J = np.pad(J, p, mode="constant", constant_values=0)
 
@@ -250,6 +250,53 @@ def stack(Is, padding=0, dtype=None, gray=None):
             S = np.vstack((S, R))
 
     return S
+
+
+def astack(Is, padding=0, dtype=None, gray=None, aspect=1.77):
+    """
+    Given a 1d image list `Is`, returns a 2d-stacked image with an aspect ratio
+    as close as possible to the desired aspect ratio `aspect`.
+    """
+
+    # find the optimal image count per row
+    imageCount = len(Is)
+    bestImageCountPerRow = 1
+    bestError = float("inf")
+    for imageCountPerRow in range(1, imageCount + 1):
+        H = 0
+        W = 0
+        nImageRow = 0
+        rowH = 0
+        rowW = 0
+        for (nImage, I) in enumerate(Is):
+            rowH = max(rowH, I.shape[0] + padding)
+            rowW += I.shape[1] + padding
+            if ((nImageRow + 1) == imageCountPerRow) or ((nImage + 1) == imageCount):
+                H += rowH
+                W = max(W, rowW)
+                nImageRow = 0
+                rowH = 0
+                rowW = 0
+            else:
+                nImageRow += 1
+        H += padding
+        W += padding
+
+        error = abs(aspect - (W / H))
+        if error < bestError:
+            bestImageCountPerRow = imageCountPerRow
+            bestError = error
+
+    # construct 2d list of images
+    rows = []
+    row = []
+    for (nImage, I) in enumerate(Is):
+        row.append(I)
+        if (len(row) == bestImageCountPerRow) or ((nImage + 1) == imageCount):
+            rows.append(row)
+            row = []
+
+    return stack(Is=rows, padding=padding, dtype=dtype, gray=gray)
 
 
 ###
