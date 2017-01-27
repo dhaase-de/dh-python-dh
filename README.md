@@ -31,11 +31,23 @@ Changelog
 =========
 
 
+0.6.0 (2017-01-27)
+------------------
+
+* note: version numbers 0.4.x and 0.5.x are skipped due to the amount of
+  changes since 0.3.0
+* *vastly* improved `dh.utils` and `dh.image` (added a lot of new functionality
+  and bugfixes)
+* added `dh.data` module
+* integrated multiple thirdparty modules `tabulate`, `tqdm`
+* updated framework (scripts, license)
+
+
 0.3.0 (2015-11-29)
 ------------------
 
 * improved framework (documentation, unit tests, dev dir, scripts, ...)
-* extended `utils`
+* extended `dh.utils`
 
 
 0.2.0 (2015-08-31)
