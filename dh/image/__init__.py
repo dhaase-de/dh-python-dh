@@ -36,10 +36,9 @@ except ImportError as e:
 
 # decorator for functions that need OpenCV
 def CV2(f):
-    if _CV2_VERSION is None:
-        raise RuntimeError("Module 'cv2' is needed for that operation ('{}'), but could not be imported (error: {})".format(f.__name__, _CV2_ERROR))
-
     def g(*args, **kwargs):
+        if _CV2_VERSION is None:
+            raise RuntimeError("Module 'cv2' is needed for that operation ('{}'), but could not be imported (error: {})".format(f.__name__, _CV2_ERROR))
         return f(*args, **kwargs)
 
     return g
@@ -71,7 +70,7 @@ def load(filename, color=False):
 
     # check if file exists
     if not os.path.exists(filename):
-        raise RuntimeError("Image file '{}' does not exist".format(filename))
+        raise FileNotFoundError("Image file '{}' does not exist".format(filename))
 
     # flags - select grayscale or color mode
     flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_COLOR if color else cv2.IMREAD_GRAYSCALE)
@@ -299,6 +298,82 @@ def astack(Is, padding=0, dtype=None, gray=None, aspect=1.77):
     return stack(Is=rows, padding=padding, dtype=dtype, gray=gray)
 
 
+@CV2
+def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", padding=1.0):
+    """
+    Draws the text `message` into the image `I`.
+
+    The `position` is given as 2D point in relative coordinates (i.e., with
+    coordinate ranges of [0, 1]). The `anchor` must be given as two letter
+    string,  following the pattern `[lcr][tcb]`. It specifies the horizontal
+    and vertical alignment of the text with respect to the given position. The
+    `padding` is given in (possibly non-integer) multiples of the font's
+    baseline height.
+    """
+
+    # font
+    if font == "sans":
+        fontFace = cv2.FONT_HERSHEY_DUPLEX
+    elif font == "serif":
+        fontFace = cv2.FONT_HERSHEY_TRIPLEX
+    else:
+        raise ValueError("Invalid font '{}'".format(font))
+    fontScale = scale
+    fontThickness = 1
+
+    # calculate width and height of the text
+    ((W, H), baseline) = cv2.getTextSize(
+        text=message,
+        fontFace=fontFace,
+        fontScale=fontScale,
+        thickness=fontThickness,
+    )
+
+    # base offset derived from the specified position
+    offset = np.array([
+        dh.utils.tinterval(position[0], 0.0, 1.0, 0, I.shape[1]),
+        dh.utils.tinterval(position[1], 0.0, 1.0, 0, I.shape[0] - baseline),
+    ])
+
+    # add padding to offset
+    padding = round(padding * baseline)
+
+    # adjust offset based on the specified anchor type
+    if not (isinstance(anchor, str) and (len(anchor) == 2) and (anchor[0] in ("l", "c", "r")) and (anchor[1] in ("t", "c", "b"))):
+        raise ValueError("Argument 'anchor' must be a string of length two (pattern: '[lcr][tcb]') , but is '{}'".format(anchor))
+    (anchorH, anchorV) = anchor
+    if anchorH == "l":
+        pass
+    elif anchorH == "c":
+        offset[0] -= W * 0.5
+    elif anchorH == "r":
+        offset[0] -= W
+    if anchorV == "t":
+        offset[1] += H
+    elif anchorV == "c":
+        offset[1] += H * 0.5
+    elif anchorV == "b":
+        pass
+
+    offset = dh.image.tir(offset)
+    I[max(0, offset[1] - H - padding):min(I.shape[0], offset[1] + max(baseline, padding)), max(0, offset[0] - padding):min(I.shape[1], offset[0] + W + padding), ...] = 0
+
+    # draw text
+    cv2.putText(
+        img=I,
+        text=message,
+        org=offset,
+        fontFace=fontFace,
+        fontScale=fontScale,
+        color=(255, 255, 255),
+        thickness=fontThickness,
+        lineType=cv2.LINE_8,
+        bottomLeftOrigin=False,
+    )
+
+    return I
+
+
 ###
 #%% data type and color mode handling
 ###
@@ -523,28 +598,58 @@ def colorize(I, c="jet", reverse=False, bitwise=False):
     return C
 
 
-def colormaps(show=True, **kwargs):
+def colormaps():
     """
-    Creates and returns a demo image of all available colormaps.
+    Returns a dict of all available colormaps. The keys are the colormap names.
     """
-
-    slope = np.array([range(256)] * 32, dtype = "uint8")
 
     filenames = glob.glob(os.path.join(_COLORMAP_DIR, "*.json"))
     names = list(sorted(os.path.splitext(os.path.basename(filename))[0] for filename in filenames))
-    Is = []
-    for name in sorted(names):
-        I = colorize(slope, name)
-        Is.append(I)
+    return {name: colormap(name) for name in names}
 
-    C = np.vstack(Is)
-    if show:
-        imshow(C, **kwargs)
 
-    return {
-        "names": names,
-        "image": C,
-    }
+def cdemo(I=None):
+    """
+    Interactive demo which lets the user cycle through all available colormaps,
+    applied on the given image `I`.
+
+    Keys `+` and `-` navigate forwards and backwards (with cycling), and `q`
+    quits the demo. If no image is given, a test image is used.
+    """
+
+    if I is None:
+        I = np.array(list(range(256)) * 256, dtype="uint8")
+        I.shape = (256, 256)
+        I = resize(I, 2.0)
+
+    cs = colormaps()
+    names = sorted(cs.keys())
+    colormapCount = len(names)
+    if colormapCount == 0:
+        raise RuntimeError("Found no colormaps")
+
+    nColormap = 0
+    run = True
+    while run:
+        name = names[nColormap]
+        C = colorize(I, c=cs[name])
+        text(C, "{}/{}: {}".format(nColormap + 1, colormapCount, name))
+        while True:
+            needsUpdate = True
+
+            key = show(C, wait=10)
+            if key in dh.utils.qkeys():
+                run = False
+            elif key in (ord("+"),):
+                nColormap = (nColormap + 1) % colormapCount
+            elif key in (ord("-"),):
+                nColormap = (nColormap - 1) % colormapCount
+            else:
+                needsUpdate = False
+
+            if needsUpdate:
+                break
+
 
 
 ###
@@ -665,6 +770,11 @@ def normalize(I, mode="minmax", **kwargs):
     elif mode == "minmax":
         return normalize(I, mode="interval", lower=np.min(I), upper=np.max(I))
 
+    elif mode == "zminmax":
+        # "zero-symmetric" minmax (makes only sense for float images)
+        absmax = max(np.abs(np.min(I)), np.abs(np.max(I)))
+        return normalize(I, mode="interval", lower=-absmax, upper=absmax)
+
     elif mode == "percentile":
         # get percentile
         try:
@@ -741,7 +851,7 @@ def rotate(I, degree):
 
 
 ###
-#%% cordinates
+#%% coordinates
 ###
 
 

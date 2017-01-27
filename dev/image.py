@@ -60,5 +60,19 @@ def resize():
     dh.image.imshow(R, scale=1.0, wait=1000)
 
 
+def text():
+    I = dh.data.lena()
+    I[I.shape[0] // 2, :, :] = 255
+    I[:, I.shape[1] // 2, :] = 255
+    I = dh.image.text(I, "Error quantile:", position=(0.5, 0.5), anchor="cc", padding=1.5)
+    dh.image.imshow(I, wait=10, scale=1.0)
+
+
+def cdemo():
+    I = dh.data.lena()
+    I = dh.image.asgray(I)
+    dh.image.cdemo()
+
+
 if __name__ == "__main__":
     astack()

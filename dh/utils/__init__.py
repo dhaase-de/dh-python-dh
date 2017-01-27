@@ -72,7 +72,7 @@ def eqvalue(x):
     first = next(items)
     for item in items:
         if item != first:
-            raise ValueError("Values are not identical")
+            raise ValueError("Values are not identical: {}, {}".format(first, item))
     return first
 
 
