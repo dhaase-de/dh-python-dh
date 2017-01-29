@@ -385,6 +385,17 @@ class osum():
         return self.sum
 
 
+def mean(x):
+    """
+    Returns the mean of the elements of the iterable `x`.
+
+    >>> mean([1, 3, 2, 4, 0])
+    2.0
+    """
+
+    return sum(x) / len(x)
+
+
 def median(x):
     """
     Returns the median of the elements of the iterable `x`.
