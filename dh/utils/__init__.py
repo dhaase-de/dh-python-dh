@@ -389,11 +389,32 @@ def mean(x):
     """
     Returns the mean of the elements of the iterable `x`.
 
+    It also works for generators which have no `len`.
+
     >>> mean([1, 3, 2, 4, 0])
+    2.0
+
+    >>> mean(n for n in range(5))
     2.0
     """
 
-    return sum(x) / len(x)
+    try:
+        # check if x has `len`
+        l = len(x)
+    except TypeError:
+        # if not, count the items explicitly
+        s = None
+        l = 0
+        for item in x:
+            if s is None:
+                s = item
+            else:
+                s += item
+            l += 1
+        return s / l
+    else:
+        # otherwise, no need to count
+        return sum(x) / l
 
 
 def median(x):
