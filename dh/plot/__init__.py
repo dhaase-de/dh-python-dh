@@ -139,7 +139,10 @@ class GoogleChart(abc.ABC):
 
     @header.setter
     def header(self, value):
-        self._header = [value]
+        if value is not None:
+            self._header = [value]
+        else:
+            self._header= []
 
     @property
     def data(self):
@@ -240,8 +243,46 @@ class GoogleScatterChart(GoogleChart):
         return "google.visualization.ScatterChart"
 
 
+class GoogleLineChart(GoogleChart):
+    """
+    Line chart which can be added to a `GoogleCharts` container.
+
+    `xs` must be a iterable specifying the x values of the chart. `yss` must be
+    either an iterable or a dictionary of iterables. If `yss` is an iterable,
+    the chart will have one line with y values according to `yss`. If `yss` is
+    a dictionary of iterables, the chart will have multiple lines, where the
+    y values are given by each iterable of the dictionary. The dictionary keys
+    will then serve as labels.
+    """
+
+    def __init__(self, xs, yss, **kwargs):
+        super().__init__(**kwargs)
+
+        # header
+        labeled = isinstance(yss, dict)
+        if labeled:
+            ulabels = tuple(sorted(dh.utils.unique(yss.keys())))
+            self.header = ("x",) + ulabels
+        else:
+            self.header = ("x", "y")
+
+        # data
+        rowCount = len(xs)
+        for nRow in range(rowCount):
+            if labeled:
+                row = [xs[nRow]] + [yss[label][nRow] for label in ulabels]
+            else:
+                row = (xs[nRow], yss[nRow])
+            self._data.append(row)
+
+    @staticmethod
+    def chartClass():
+        return "google.visualization.LineChart"
+
+
 if __name__ == "__main__":
     c = GoogleCharts()
     c.append(GoogleScatterChart([1, 2, 3, 4], [2, 3, 2, 1], ["a", "a", "b", "b"]))
-    c.append(GoogleScatterChart([1, 2, 3, 4], [2, 3, 2, 1], ["a", "a", "b", "b"]))
+    c.append(GoogleLineChart([1, 2, 3, 4], [2, 3, 2, 1]))
+    c.append(GoogleLineChart([1, 2, 3, 4], {"a": [2, 3, 2, 1], "b": [3, 2, 2, 4]}))
     c.save("/home/dh/tmp/chart.html")
