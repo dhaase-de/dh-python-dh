@@ -1,3 +1,7 @@
+"""
+Tools for data visualization.
+"""
+
 import abc
 import json
 import textwrap
@@ -11,6 +15,13 @@ import dh.utils
 
 
 class GoogleCharts():
+    """
+    Wrapper for Google charts (https://developers.google.com/chart/).
+
+    This class creates a "container" to which multiple charts (instances of
+    class `GoogleChart` can be added (see :func:`GoogleCharts.append()`.
+    """
+
     def __init__(self, api="current"):
         self._api = api
         self.charts = []
@@ -21,8 +32,9 @@ class GoogleCharts():
 
     def append(self, chart):
         """
-        Append chart to list.
+        Append chart to this Google charts object.
         """
+
         if not isinstance(chart, GoogleChart):
             raise TypeError("Argument 'chart' must be of type 'GoogleChart' (but '{}' was provided)".format(type(chart)))
         if chart.uid is None:
@@ -30,6 +42,10 @@ class GoogleCharts():
         self.charts.append(chart)
 
     def renderJs(self):
+        """
+        Returns string of the JavaScript code which draws all charts of this.
+        """
+
         template = """
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             <script type="text/javascript">
@@ -52,6 +68,9 @@ class GoogleCharts():
         )
 
     def renderDivs(self):
+        """
+        Returns string of the HTML `div` elements needed to draw the charts.
+        """
         return "\n".join("<div id=\"{}\"></div>".format(chart.divName()) for chart in self.charts)
 
     def renderHtml(self):
@@ -87,6 +106,11 @@ class GoogleCharts():
 
 
 class GoogleChart(abc.ABC):
+    """
+    Base class for individual Google charts which can be added to a
+    `GoogleCharts` container.
+    """
+
     def __init__(self, uid=None, options=None):
         self._uid = uid
         if options is not None:
@@ -184,6 +208,10 @@ class GoogleChart(abc.ABC):
 
 
 class GoogleScatterChart(GoogleChart):
+    """
+    Scatter chart which can be added to a `GoogleCharts` container.
+    """
+
     def __init__(self, xs, ys, labels=None, **kwargs):
         super().__init__(**kwargs)
 
