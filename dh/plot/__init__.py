@@ -212,6 +212,8 @@ class GoogleChart(abc.ABC):
 class GoogleColumnChart(GoogleChart):
     """
     Column chart which can be added to a `GoogleCharts` container.
+
+    .. note:: Use `collections.OrderedDict` to order the labels.
     """
 
     def __init__(self, xs, yss, **kwargs):
@@ -220,7 +222,7 @@ class GoogleColumnChart(GoogleChart):
         # header
         labeled = isinstance(yss, dict)
         if labeled:
-            ulabels = tuple(sorted(dh.utils.unique(yss.keys())))
+            ulabels = tuple(dh.utils.unique(yss.keys()))
             self.header = ("x",) + ulabels
         else:
             self.header = ("x", "y")
@@ -282,6 +284,8 @@ class GoogleLineChart(GoogleChart):
     a dictionary of iterables, the chart will have multiple lines, where the
     y values are given by each iterable of the dictionary. The dictionary keys
     will then serve as labels.
+
+    .. note:: Use `collections.OrderedDict` to order the labels.
     """
 
     def __init__(self, xs, yss, **kwargs):
@@ -290,7 +294,7 @@ class GoogleLineChart(GoogleChart):
         # header
         labeled = isinstance(yss, dict)
         if labeled:
-            ulabels = tuple(sorted(dh.utils.unique(yss.keys())))
+            ulabels = tuple(dh.utils.unique(yss.keys()))
             self.header = ("x",) + ulabels
         else:
             self.header = ("x", "y")
