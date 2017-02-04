@@ -120,7 +120,6 @@ class GoogleChart(abc.ABC):
         self._header = []
         self._data = []
 
-
     @property
     def uid(self):
         return self._uid

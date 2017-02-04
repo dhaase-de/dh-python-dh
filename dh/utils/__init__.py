@@ -8,6 +8,7 @@ third-party modules included in this package to ensure maximum compatibility.
 import base64
 import collections
 import colorsys
+import copy
 import datetime
 import errno
 import functools
@@ -829,10 +830,13 @@ def awopen(*args, **kwargs):
 ###
 
 
-def rupdate(d, u):
+def rupdate(d, u, deepcopy=True):
     """
     Performs a recursive update of the nested dict `d` with according values of
     the nested dict `u`.
+
+    If `deepcopy` is `True`, a deep copy of `d` is updated and returned, while
+    the original `d` remains unchanged.
 
     The difference to the builtin `dict.update` is that this also works for
     nested dicts.
@@ -854,7 +858,11 @@ def rupdate(d, u):
     7
 
     .. seealso: http://stackoverflow.com/a/3233356/1913780
+    .. seealso: http://stackoverflow.com/a/5105554/1913780
     """
+
+    if deepcopy:
+        d = copy.deepcopy(d)
 
     for (key, value) in u.items():
         if isinstance(value, collections.Mapping):
