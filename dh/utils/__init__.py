@@ -123,7 +123,7 @@ def minmax(x):
     """
     Returns a tuple containing the min and max value of the iterable `x`.
 
-    Note: this also works if `x` is a generator.
+    .. note:: this also works if `x` is a generator.
 
     >>> minmax([1, -2, 3, 4, 1, 0, -2, 5, 1, 0])
     (-2, 5)
@@ -662,7 +662,7 @@ def fargs(*args, **kwargs):
     >>> fargs(1, [2], x=3.0, y='four')
     "1, [2], x=3.0, y='four'"
 
-    .. note: The items of `**kwargs` are sorted by their key.
+    .. note:: The items of `**kwargs` are sorted by their key.
     """
 
     items = []
@@ -857,8 +857,8 @@ def rupdate(d, u, deepcopy=True):
     >>> d['d']['db']
     7
 
-    .. seealso: http://stackoverflow.com/a/3233356/1913780
-    .. seealso: http://stackoverflow.com/a/5105554/1913780
+    .. seealso:: http://stackoverflow.com/a/3233356/1913780
+    .. seealso:: http://stackoverflow.com/a/5105554/1913780
     """
 
     if deepcopy:
@@ -1010,8 +1010,8 @@ def deprecated(message):
     """
     Raise a depracation warning with the specified `message`.
 
-    .. note: Raised `DeprecationWarning`s are ignored by default. See
-    http://stackoverflow.com/a/20960427/1913780 for details.
+    .. note:: Raised `DeprecationWarning`s are ignored by default. See
+              http://stackoverflow.com/a/20960427/1913780 for details.
     """
 
     warnings.warn(message, DeprecationWarning, stacklevel=2)
