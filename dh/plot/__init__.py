@@ -210,6 +210,36 @@ class GoogleChart(abc.ABC):
         )
 
 
+class GoogleColumnChart(GoogleChart):
+    """
+    Column chart which can be added to a `GoogleCharts` container.
+    """
+
+    def __init__(self, xs, yss, **kwargs):
+        super().__init__(**kwargs)
+
+        # header
+        labeled = isinstance(yss, dict)
+        if labeled:
+            ulabels = tuple(sorted(dh.utils.unique(yss.keys())))
+            self.header = ("x",) + ulabels
+        else:
+            self.header = ("x", "y")
+
+        # data
+        rowCount = len(xs)
+        for nRow in range(rowCount):
+            if labeled:
+                row = [xs[nRow]] + [yss[label][nRow] for label in ulabels]
+            else:
+                row = (xs[nRow], yss[nRow])
+            self._data.append(row)
+
+    @staticmethod
+    def chartClass():
+        return "google.visualization.ColumnChart"
+
+
 class GoogleScatterChart(GoogleChart):
     """
     Scatter chart which can be added to a `GoogleCharts` container.
