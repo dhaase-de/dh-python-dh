@@ -829,6 +829,42 @@ def awopen(*args, **kwargs):
 ###
 
 
+def rupdate(d, u):
+    """
+    Performs a recursive update of the nested dict `d` with according values of
+    the nested dict `u`.
+
+    The difference to the builtin `dict.update` is that this also works for
+    nested dicts.
+
+    >>> d = {'a': 1, 'b': {'ba': 2, 'bb': 3}, 'c': {'ca': 4, 'cb': 5}, 'd': {'da': 6, 'db': 7}}
+    >>> u = {'a': 'one', 'b': {'ba': 'two'}, 'c': 'fourfive'}
+    >>> d = rupdate(d, u)
+    >>> d['a']
+    'one'
+    >>> d['b']['ba']
+    'two'
+    >>> d['b']['bb']
+    3
+    >>> d['c']
+    'fourfive'
+    >>> d['d']['da']
+    6
+    >>> d['d']['db']
+    7
+
+    .. seealso: http://stackoverflow.com/a/3233356/1913780
+    """
+
+    for (key, value) in u.items():
+        if isinstance(value, collections.Mapping):
+            r = rupdate(d.get(key, {}), value)
+            d[key] = r
+        else:
+            d[key] = u[key]
+    return d
+
+
 class avdict():
     """
     Class with (recursive) autovivification of attributes and items.
