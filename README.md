@@ -30,6 +30,12 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.7.0 (2017-02-19)
+------------------
+
+* added module `dh.plot`, containing wrapper classes for Google charts
+* smaller improvements and bugfixes
+
 
 0.6.0 (2017-01-27)
 ------------------
