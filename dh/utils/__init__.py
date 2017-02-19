@@ -844,8 +844,8 @@ class ejson():
     but with support for more data types - currently, `bytes` and
     `numpy.ndarray`.
 
-    >>> ejson.loads(ejson.dumps([1, "2", bytes((3, 4))]))
-    [1, '2', b'\x03\x04']
+    >>> ejson.loads(ejson.dumps(bytes([222, 173, 190, 239]))).hex()
+    'deadbeef'
     """
 
     @staticmethod
