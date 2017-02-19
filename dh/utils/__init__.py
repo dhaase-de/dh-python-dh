@@ -15,7 +15,9 @@ import functools
 import hashlib
 import importlib
 import inspect
+import io
 import itertools
+import json
 import math
 import os
 import pprint
@@ -26,6 +28,13 @@ import warnings
 import dh.thirdparty.atomicwrites
 import dh.thirdparty.tabulate
 import dh.thirdparty.tqdm
+
+# NumPy is optional (used in the extended JSON encoder/decoder)
+try:
+    import numpy as np
+    _NUMPY_ERROR = None
+except ImportError as e:
+    _NUMPY_ERROR = e
 
 
 ###
@@ -764,6 +773,108 @@ def pbar(*args, **kwargs):
     """
 
     return dh.thirdparty.tqdm.tqdm(*args, **kwargs)
+
+
+###
+#%% serialization
+###
+
+
+class _ExtendedJsonEncoder(json.JSONEncoder):
+    """
+    JSON encoder which also supports objects of the following types:
+    `bytes`, `numpy.ndarray`.
+
+    For decoding, use `ExtendedJsonDecoder.object_hook` as value for the
+    `object_hook` parameter of `json.load` or `json.loads`.
+    """
+
+    def default(self, o):
+        # byte arrays
+        if isinstance(o, bytes):
+            e = base64.b85encode(o).decode("ascii")
+            return {"__ExtendedJsonType__": "bytes", "__ExtendedJsonValue__": e}
+
+        # NumPy arrays
+        if (_NUMPY_ERROR is None) and isinstance(o, np.ndarray):
+            b = io.BytesIO()
+            np.save(file=b, arr=o, allow_pickle=False, fix_imports=False)
+            e = base64.b85encode(b.getvalue()).decode("ascii")
+            return {"__ExtendedJsonType__": "numpy.ndarray", "__ExtendedJsonValue__": e}
+
+        # no extended object
+        return super().default(o)
+
+
+class _ExtendedJsonDecoder():
+    """
+    This class is the counterpart of `ExtendedJsonEncoder` and provides the
+    static method `object_hook`.
+    """
+
+    @staticmethod
+    def object_hook(o):
+        # only handle dicts which have the two keys "__ExtendedJsonType__" and "__ExtendedJsonValue__"
+        keys = o.keys()
+        if (len(keys) == 2) and ("__ExtendedJsonType__" in keys) and ("__ExtendedJsonValue__" in keys):
+            # byte arrays
+            if o["__ExtendedJsonType__"] == "bytes":
+                e = o["__ExtendedJsonValue__"]
+                b = base64.b85decode(bytes(e, "ascii"))
+                return b
+
+            # NumPy arrays
+            if o["__ExtendedJsonType__"] == "numpy.ndarray":
+                if _NUMPY_ERROR is None:
+                    e = o["__ExtendedJsonValue__"]
+                    b = base64.b85decode(bytes(e, "ascii"))
+                    x = np.load(file=io.BytesIO(b), allow_pickle=False, fix_imports=False)
+                    return x
+                else:
+                    warnings.warn("Could not decode object of type 'numpy.ndarray', because NumPy import failed: '{}'".format(_NUMPY_ERROR))
+
+        # no extended object
+        return o
+
+
+class ejson():
+    """
+    Class providing static methods `dump()`, `dumps()`, `load()`, `loads()`
+    for JSON serialization and de-serialization just like the `json` module,
+    but with support for more data types - currently, `bytes` and
+    `numpy.ndarray`.
+
+    >>> ejson.loads(ejson.dumps([1, "2", bytes((3, 4))]))
+    [1, '2', b'\x03\x04']
+    """
+
+    @staticmethod
+    def dump(*args, **kwargs):
+        """
+        See :func:`json.dump()`.
+        """
+        return json.dump(*args, **kwargs, ensure_ascii=True, cls=_ExtendedJsonEncoder)
+
+    @staticmethod
+    def dumps(*args, **kwargs):
+        """
+        See :func:`json.dumps()`.
+        """
+        return json.dumps(*args, **kwargs, ensure_ascii=True, cls=_ExtendedJsonEncoder)
+
+    @staticmethod
+    def load(*args, **kwargs):
+        """
+        See :func:`json.load()`.
+        """
+        return json.load(*args, **kwargs, object_hook=_ExtendedJsonDecoder.object_hook)
+
+    @staticmethod
+    def loads(*args, **kwargs):
+        """
+        See :func:`json.loads()`.
+        """
+        return json.loads(*args, **kwargs, object_hook=_ExtendedJsonDecoder.object_hook)
 
 
 ###
