@@ -24,6 +24,8 @@ class GoogleCharts():
     `api` can be used to specify the version of the Google chart API. It must
     be a string and can either contain a number (e.g., `"45"`) or the value
     `"current"`).
+
+    .. todo:: Allow user to specify the width/height of DIV elements.
     """
 
     def __init__(self, api="current"):
