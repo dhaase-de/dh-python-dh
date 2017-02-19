@@ -144,7 +144,7 @@ class SocketServer(abc.ABC):
     in the method `handler`.
     """
 
-    def __init__(self, host=None, port=7214, backlog=5, messageClass=ByteSocketMessage):
+    def __init__(self, host="", port=7214, backlog=5, messageClass=ByteSocketMessage):
         print("Creating socket...")
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Binding socket to {}:{}...".format(host, port))
@@ -164,6 +164,10 @@ class SocketServer(abc.ABC):
 
     @abc.abstractmethod
     def handler(self, communication):
+        """
+        In here, `communication.send()` and `communication.recv()` can be used
+        (see `SocketMessage`).
+        """
         pass
 
 
@@ -213,7 +217,7 @@ class DataProcessingServer(SocketServer):
     the static method `process(data, params)`.
     """
 
-    def __init__(self, fun, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         kwargs["messageClass"] = ExtendedJsonSocketMessage
         super().__init__(*args, **kwargs)
 
@@ -255,4 +259,4 @@ class DataProcessingClient(SocketClient):
         res = communication.recv()
         if res["status"] != "OK":
             raise RuntimeError("Received non-OK result status: ''".format(res["status"]))
-        return res
+        return res["result"]
