@@ -793,14 +793,14 @@ class _ExtendedJsonEncoder(json.JSONEncoder):
         # byte arrays
         if isinstance(o, bytes):
             e = base64.b64encode(o).decode("ascii")
-            return {"__ExtendedJsonType__": "bytes", "__ExtendedJsonValue__": e}
+            return {"__ExtendedJsonType__": "bytes", "__ExtendedJsonValue__": e, "__ExtendedJsonEncoding__": "base64"}
 
         # NumPy arrays
         if (_NUMPY_ERROR is None) and isinstance(o, np.ndarray):
             b = io.BytesIO()
             np.save(file=b, arr=o, allow_pickle=False, fix_imports=False)
             e = base64.b64encode(b.getvalue()).decode("ascii")
-            return {"__ExtendedJsonType__": "numpy.ndarray", "__ExtendedJsonValue__": e}
+            return {"__ExtendedJsonType__": "numpy.ndarray", "__ExtendedJsonValue__": e, "__ExtendedJsonEncoding__": "base64"}
 
         # no extended object
         return super().default(o)
@@ -814,9 +814,9 @@ class _ExtendedJsonDecoder():
 
     @staticmethod
     def object_hook(o):
-        # only handle dicts which have the two keys "__ExtendedJsonType__" and "__ExtendedJsonValue__"
+        # only handle dicts which have the three keys "__ExtendedJsonType__", "__ExtendedJsonValue__", and "__ExtendedJsonEncoding__"
         keys = o.keys()
-        if (len(keys) == 2) and ("__ExtendedJsonType__" in keys) and ("__ExtendedJsonValue__" in keys):
+        if (len(keys) == 3) and ("__ExtendedJsonType__" in keys) and ("__ExtendedJsonValue__" in keys) and ("__ExtendedJsonEncoding__" in keys) and (o["__ExtendedJsonEncoding__"] == "base64"):
             # byte arrays
             if o["__ExtendedJsonType__"] == "bytes":
                 e = o["__ExtendedJsonValue__"]
