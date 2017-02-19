@@ -289,6 +289,29 @@ def around(number, digitCount=3):
     return round(number, roundDigitCount)
 
 
+def cdist(x, y):
+    """
+    Returns the circular distance between two points on a unit circle. The
+    points `x` and `y` must be given by their angle (in degree) on the unit
+    circle.
+
+    >>> cdist(90.0, 350.0)
+    100.0
+
+    >>> cdist(90.0, 260.0)
+    170.0
+
+    >>> cdist(90.0, 280.0)
+    170.0
+
+    >>> cdist(-20.0, 270.0)
+    70.0
+    """
+
+    d = x - y
+    return min(d % 360, -d % 360)
+
+
 def diff(x):
     """
     Yields the successive differences of the elements of `x`.
