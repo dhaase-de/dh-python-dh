@@ -30,6 +30,14 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.8.0 (2017-02-19)
+------------------
+
+* added module `dh.network` and functionality to send various high-level
+  message types via sockets (plus example)
+* added extended JSON encoder/decoder to `dh.utils`
+
+
 0.7.0 (2017-02-19)
 ------------------
 
