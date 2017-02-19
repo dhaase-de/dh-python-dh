@@ -80,7 +80,7 @@ class GoogleCharts():
         Returns string of the HTML `div` elements needed to draw the charts of
         this container.
         """
-        return "\n".join("<div id=\"{}\"></div>".format(chart.divName()) for chart in self.charts)
+        return "\n".join("<div id=\"{}\" style=\"margin:50px auto; width: 800px; height: 800px;\"></div>".format(chart.divName()) for chart in self.charts)
 
     def renderHtml(self):
         """
@@ -139,12 +139,15 @@ class GoogleChart(abc.ABC):
     If it is `None`, an empty dictionary is created.
     """
 
+    _optionsDefault = {
+        "chartArea": {"width": "70%", "height": "70%"},
+    }
+
     def __init__(self, uid=None, options=None):
         self._uid = uid
-        if options is not None:
-            self._options = options
-        else:
-            self._options = {}
+        if options is None:
+            options = {}
+        self._options = dh.utils.rupdate(self._optionsDefault, options)
         self._header = []
         self._data = []
 

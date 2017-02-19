@@ -13,6 +13,9 @@ if __name__ == "__main__":
     C.append(dh.plot.GoogleColumnChart(
         xs=[1, 2, 3, 4],
         yss=[2, 3, 2, 1],
+        options={
+            "chartArea": {"width": "50%", "height": "50%"},
+        }
     ))
 
     # scatter chart
