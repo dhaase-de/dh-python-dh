@@ -792,14 +792,14 @@ class _ExtendedJsonEncoder(json.JSONEncoder):
     def default(self, o):
         # byte arrays
         if isinstance(o, bytes):
-            e = base64.b85encode(o).decode("ascii")
+            e = base64.b64encode(o).decode("ascii")
             return {"__ExtendedJsonType__": "bytes", "__ExtendedJsonValue__": e}
 
         # NumPy arrays
         if (_NUMPY_ERROR is None) and isinstance(o, np.ndarray):
             b = io.BytesIO()
             np.save(file=b, arr=o, allow_pickle=False, fix_imports=False)
-            e = base64.b85encode(b.getvalue()).decode("ascii")
+            e = base64.b64encode(b.getvalue()).decode("ascii")
             return {"__ExtendedJsonType__": "numpy.ndarray", "__ExtendedJsonValue__": e}
 
         # no extended object
@@ -820,14 +820,14 @@ class _ExtendedJsonDecoder():
             # byte arrays
             if o["__ExtendedJsonType__"] == "bytes":
                 e = o["__ExtendedJsonValue__"]
-                b = base64.b85decode(bytes(e, "ascii"))
+                b = base64.b64decode(bytes(e, "ascii"))
                 return b
 
             # NumPy arrays
             if o["__ExtendedJsonType__"] == "numpy.ndarray":
                 if _NUMPY_ERROR is None:
                     e = o["__ExtendedJsonValue__"]
-                    b = base64.b85decode(bytes(e, "ascii"))
+                    b = base64.b64decode(bytes(e, "ascii"))
                     x = np.load(file=io.BytesIO(b), allow_pickle=False, fix_imports=False)
                     return x
                 else:
