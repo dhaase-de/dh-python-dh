@@ -18,8 +18,12 @@ class GoogleCharts():
     """
     Wrapper for Google charts (https://developers.google.com/chart/).
 
-    This class creates a "container" to which multiple charts (instances of
-    class `GoogleChart` can be added (see :func:`GoogleCharts.append()`.
+    This class creates an empty "container" to which multiple charts (instances
+    of class `GoogleChart` can be added (see :func:`GoogleCharts.append()`).
+
+    `api` can be used to specify the version of the Google chart API. It must
+    be a string and can either contain a number (e.g., `"45"`) or the value
+    `"current"`).
     """
 
     def __init__(self, api="current"):
@@ -28,6 +32,9 @@ class GoogleCharts():
 
     @property
     def api(self):
+        """
+        Property which gets the API version of this Google chart container.
+        """
         return self._api
 
     def append(self, chart):
@@ -43,7 +50,8 @@ class GoogleCharts():
 
     def renderJs(self):
         """
-        Returns string of the JavaScript code which draws all charts of this.
+        Returns string of the JavaScript code which draws all charts of this
+        container.
         """
 
         template = """
@@ -69,11 +77,17 @@ class GoogleCharts():
 
     def renderDivs(self):
         """
-        Returns string of the HTML `div` elements needed to draw the charts.
+        Returns string of the HTML `div` elements needed to draw the charts of
+        this container.
         """
         return "\n".join("<div id=\"{}\"></div>".format(chart.divName()) for chart in self.charts)
 
     def renderHtml(self):
+        """
+        Return string containing the entire HTML code needed to render all
+        charts that were added to this container.
+        """
+
         template = """
             <html>
                 <head>
@@ -100,6 +114,12 @@ class GoogleCharts():
         )
 
     def save(self, filename):
+        """
+        Render HTML code and save it to file `filename`.
+
+        Directories are created as necessary.
+        """
+
         dh.utils.mkpdir(filename)
         with open(filename, "w") as f:
             f.write(self.renderHtml())
@@ -107,8 +127,16 @@ class GoogleCharts():
 
 class GoogleChart(abc.ABC):
     """
-    Base class for individual Google charts which can be added to a
+    Base class for an individual Google chart which can be added to a
     `GoogleCharts` container.
+
+    `uid` must be a unique string which is used to reference the plot in the
+    generated JavaScript and HTML code. If it is `None`, the Google chart
+    container chooses a unique value.
+
+    `options` can be `None` or a dictionary containing key/value pairs as
+    documented in https://developers.google.com/chart/interactive/docs/basic_customizing_chart#specify-options.
+    If it is `None`, an empty dictionary is created.
     """
 
     def __init__(self, uid=None, options=None):
@@ -122,6 +150,9 @@ class GoogleChart(abc.ABC):
 
     @property
     def uid(self):
+        """
+        Property which can be used to get and set the UID of this chart.
+        """
         return self._uid
 
     @uid.setter
@@ -134,6 +165,10 @@ class GoogleChart(abc.ABC):
 
     @property
     def header(self):
+        """
+        Property which can be used to get and set the header of the data
+        table of this chart.
+        """
         return self._header
 
     @header.setter
@@ -145,6 +180,9 @@ class GoogleChart(abc.ABC):
 
     @property
     def data(self):
+        """
+        Property which gets the data table of this chart.
+        """
         return self._data
 
     ##
@@ -153,10 +191,16 @@ class GoogleChart(abc.ABC):
 
     @property
     def options(self):
+        """
+        Property which gets the option dictionary.
+        """
         return self._options
 
     @property
     def title(self):
+        """
+        Property which can be used to get and set the title of this chart.
+        """
         try:
             return self.options["title"]
         except KeyError:
@@ -172,23 +216,33 @@ class GoogleChart(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def chartClass():
+    def _chartClass():
         pass
 
     @staticmethod
     def renderObject(obj):
         """
-        Render Python object `obj` as Javascript object.
+        Render Python object `obj` (e.g., a list or a dictionary) as
+        JavaScript object.
         """
         return json.dumps(obj, indent=4, sort_keys=True)
 
     def functionName(self):
+        """
+        Return this plot's JavaScript function name.
+        """
         return "chart_{uid}_draw".format(uid=self.uid)
 
     def divName(self):
+        """
+        Return this plot's HTML div-element name.
+        """
         return "chart_{uid}_div".format(uid=self.uid)
 
     def renderFunctionJs(self):
+        """
+        Return the JavaScript function needed to draw this plot.
+        """
         template = """
             function {functionName}() {{
                 var data = google.visualization.arrayToDataTable({data});
@@ -199,21 +253,31 @@ class GoogleChart(abc.ABC):
                 chart.draw(data, options);
             }}
         """
-
         return textwrap.dedent(template).format(
             functionName=self.functionName(),
             data=self.renderObject(self.header + self.data),
             options=self.renderObject(self.options),
-            chartClass=self.chartClass(),
+            chartClass=self._chartClass(),
             divName=self.divName(),
         )
 
 
 class GoogleColumnChart(GoogleChart):
     """
-    Column chart which can be added to a `GoogleCharts` container.
+    Column (bar) chart which can be added to a `GoogleCharts` container.
 
-    .. note:: Use `collections.OrderedDict` to order the labels.
+    `xs` must be a iterable specifying the x values of the chart (which can be
+    numerics or strings). `yss` must be either an iterable of the same length
+    as `xs` or a dictionary of iterables, each of the same length as `xs`. In
+    the first case, the chart will have one bar per value in `xs`. In the
+    second case, there will be as many bars per value in `xs` as there are
+    keys in `yss`.
+
+    .. note:: Use `collections.OrderedDict` to order the bars.
+
+    >>> c = GoogleColumnChart(xs=["a", "b", "c", "d"], yss=[1, 2, 3, 4])
+
+    >>> c = GoogleColumnChart(xs=[1, 2, 3, 4], yss={"bar1": [1, 2, 3, 4], "bar2": [2, 3, 2, 1]})
     """
 
     def __init__(self, xs, yss, **kwargs):
@@ -237,13 +301,23 @@ class GoogleColumnChart(GoogleChart):
             self._data.append(row)
 
     @staticmethod
-    def chartClass():
+    def _chartClass():
         return "google.visualization.ColumnChart"
 
 
 class GoogleScatterChart(GoogleChart):
     """
     Scatter chart which can be added to a `GoogleCharts` container.
+
+    `xs` and `ys` must be iterables of equal length specifying the x and y
+    coordinates of the points to be plotted. If `labels` is `None`, all
+    points have the same color. Otherwise, to visually group points, `labels`
+    must be an iterable of strings with the same length as `xs` and `ys`, which
+    indicates which label each point to be plotted should have.
+
+    >>> c = GoogleScatterChart(xs=[3, 5, 3, 5, 4], ys=[3, 2, 1, 5, 1])
+
+    >>> c = GoogleScatterChart(xs=[3, 5, 3, 5, 4], ys=[3, 2, 1, 5, 1], labels=["a", "b", "a", "b", "a"])
     """
 
     def __init__(self, xs, ys, labels=None, **kwargs):
@@ -270,7 +344,7 @@ class GoogleScatterChart(GoogleChart):
             self._data.append(row)
 
     @staticmethod
-    def chartClass():
+    def _chartClass():
         return "google.visualization.ScatterChart"
 
 
@@ -285,7 +359,11 @@ class GoogleLineChart(GoogleChart):
     y values are given by each iterable of the dictionary. The dictionary keys
     will then serve as labels.
 
-    .. note:: Use `collections.OrderedDict` to order the labels.
+    .. note:: Use `collections.OrderedDict` for `yss` to order the labels.
+
+    >>> c = GoogleLineChart(xs=[1, 2, 3, 4, 5], yss=[1, 4, 9, 16, 25])
+
+    >>> c = GoogleLineChart(xs=[1, 2, 3, 4, 5], yss={"x**2": [1, 4, 9, 16, 25], "x**3": [1, 8, 27, 64, 125]})
     """
 
     def __init__(self, xs, yss, **kwargs):
@@ -309,13 +387,5 @@ class GoogleLineChart(GoogleChart):
             self._data.append(row)
 
     @staticmethod
-    def chartClass():
+    def _chartClass():
         return "google.visualization.LineChart"
-
-
-if __name__ == "__main__":
-    c = GoogleCharts()
-    c.append(GoogleScatterChart([1, 2, 3, 4], [2, 3, 2, 1], ["a", "a", "b", "b"]))
-    c.append(GoogleLineChart([1, 2, 3, 4], [2, 3, 2, 1]))
-    c.append(GoogleLineChart([1, 2, 3, 4], {"a": [2, 3, 2, 1], "b": [3, 2, 2, 4]}))
-    c.save("/home/dh/tmp/chart.html")
