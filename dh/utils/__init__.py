@@ -731,13 +731,17 @@ def ftime(secs):
     return res
 
 
-def dtstr():
+def dtstr(compact=True):
     """
     Returns the current timestamp string including date, time, and
     microseconds.
     """
 
-    return datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
+    if compact:
+        fmt = "%Y%m%d-%H%M%S-%f"
+    else:
+        fmt = "%Y-%m-%d %H:%M:%S:%f"
+    return datetime.datetime.now().strftime(fmt)
 
 
 def table(*args, **kwargs):
