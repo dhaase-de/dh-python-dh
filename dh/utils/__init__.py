@@ -1201,8 +1201,20 @@ class Timer():
     breakpoints ("splits").
     """
 
-    def __init__(self, name=None):
+    _units = (("us", 1e-6), ("ms", 1e-3), ("s", 1.0), ("min", 60.0), ("h", 3600.0))
+
+    def __init__(self, name=None, unit="ms"):
         self._name = name
+        self._unit = unit
+        for u in self._units:
+            if u[0] == unit:
+                self._unit = unit
+                self._scale = 1.0 / u[1]
+                break
+        else:
+            unitNames = tuple(u[0] for u in self._units)
+            raise ValueError("Invalid unit name '{}', must be one of '{}'".format(unit, "', '".join(unitNames)))
+
 
     def __enter__(self):
         self.start()
@@ -1245,10 +1257,10 @@ class Timer():
             rows.append((
                 ("" if self._name is None else "{}.".format(self._name)) + splitFrom["name"],
                  ("" if self._name is None else "{}.".format(self._name)) + splitTo["name"],
-                dt,
-                splitTo["t"],
+                dt * self._scale,
+                splitTo["t"] * self._scale,
             ))
-        return table(rows, headers=("From", "To", "Duration [s]", "Total [s]"))
+        return table(rows, headers=("From", "To", "Duration [{}]".format(self._unit), "Cumulative [{}]".format(self._unit)))
 
 
 def _pdeco(callerName, fName, message):
