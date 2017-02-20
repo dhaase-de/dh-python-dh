@@ -51,7 +51,16 @@ class ByteSocketMessage(SocketMessage):
     Each message has a fixed-length (four byte) header, specifying the length
     of the message content. Thus, calls to `send()` and `recv()` always
     ensure that the entire message is being sent/received.
+
+    If `compress` is `True`, messages are compressed before sending and
+    decompressed after receiving. This reduces the network load but costs more
+    time. The value for `compress` must be the same for both the server and the
+    client.
     """
+
+    def __init__(self, socket, compress=False):
+        super().__init__(socket=socket)
+        self._compress = compress
 
     def _recvn(self, byteCount):
         """
@@ -69,6 +78,8 @@ class ByteSocketMessage(SocketMessage):
         return b.getvalue()
 
     def send(self, b):
+        if self._compress:
+            b = zlib.compress(b)
         header = struct.pack(">I", int(len(b)))
         self.socket.sendall(header + b)
 
@@ -76,29 +87,14 @@ class ByteSocketMessage(SocketMessage):
         header = self._recvn(4)
         if header is None:
             return None
-        size = struct.unpack(">I", header)[0]
-        return self._recvn(size)
-
-
-class GzipByteSocketMessage(ByteSocketMessage):
-    """
-    Class providing `send()` and `recv()` methods for sending and receiving
-    byte messages via the given socket. In contrast to `ByteSocketMessage`, the
-    byte messages are gzipped before being sent and unzipped after being
-    received.
-    """
-
-    def send(self, b):
-        z = zlib.compress(b)
-        super().send(z)
-
-    def recv(self):
-        z = super().recv()
-        b = zlib.decompress(z)
+        length = struct.unpack(">I", header)[0]
+        b = self._recvn(length)
+        if self._compress:
+            b = zlib.decompress(b)
         return b
 
 
-class JsonSocketMessage(GzipByteSocketMessage):
+class JsonSocketMessage(ByteSocketMessage):
     """
     Class providing `send()` and `recv()` methods for sending and receiving
     JSON-serializable objects via the given socket.
@@ -116,7 +112,7 @@ class JsonSocketMessage(GzipByteSocketMessage):
         return x
 
 
-class ExtendedJsonSocketMessage(GzipByteSocketMessage):
+class ExtendedJsonSocketMessage(ByteSocketMessage):
     """
     Class providing `send()` and `recv()` methods for sending and receiving
     JSON-serializable (with extended range of supported types, see
