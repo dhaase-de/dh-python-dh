@@ -14,7 +14,7 @@ import dh.utils
 
 
 def main():
-    C = dh.network.DataProcessingClient("localhost")
+    C = dh.network.ImageProcessingClient("localhost")
 
     # input
     I = dh.data.lena()
@@ -27,6 +27,7 @@ def main():
     t1 = time.time()
 
     # show result
+    dh.image.pinfo(J)
     print("Received result after {} ms".format(dh.utils.around((t1 - t0) * 1000.0)))
     dh.image.show(dh.image.stack([I, J]), wait=0)
 

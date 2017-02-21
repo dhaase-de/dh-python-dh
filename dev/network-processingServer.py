@@ -9,10 +9,11 @@ import dh.network
 ###
 
 
-class Server(dh.network.DataProcessingServer):
+class Server(dh.network.ImageProcessingServer):
     @staticmethod
     def process(data, params):
-        return dh.image.gamma(data, params["gamma"])
+        return data
+        #return dh.image.gamma(data, params["gamma"])
 
 
 def main():
