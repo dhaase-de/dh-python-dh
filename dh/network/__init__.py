@@ -176,6 +176,7 @@ class SocketServer(abc.ABC):
     def __init__(self, host="", port=7214, backlog=5, nodelay=True, messageClass=ByteSocketMessage):
         print("Creating socket...")
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if nodelay:
             self._socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
