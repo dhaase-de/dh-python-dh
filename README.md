@@ -30,6 +30,16 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.8.1 (2017-02-21)
+------------------
+
+* improved `dh.network`: added `ImageProcessingServer` and client, added
+  `NumpySocketMessage`, and improved the general performance (latency dropped
+  from ~250ms to ~4ms for a no-op image processing client-server communication
+  on the same machine)
+* smaller improvements
+
+
 0.8.0 (2017-02-19)
 ------------------
 
