@@ -12,4 +12,4 @@ source "$SCRIPT_DIR"/setenv.sh
 "$SCRIPT_DIR"/version-setFromGit.sh
 
 # run local installation
-cd "$PACKAGE_DIR" && python3 setup.py install
+cd "$PACKAGE_DIR" && python3 setup.py install --user

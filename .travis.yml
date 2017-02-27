@@ -9,7 +9,7 @@ python:
 
 install:
     - "pip install --requirement requirements.txt"
-    - "./scripts/build-install.sh"
+    - "python3 setup.py install"
 
 script:
     - "./scripts/check-tests.sh"
