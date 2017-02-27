@@ -11,4 +11,5 @@ install:
     - "pip install --requirement requirements.txt"
 
 script:
-    - "./scripts/check-tests.sh"
+    - "nosetests dh --with-doctest --verbosity=3"
+
