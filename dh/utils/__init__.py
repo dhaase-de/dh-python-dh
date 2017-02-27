@@ -857,28 +857,32 @@ class ejson():
         """
         See :func:`json.dump()`.
         """
-        return json.dump(*args, **kwargs, ensure_ascii=True, cls=_ExtendedJsonEncoder)
+        return json.dump(*args, **kwargs)
 
     @staticmethod
     def dumps(*args, **kwargs):
         """
         See :func:`json.dumps()`.
         """
-        return json.dumps(*args, **kwargs, ensure_ascii=True, cls=_ExtendedJsonEncoder)
+        kwargs["ensure_ascii"] = True
+        kwargs["cls"] = _ExtendedJsonEncoder
+        return json.dumps(*args, **kwargs)
 
     @staticmethod
     def load(*args, **kwargs):
         """
         See :func:`json.load()`.
         """
-        return json.load(*args, **kwargs, object_hook=_ExtendedJsonDecoder.object_hook)
+        kwargs["object_hook"] = _ExtendedJsonDecoder.object_hook
+        return json.load(*args, **kwargs)
 
     @staticmethod
     def loads(*args, **kwargs):
         """
         See :func:`json.loads()`.
         """
-        return json.loads(*args, **kwargs, object_hook=_ExtendedJsonDecoder.object_hook)
+        kwargs["object_hook"] = _ExtendedJsonDecoder.object_hook
+        return json.loads(*args, **kwargs)
 
 
 ###
