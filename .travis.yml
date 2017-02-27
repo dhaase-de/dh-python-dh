@@ -16,3 +16,5 @@ script:
     - "./scripts/build-wheel.sh"
     - "./scripts/build-doc.sh"
 
+notifications:
+    email: false
