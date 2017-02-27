@@ -4,6 +4,7 @@ python:
     - "3.4"
     - "3.5"
     - "3.6"
+    - "3.7-dev"
     - "nightly"
 
 install:
@@ -11,5 +12,7 @@ install:
     - "pip install --requirement requirements.txt"
 
 script:
-    - "nosetests dh --with-doctest --verbosity=3"
+    - "./scripts/check-tests.sh"
+    - "./scripts/build-wheel.sh"
+    - "./scripts/build-doc.sh"
 

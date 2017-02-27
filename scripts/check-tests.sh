@@ -8,4 +8,8 @@ set -o nounset
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source "$SCRIPT_DIR"/setenv.sh
 
-cd "$PACKAGE_DIR" && nosetests3 dh --with-doctest --verbosity=3
+# find nosetests binary
+NOSETESTS_BIN=$(which nosetests3 || which nosetests)
+
+# run tests
+cd "$PACKAGE_DIR" && "$NOSETESTS_BIN" dh --with-doctest --verbosity=3
