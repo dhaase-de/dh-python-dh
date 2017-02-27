@@ -8,8 +8,8 @@ python:
     - "nightly"
 
 install:
-    - "./scripts/build-install.sh"
     - "pip install --requirement requirements.txt"
+    - "./scripts/build-install.sh"
 
 script:
     - "./scripts/check-tests.sh"
