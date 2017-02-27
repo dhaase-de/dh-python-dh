@@ -12,4 +12,4 @@ source "$SCRIPT_DIR"/setenv.sh
 "$SCRIPT_DIR"/version-setFromGit.sh
 
 # run setup script
-cd "$PACKAGE_DIR" && ./setup.py bdist_wheel
+cd "$PACKAGE_DIR" && python3 setup.py bdist_wheel

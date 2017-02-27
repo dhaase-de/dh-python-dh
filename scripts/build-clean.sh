@@ -9,7 +9,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source "$SCRIPT_DIR"/setenv.sh
 
 # clean build output
-cd "$PACKAGE_DIR" && ./setup.py clean --all
+cd "$PACKAGE_DIR" && python3 setup.py clean --all
 rm -rf "$PACKAGE_DIR"/*.egg-info/
 rm -rf "$PACKAGE_DIR"/dist/
 
