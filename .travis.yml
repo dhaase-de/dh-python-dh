@@ -1,0 +1,14 @@
+language: python
+
+python:
+    - "3.4"
+    - "3.5"
+    - "3.6"
+    - "nightly"
+
+install:
+    - "./scripts/build-install.sh"
+    - "pip install --requirement requirements.txt"
+
+script:
+    - "./scripts/check-tests.sh"
