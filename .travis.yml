@@ -8,7 +8,7 @@ python:
     - "nightly"
 
 install:
-    - "pip install --upgrade --requirement requirements.txt"
+    - "pip install --requirement requirements.txt"
     - "./scripts/build-install.sh"
 
 script:
