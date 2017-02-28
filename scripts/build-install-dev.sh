@@ -9,4 +9,4 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source "$SCRIPT_DIR"/setenv.sh
 
 # run local installation
-cd "$PACKAGE_DIR" && ./setup.py develop --user
+cd "$PACKAGE_DIR" && python3 setup.py develop --user

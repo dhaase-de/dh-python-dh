@@ -11,5 +11,5 @@ source "$SCRIPT_DIR"/setenv.sh
 # update version in file "dh/VERSION.txt"
 "$SCRIPT_DIR"/version-setFromGit.sh
 
-# run setup script
-cd "$PACKAGE_DIR" && python3 setup.py bdist_wheel
+# run local installation
+cd "$PACKAGE_DIR" && python3 setup.py install --user

@@ -2,13 +2,19 @@
 GUI-related functions for the Tcl/Tk framework.
 """
 
-import numpy as np
-import PIL
-import PIL.ImageTk
 import tkinter
 import tkinter.ttk
 
-import dh.image
+# optional image support, only needed for ImageCanvas
+try:
+    import numpy as np
+    import PIL
+    import PIL.ImageTk
+    import dh.image
+except ImportError as e:
+    _IMAGECANVAS_ERROR=e
+else:
+    _IMAGECANVAS_ERROR=None
 
 
 class Window(tkinter.Tk):
@@ -56,6 +62,10 @@ class ImageCanvas(tkinter.Canvas):
     """
 
     def __init__(self, parent, **kwargs):
+        # check if all required modules were imported
+        if _IMAGECANVAS_ERROR is not None:
+            raise _IMAGECANVAS_ERROR
+
         # parent class init
         super().__init__(parent, **kwargs)
 
