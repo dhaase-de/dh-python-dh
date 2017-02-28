@@ -259,6 +259,29 @@ def nth(*args, **kwargs):
     return which(isnth(*args, **kwargs))
 
 
+def ranks(x, reverse=False):
+    """
+    Returns a tuple containing the rank of each element of the iterable `x`.
+
+    The ranks start at `0`. If `reverse` is `False`, the elements of `x` are
+    ranked in ascending order, and in descending order otherwise.
+
+    Equal elements will all be assigned the same (lowest-possible) rank.
+
+    >>> ranks(["d", "a", "c", "b"])
+    (3, 0, 2, 1)
+
+    >>> ranks(["d", "a", "c", "b"], reverse=True)
+    (0, 3, 1, 2)
+
+    >>> ranks(["d", "a", "c", "b", "c"])
+    (4, 0, 2, 1, 2)
+    """
+
+    s = sorted(x, reverse=reverse)
+    return tuple(s.index(item) for item in x)
+
+
 def powerset(x):
     """
     Generator which yields each element of the powerset of the iterable `x`.
