@@ -4,6 +4,12 @@ Overview
 Python3 toolbox of Daniel Haase.
 
 
+Status
+------
+
+[![Build Status](https://travis-ci.org/dhaase-de/dh-python-dh.svg?branch=master)](https://travis-ci.org/dhaase-de/dh-python-dh)
+
+
 Installation
 ------------
 
