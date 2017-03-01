@@ -56,7 +56,7 @@ class Test(unittest.TestCase):
         C = dh.image.convert(L, "float")
         self.assertEqual(C.shape, (512, 512, 3))
         self.assertEqual(C.dtype, np.float)
-        self.assertEqual(C.mean(), 0.50285637550104678)
+        self.assertAlmostEqual(C.mean(), 0.50285637550104678)
 
     def test_tir(self):
         self.assertEqual(
