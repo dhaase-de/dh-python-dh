@@ -196,6 +196,10 @@ def stack(Is, padding=0, dtype=None, gray=None):
         rowHeight = 0
         for I in row:
             rowHeight = max(rowHeight, I.shape[0])
+        if nRow == 0:
+            rowHeight += 2 * padding
+        else:
+            rowHeight += padding
 
         R = None
         for (nCol, I) in enumerate(row):
