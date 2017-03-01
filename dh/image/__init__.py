@@ -577,12 +577,13 @@ def colorize(I, c="jet", reverse=False, bitwise=False):
     # make sure that the input has only two dimensions
     # it could also have three dimensions, with the length of the last
     # dimension being one
-    if not isgray(I):
-        raise ValueError("Input image must be in gray scale mode")
     J = asgray(I).copy()
 
+    # convert input to dtype "uint8"
+    J = convert(J, "uint8")
+
     if reverse:
-        J = 255 - J
+        J = invert(J)
 
     # mapping from source (one channel) to target (three channel) color
     m = colormap(c)
