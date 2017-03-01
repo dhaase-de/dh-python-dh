@@ -7,15 +7,15 @@ import dh.image
 
 
 def stack():
-    I1 = dh.data.lena()
-    I2 = dh.image.convert(dh.data.M(300, 200).astype("uint16"), "uint8")
-    I3 = dh.data.grid([350, 500])
-    I4 = dh.data.pal()
-    I5 = dh.data.grid([200, 200])
+    L = dh.data.lena()
+    M = dh.image.convert(dh.data.M(300, 200).astype("uint16"), "uint8")
+    G1 = dh.data.grid([350, 500])
+    G2 = dh.data.grid([200, 200])
+    P = dh.data.pal()
 
-    #S = dh.image.stack([[I1, I2], [I3, I4], [I5]])
-    S = dh.image.stack([[I4, I4, I4], [I1, I1, I1]], padding=32)
-    dh.image.imshow(S, scale=0.3, wait=10)
+    S = dh.image.stack([[L, M], [G1, G2], [P]], padding=0)
+    print(S.shape)
+    dh.image.imshow(S, scale=None, wait=0)
 
 
 def astack():
@@ -75,4 +75,4 @@ def cdemo():
 
 
 if __name__ == "__main__":
-    astack()
+    stack()
