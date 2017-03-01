@@ -49,6 +49,14 @@ class Test(unittest.TestCase):
         self.assertEqual(S.dtype, np.uint8)
         self.assertAlmostEqual(S.mean(), 89.139465982846545)
 
+    def test_convert(self):
+        L = dh.data.lena()
+
+        # test conversion to float
+        C = dh.image.convert(L, "float")
+        self.assertEqual(C.shape, (512, 512, 3))
+        self.assertEqual(C.dtype, np.float)
+        self.assertEqual(C.mean(), 0.50285637550104678)
 
     def test_tir(self):
         self.assertEqual(
