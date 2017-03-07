@@ -12,7 +12,7 @@ source "$SCRIPT_DIR"/setenv.sh
 GIT="$(which git)"
 
 # get version number from git
-cd "$PACKAGE_DIR" && VERSION=$("$GIT" describe --tags --dirty | sed s'/-/_/' | sed s'/-/./g')
+cd "$PACKAGE_DIR" && VERSION=$("$GIT" describe --tags --dirty | sed s'/-/+/' | sed s'/-/./g')
 
 # write version number to file
 VERSION_FILE="$PACKAGE_DIR"/dh/"VERSION.txt"
