@@ -180,7 +180,7 @@ class MessageSocket():
         messageType.send(self._socket, x)
 
     def mrecv(self, messageType):
-        messageType.recv(self._socket)
+        return messageType.recv(self._socket)
 
 
 ###
