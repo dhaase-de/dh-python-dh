@@ -188,8 +188,8 @@ class MessageSocket(socket.socket):
 class SocketServer(abc.ABC):
     """
     Simple socket server which accepts connections on the specified `host`
-    and `port` and communicates using the specified message type `messageClass`
-    in the method `handler`.
+    and `port` and communicates with the client as specified in
+    `communicate()`.
 
     See http://stackoverflow.com/a/19742674/1913780 for an explanation of
     `nodelay`.
@@ -197,7 +197,7 @@ class SocketServer(abc.ABC):
 
     def __init__(self, host="", port=7214, backlog=5, nodelay=True):
         print("Creating socket...")
-        self._socket = MessageSocket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if nodelay:
             self._socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -210,10 +210,6 @@ class SocketServer(abc.ABC):
     def _print(self, text):
         print("[{}]  {}".format(dh.utils.dtstr(compact=False), text))
 
-    @property
-    def socket(self):
-        return self._socket
-
     def run(self):
         self._socket.listen(self._backlog)
         while True:
@@ -223,13 +219,15 @@ class SocketServer(abc.ABC):
             self._print("Accepted connection from {}:{}".format(connectionAddress[0], connectionAddress[1]))
             t0 = time.time()
             try:
-                self.communicate()
+                # "cast" to connectionSocket from socket.socket to MessageSocket (which adds the two methods 'msend' and 'mrecv')
+                connectionSocket.__class__ = MessageSocket
+                self.communicate(connectionSocket)
             except Exception as e:
                 self._print("** {}: {}".format(type(e).__name__, e))
             self._print("Finished request from {}:{} after {} ms".format(connectionAddress[0], connectionAddress[1], dh.utils.around((time.time() - t0) * 1000.0)))
 
     @abc.abstractmethod
-    def communicate(self):
+    def communicate(self, socket):
         """
         Implements the entire communication happening for one connection with a
         client via high-level socket messages (see `SocketMessageType`).
@@ -243,8 +241,8 @@ class SocketServer(abc.ABC):
 class SocketClient(abc.ABC):
     """
     Simple socket client which connects to the server on the specified `host`
-    and `port` each time `query()` is called. It communicates using the
-    specified message type `messageClass` in the method `handler`.
+    and `port` each time `query()` is called. The communication with the server
+    is specified in `communicate()`.
 
     See http://stackoverflow.com/a/19742674/1913780 for an explanation of
     `nodelay`.
@@ -255,10 +253,6 @@ class SocketClient(abc.ABC):
         self._port = port
         self._nodelay = nodelay
 
-    @property
-    def socket(self):
-        return self._socket
-
     def query(self, *args, **kwargs):
         # establish connection with the server
         self._socket = MessageSocket(socket.AF_INET, socket.SOCK_STREAM)
@@ -266,8 +260,8 @@ class SocketClient(abc.ABC):
             self._socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self._socket.connect((self._host, self._port))
 
-        # user-specific communication
-        res = self.communicate(*args, **kwargs)
+        # actual communication
+        res = self.communicate(self._socket, *args, **kwargs)
 
         # close connection
         self._socket.shutdown(socket.SHUT_RDWR)
@@ -276,7 +270,7 @@ class SocketClient(abc.ABC):
         return res
 
     @abc.abstractmethod
-    def communicate(self, *args, **kwargs):
+    def communicate(self, socket, *args, **kwargs):
         """
         Implements the entire communication happening for one connection with a
         server via high-level socket messages (see `SocketMessageType`).
@@ -297,19 +291,20 @@ class ImageProcessingServer(SocketServer):
     the static method `process(data, params)`.
     """
 
-    def communicate(self):
+    def communicate(self, socket):
         # receive input image and parameters
-        data = self.socket.mrecv(NumpySocketMessageType())
-        params = self.socket.mrecv(JsonSocketMessageType())
+        data = socket.mrecv(NumpySocketMessageType())
+        params = socket.mrecv(JsonSocketMessageType())
 
-        # process and send result image
+        # process
         try:
             result = self.process(data=data, params=params)
         except Exception as e:
             self._print("** {}: {}".format(type(e).__name__, e))
             result = np.zeros(shape=(0, 0), dtype="uint8")
-        else:
-            self.socket.msend(NumpySocketMessageType(), result)
+
+        # send result image
+        socket.msend(NumpySocketMessageType(), result)
 
     @staticmethod
     @abc.abstractmethod
@@ -332,16 +327,17 @@ class ImageProcessingClient(SocketClient):
     `process(data, params)`.
     """
 
-    def communicate(self, data, params):
+    def communicate(self, socket, data, params):
         # send input image and parameters
-        self.socket.msend(NumpySocketMessageType(), data)
-        self.socket.msend(JsonSocketMessageType(), params)
+        socket.msend(NumpySocketMessageType(), data)
+        socket.msend(JsonSocketMessageType(), params)
 
-        # reveive result image
-        return self.socket.mrecv(NumpySocketMessageType())
+        # receive result image
+        return socket.mrecv(NumpySocketMessageType())
 
     def process(self, data, params):
         """
-        Just another name for the `query` method.
+        Just another name for the `query` method (to better show the connection
+        to the server's `process` method).
         """
         return self.query(data=data, params=params)
