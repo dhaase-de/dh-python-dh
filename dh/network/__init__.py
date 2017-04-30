@@ -26,33 +26,26 @@ else:
 
 
 ###
-#%% sockets
+#%% socket message types
 ###
 
 
-class SocketMessage(abc.ABC):
+class SocketMessageType(abc.ABC):
     """
     Base class providing `send()` and `recv()` methods for sending and
-    receiving (higher-level) messages via the specified socket `socket`.
+    receiving (higher-level) messages via the socket `socket`.
     """
 
-    def __init__(self, socket):
-        self._socket = socket
-
-    @property
-    def socket(self):
-        return self._socket
-
     @abc.abstractmethod
-    def send(self, x):
+    def send(self, socket, x):
         pass
 
     @abc.abstractmethod
-    def recv(self):
+    def recv(self, socket):
         pass
 
 
-class ByteSocketMessage(SocketMessage):
+class ByteSocketMessageType(SocketMessageType):
     """
     Class providing methods for sending and receiving byte *messages* of up to
     4 GiB in size via a given socket.
@@ -67,11 +60,10 @@ class ByteSocketMessage(SocketMessage):
     client.
     """
 
-    def __init__(self, socket, compress=False):
-        super().__init__(socket=socket)
+    def __init__(self, compress=False):
         self._compress = compress
 
-    def _recvn(self, byteCount):
+    def _recvn(self, socket, byteCount):
         """
         Receive and return a fixed number of `byteCount` bytes from the socket.
         """
@@ -80,30 +72,30 @@ class ByteSocketMessage(SocketMessage):
             currentByteCount = b.getbuffer().nbytes
             if currentByteCount >= byteCount:
                 break
-            packet = self.socket.recv(byteCount - currentByteCount)
+            packet = socket.recv(byteCount - currentByteCount)
             if len(packet) == 0:
                 return None
             b.write(packet)
         return b.getvalue()
 
-    def send(self, b):
+    def send(self, socket, b):
         if self._compress:
             b = zlib.compress(b)
         header = struct.pack(">I", int(len(b)))
-        self.socket.sendall(header + b)
+        socket.sendall(header + b)
 
-    def recv(self):
+    def recv(self, socket):
         header = self._recvn(4)
         if header is None:
             return None
         length = struct.unpack(">I", header)[0]
-        b = self._recvn(length)
+        b = self._recvn(socket, length)
         if self._compress:
             b = zlib.decompress(b)
         return b
 
 
-class NumpySocketMessage(ByteSocketMessage):
+class NumpySocketMessageType(ByteSocketMessageType):
     """
     Class providing `send()` and `recv()` methods for sending and receiving
     NumPy ndarray objects via the given socket.
@@ -114,35 +106,35 @@ class NumpySocketMessage(ByteSocketMessage):
             raise _NUMPY_ERROR
         super().__init__(*args, **kwargs)
 
-    def send(self, x):
+    def send(self, socket, x):
         b = io.BytesIO()
         np.save(file=b, arr=x, allow_pickle=False, fix_imports=False)
-        super().send(b.getvalue())
+        super().send(socket, b.getvalue())
 
-    def recv(self):
-        b = io.BytesIO(super().recv())
+    def recv(self, socket):
+        b = io.BytesIO(super().recv(socket))
         return np.load(file=b, allow_pickle=False, fix_imports=False)
 
 
-class JsonSocketMessage(ByteSocketMessage):
+class JsonSocketMessageType(ByteSocketMessageType):
     """
     Class providing `send()` and `recv()` methods for sending and receiving
     JSON-serializable objects via the given socket.
     """
 
-    def send(self, x):
+    def send(self, socket, x):
         j = json.dumps(x, ensure_ascii=True)
         b = bytes(j, "ascii")
-        super().send(b)
+        super().send(socket, b)
 
-    def recv(self):
-        b = super().recv()
+    def recv(self, socket):
+        b = super().recv(socket)
         j = b.decode("ascii")
         x = json.loads(j)
         return x
 
 
-class ExtendedJsonSocketMessage(ByteSocketMessage):
+class ExtendedJsonSocketMessageType(ByteSocketMessageType):
     """
     Class providing `send()` and `recv()` methods for sending and receiving
     JSON-serializable (with extended range of supported types, see
@@ -151,16 +143,46 @@ class ExtendedJsonSocketMessage(ByteSocketMessage):
     .. see:: `dh.utils.ejson`.
     """
 
-    def send(self, x):
+    def send(self, socket, x):
         j = dh.utils.ejson.dumps(x)
         b = bytes(j, "ascii")
-        super().send(b)
+        super().send(socket, b)
 
-    def recv(self):
-        b = super().recv()
+    def recv(self, socket):
+        b = super().recv(socket)
         j = b.decode("ascii")
         x = dh.utils.ejson.loads(j)
         return x
+
+
+###
+#%% extended socket with support for multiple message types
+###
+
+
+class MessageSocket(socket.socket):
+    """
+    This is a socket which supports the methods `msend()` and `mrecv()`, which
+    send/receive entire (higher-level) messages.
+
+    For both methods, the `messageType` argument must be an instance of the
+    class `SocketMessageType`.
+
+    Note: in this context, 'message' means a high-level, user-defined object,
+    not the 'message' used in the context of `socket.socket.recvmsg` and
+    `socket.socket.sendmsg`.
+    """
+
+    def msend(self, messageType, x):
+        messageType.send(self, x)
+
+    def mrecv(self, messageType):
+        messageType.recv(self)
+
+
+###
+#%% socket servers/clients
+###
 
 
 class SocketServer(abc.ABC):
@@ -173,9 +195,9 @@ class SocketServer(abc.ABC):
     `nodelay`.
     """
 
-    def __init__(self, host="", port=7214, backlog=5, nodelay=True, messageClass=ByteSocketMessage):
+    def __init__(self, host="", port=7214, backlog=5, nodelay=True):
         print("Creating socket...")
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket = MessageSocket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if nodelay:
             self._socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -184,10 +206,13 @@ class SocketServer(abc.ABC):
         self._socket.bind((host, port))
         self._backlog = backlog
         self._nodelay = nodelay
-        self._messageClass = messageClass
 
     def _print(self, text):
         print("[{}]  {}".format(dh.utils.dtstr(compact=False), text))
+
+    @property
+    def socket(self):
+        return self._socket
 
     def run(self):
         self._socket.listen(self._backlog)
@@ -197,18 +222,20 @@ class SocketServer(abc.ABC):
             (connectionSocket, connectionAddress) = self._socket.accept()
             self._print("Accepted connection from {}:{}".format(connectionAddress[0], connectionAddress[1]))
             t0 = time.time()
-            communication = self._messageClass(connectionSocket)
             try:
-                self.handler(communication=communication)
+                self.communicate()
             except Exception as e:
                 self._print("** {}: {}".format(type(e).__name__, e))
             self._print("Finished request from {}:{} after {} ms".format(connectionAddress[0], connectionAddress[1], dh.utils.around((time.time() - t0) * 1000.0)))
 
     @abc.abstractmethod
-    def handler(self, communication):
+    def communicate(self):
         """
-        In here, `communication.send()` and `communication.recv()` can be used
-        (see `SocketMessage`).
+        Implements the entire communication happening for one connection with a
+        client via high-level socket messages (see `SocketMessageType`).
+
+        Counterpart of `SocketClient.communicate`. See specific client/server
+        implementations for examples.
         """
         pass
 
@@ -223,22 +250,24 @@ class SocketClient(abc.ABC):
     `nodelay`.
     """
 
-    def __init__(self, host, port=7214, nodelay=True, messageClass=ByteSocketMessage):
+    def __init__(self, host, port=7214, nodelay=True):
         self._host = host
         self._port = port
         self._nodelay = nodelay
-        self._messageClass = messageClass
+
+    @property
+    def socket(self):
+        return self._socket
 
     def query(self, *args, **kwargs):
         # establish connection with the server
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket = MessageSocket(socket.AF_INET, socket.SOCK_STREAM)
         if self._nodelay:
             self._socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self._socket.connect((self._host, self._port))
 
         # user-specific communication
-        communication = self._messageClass(self._socket)
-        res = self.handler(*args, communication=communication, **kwargs)
+        res = self.communicate(*args, **kwargs)
 
         # close connection
         self._socket.shutdown(socket.SHUT_RDWR)
@@ -247,67 +276,15 @@ class SocketClient(abc.ABC):
         return res
 
     @abc.abstractmethod
-    def handler(self, *args, communication, **kwargs):
+    def communicate(self, *args, **kwargs):
         """
-        In here, `communication.send()` and `communication.recv()` can be used
-        (see `SocketMessage`).
+        Implements the entire communication happening for one connection with a
+        server via high-level socket messages (see `SocketMessageType`).
+
+        Counterpart of `SocketServer.communicate`. See specific client/server
+        implementations for examples.
         """
         pass
-
-
-class DataProcessingServer(SocketServer):
-    """
-    Special case of `SocketServer` which accepts dictionary messages having the
-    keys `"data"` and `"params"` and returns a dictionary with keys `"status"`
-    and `"result"`. The counterpart is the `DataProcessingClient` class.
-
-    To specify the processing behavior, sub-class this class and implement
-    the static method `process(data, params)`.
-    """
-
-    def __init__(self, *args, **kwargs):
-        kwargs["messageClass"] = ExtendedJsonSocketMessage
-        super().__init__(*args, **kwargs)
-
-    def handler(self, communication):
-        x = communication.recv()
-        try:
-            (data, params) = (x["data"], x["params"])
-            result = self.process(data=data, params=params)
-        except Exception as e:
-            communication.send({"status": "ERROR ({}: {})".format(type(e).__name__, e), "result": None})
-        else:
-            communication.send({"status": "OK", "result": result})
-
-    @staticmethod
-    @abc.abstractmethod
-    def process(data, params):
-        pass
-
-
-class DataProcessingClient(SocketClient):
-    """
-    Special case of `SocketClient` which sends dictionary messages having the
-    keys `"data"` and `"params"` and receives a dictionary with keys `"status"`
-    and `"result"`. The counterpart is the `DataProcessingServer` class.
-
-    The processing behavior is specified by sub-classing `DataProcessingServer`
-    and implementing the static method `process(data, params)`.
-    """
-
-    def __init__(self, *args, **kwargs):
-        kwargs["messageClass"] = ExtendedJsonSocketMessage
-        super().__init__(*args, **kwargs)
-
-    def process(self, data, params):
-        return self.query(data=data, params=params)
-
-    def handler(self, data, params, communication):
-        communication.send({"data": data, "params": params})
-        res = communication.recv()
-        if res["status"] != "OK":
-            raise RuntimeError("Received non-OK result status: ''".format(res["status"]))
-        return res["result"]
 
 
 class ImageProcessingServer(SocketServer):
@@ -318,29 +295,29 @@ class ImageProcessingServer(SocketServer):
 
     To specify the processing behavior, sub-class this class and implement
     the static method `process(data, params)`.
-
-    In contrast to `DataProcessingServer`, this class is less flexible but has
-    a lower response latency.
     """
 
-    def __init__(self, *args, **kwargs):
-        kwargs["messageClass"] = NumpySocketMessage
-        super().__init__(*args, **kwargs)
+    def communicate(self):
+        # receive input image and parameters
+        data = self.socket.mrecv(NumpySocketMessageType())
+        params = self.socket.mrecv(JsonSocketMessageType())
 
-    def handler(self, communication):
-        data = communication.recv()
-        params = JsonSocketMessage(communication.socket).recv()
+        # process and send result image
         try:
             result = self.process(data=data, params=params)
         except Exception as e:
             self._print("** {}: {}".format(type(e).__name__, e))
-            communication.send(np.zeros(shape=(0, 0), dtype="uint8"))
+            result = np.zeros(shape=(0, 0), dtype="uint8")
         else:
-            communication.send(result)
+            self.socket.msend(NumpySocketMessageType(), result)
 
     @staticmethod
     @abc.abstractmethod
     def process(data, params):
+        """
+        This function specifies the processing behavior of this server and must
+        be implemeted by the user.
+        """
         pass
 
 
@@ -353,20 +330,18 @@ class ImageProcessingClient(SocketClient):
     The processing behavior is specified by sub-classing
     `ImageProcessingServer` and implementing the static method
     `process(data, params)`.
-
-    In contrast to `DataProcessingClient`, this class is less flexible but has
-    a lower response latency.
     """
 
-    def __init__(self, *args, **kwargs):
-        kwargs["messageClass"] = NumpySocketMessage
-        super().__init__(*args, **kwargs)
+    def communicate(self, data, params):
+        # send input image and parameters
+        self.socket.msend(NumpySocketMessageType(), data)
+        self.socket.msend(JsonSocketMessageType(), params)
+
+        # reveive result image
+        return self.socket.mrecv(NumpySocketMessageType())
 
     def process(self, data, params):
+        """
+        Just another name for the `query` method.
+        """
         return self.query(data=data, params=params)
-
-    def handler(self, data, params, communication):
-        communication.send(data)
-        JsonSocketMessage(communication.socket).send(params)
-        res = communication.recv()
-        return res
