@@ -160,10 +160,10 @@ class ExtendedJsonSocketMessageType(ByteSocketMessageType):
 ###
 
 
-class MessageSocket(socket.socket):
+class MessageSocket():
     """
-    This is a socket which supports the methods `msend()` and `mrecv()`, which
-    send/receive entire (higher-level) messages.
+    This is a wrapper class for `socket.socket` which supports the methods
+    `msend()` and `mrecv()`, which send/receive entire (higher-level) messages.
 
     For both methods, the `messageType` argument must be an instance of the
     class `SocketMessageType`.
@@ -173,11 +173,14 @@ class MessageSocket(socket.socket):
     `socket.socket.sendmsg`.
     """
 
+    def __init__(self, socket):
+        self._socket = socket
+
     def msend(self, messageType, x):
-        messageType.send(self, x)
+        messageType.send(self._socket, x)
 
     def mrecv(self, messageType):
-        messageType.recv(self)
+        messageType.recv(self._socket)
 
 
 ###
@@ -219,9 +222,7 @@ class SocketServer(abc.ABC):
             self._print("Accepted connection from {}:{}".format(connectionAddress[0], connectionAddress[1]))
             t0 = time.time()
             try:
-                # "cast" to connectionSocket from socket.socket to MessageSocket (which adds the two methods 'msend' and 'mrecv')
-                connectionSocket.__class__ = MessageSocket
-                self.communicate(connectionSocket)
+                self.communicate(MessageSocket(connectionSocket))
             except Exception as e:
                 self._print("** {}: {}".format(type(e).__name__, e))
             self._print("Finished request from {}:{} after {} ms".format(connectionAddress[0], connectionAddress[1], dh.utils.around((time.time() - t0) * 1000.0)))
@@ -255,19 +256,19 @@ class SocketClient(abc.ABC):
 
     def query(self, *args, **kwargs):
         # establish connection with the server
-        self._socket = MessageSocket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if self._nodelay:
             self._socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self._socket.connect((self._host, self._port))
 
-        # actual communication
-        res = self.communicate(self._socket, *args, **kwargs)
+        # actual communication, keep result
+        result = self.communicate(MessageSocket(self._socket), *args, **kwargs)
 
         # close connection
         self._socket.shutdown(socket.SHUT_RDWR)
         self._socket.close()
 
-        return res
+        return result
 
     @abc.abstractmethod
     def communicate(self, socket, *args, **kwargs):
