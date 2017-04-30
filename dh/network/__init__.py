@@ -85,7 +85,7 @@ class ByteSocketMessageType(SocketMessageType):
         socket.sendall(header + b)
 
     def recv(self, socket):
-        header = self._recvn(4)
+        header = self._recvn(socket, 4)
         if header is None:
             return None
         length = struct.unpack(">I", header)[0]
