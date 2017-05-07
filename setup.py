@@ -61,11 +61,14 @@ setup(
     version=version,
     description="Personal Python package of Daniel Haase",
     author="Daniel Haase",
-    packages=packages,
-    package_data={packageName: ["VERSION.txt", "data/*.npy", "data/*.npz", "image/colormaps/*.json"]},
+    url="https://github.com/dhaase-de/dh-python-dh",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
         "Topic :: Utilities",
     ],
+    packages=packages,
+    package_data={packageName: ["VERSION.txt", "data/*.npy", "data/*.npz", "image/colormaps/*.json"]},
 )
