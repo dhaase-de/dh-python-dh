@@ -36,6 +36,15 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.9.0 (2017-03-08)
+------------------
+
+* added Travis CI support (which includes: Travis CI config file, requirements
+  file, more tests, fixes for version-related bugs, changing version numbering
+  scheme)
+* some smaller bugfixes and improvements
+
+
 0.8.1 (2017-02-21)
 ------------------
 
