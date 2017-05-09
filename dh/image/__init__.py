@@ -59,13 +59,20 @@ def imread(*args, **kwargs):
 
 
 @CV2
-def load(filename, color=False):
+def load(filename, color=None):
     """
     Load image from file `filename` and return NumPy array.
 
-    If `color` is `False`, a grayscale image is returned. If `color` is `True`,
-    then a color image is returned (in RGB order), even if the original image
-    is grayscale.
+    If `color` is `None`, the image is loaded as-is. If `color` is `False`, a
+    grayscale image is returned. If `color` is `True`, then a color image is
+    returned (in RGB order), even if the original image is grayscale.
+
+    The bit-depth (8 or 16 bit) of the image file will be preserved.
+
+    .. note: If a color image is loaded using `color=False`, the conversion to
+             gray scale will be performed by OpenCV, and the result will be
+             different to first loading the image in color mode and then using
+             `dh.image.asgray`.
     """
 
     # check if file exists
@@ -73,13 +80,42 @@ def load(filename, color=False):
         raise FileNotFoundError("Image file '{}' does not exist".format(filename))
 
     # flags - select grayscale or color mode
-    flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_COLOR if color else cv2.IMREAD_GRAYSCALE)
+    if color is None:
+        flags = cv2.IMREAD_UNCHANGED
+    else:
+        flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_COLOR if color else cv2.IMREAD_GRAYSCALE)
 
     # read image
     I = cv2.imread(filename=filename, flags=flags)
 
     # BGR -> RGB
-    if color:
+    if dh.image.iscolor(I):
+        I = I[:, :, ::-1]
+
+    return I
+
+
+@CV2
+def decode(b, color=None):
+    """
+    Load image from the byte array `b` containing the *encoded* image and
+    return NumPy array.
+
+    .. see: `dh.image.load()` for details.
+    """
+
+    # flags - select grayscale or color mode
+    if color is None:
+        flags = cv2.IMREAD_UNCHANGED
+    else:
+        flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_COLOR if color else cv2.IMREAD_GRAYSCALE)
+
+    # read image
+    n = np.fromstring(b, dtype="uint8")
+    I = cv2.imdecode(buf=n, flags=flags)
+
+    # BGR -> RGB
+    if dh.image.iscolor(I):
         I = I[:, :, ::-1]
 
     return I

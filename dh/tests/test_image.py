@@ -12,28 +12,44 @@ import dh.image
 
 
 class Test(unittest.TestCase):
-    def test_save_load(self):
+    def test_save_load_decode(self):
         # images to be saved
         (_, filename) = tempfile.mkstemp(suffix=".png")
-        I = dh.data.lena()
-        G = dh.image.asgray(I)
+        C8  = dh.data.lena()
+        C16 = np.array(C8, dtype="uint16")
+        G8  = dh.image.asgray(C8)
+        G16 = dh.image.asgray(C16)
 
-        # save, load and check
-        dh.image.save(filename, I)
-        J = dh.image.load(filename, color=True)
-        self.assertEqual(I.shape, J.shape)
-        self.assertTrue(np.all(I == J))
+        for I in (C8, C16, G8, G16):
+            for color in (None, False, True):
+                # save image
+                dh.image.save(filename, I)
 
-        dh.image.save(filename, G)
-        J = dh.image.load(filename, color=False)
-        self.assertEqual(G.shape, J.shape)
-        self.assertTrue(np.all(G == J))
+                # load image from file
+                J = dh.image.load(filename, color=color)
 
-        dh.image.save(filename, G)
-        J = dh.image.load(filename, color=True)
-        self.assertEqual(I.shape, J.shape)
-        for nChannel in range(3):
-            self.assertTrue(np.all(G == J[:, :, nChannel]))
+                # decode image from byte array
+                with open(filename, "rb") as f:
+                    K = dh.image.decode(f.read(), color=color)
+
+                # make sure that load and decode are identical
+                self.assertEqual(J.shape, K.shape)
+                self.assertEqual(J.dtype, K.dtype)
+                self.assertTrue(np.all(J == K))
+
+                # expected image
+                if color or ((color is None) and dh.image.iscolor(I)):
+                    E = dh.image.ascolor(I)
+                else:
+                    E = dh.image.asgray(I)
+
+                # compare loaded image with expected image
+                self.assertEqual(J.dtype, E.dtype)
+                self.assertEqual(J.shape, E.shape)
+                if color in (None, True):
+                    # if I is a color image and color=False, then the conversion to gray scale will be performed by OpenCV, which is different than dh.image.asgray
+                    self.assertTrue(np.all(J == E))
+
 
     def test_stack(self):
         # images
@@ -80,7 +96,23 @@ class Test(unittest.TestCase):
             self.assertEqual(I[0, 0, nChannel], 0)
         self.assertAlmostEqual(I.mean(), 121.48126602172852)
 
-    def test_convert(self):
+    def test_convert_fromBool(self):
+        # create bool image
+        L = dh.data.lena()
+        L = dh.image.asgray(L)
+        L = (L > 127)
+        m = L.mean()
+
+        C = dh.image.convert(L, "uint8")
+        self.assertAlmostEqual(C.mean(), 255.0 * m)
+
+        C = dh.image.convert(L, "uint16")
+        self.assertAlmostEqual(C.mean(), 65535.0 * m)
+
+        C = dh.image.convert(L, "float")
+        self.assertAlmostEqual(C.mean(), m)
+
+    def test_convert_toFloat(self):
         L = dh.data.lena()
 
         # test conversion to float
