@@ -90,7 +90,7 @@ def load(filename, color=None):
 
     # BGR -> RGB
     if dh.image.iscolor(I):
-        I = I[:, :, ::-1]
+        I = cv2.cvtColor(I, cv2.COLOR_BGR2RGB)
 
     return I
 
@@ -116,7 +116,7 @@ def decode(b, color=None):
 
     # BGR -> RGB
     if dh.image.iscolor(I):
-        I = I[:, :, ::-1]
+        I = cv2.cvtColor(I, cv2.COLOR_BGR2RGB)
 
     return I
 
