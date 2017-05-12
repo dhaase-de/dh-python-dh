@@ -1295,6 +1295,32 @@ class Timer():
         return table(rows, headers=("From", "To", "Duration [{}]".format(self._unit), "Cumulative [{}]".format(self._unit)))
 
 
+class FrequencyEstimator():
+    def __init__(self, minKeepCount=10, minKeepTime=1.0):
+        self.minKeepCount = minKeepCount
+        self.minKeepTime = minKeepTime
+        self._ts = [time.time()]
+
+    def event(self):
+        # save event time
+        self._ts.append(time.time())
+
+        # clean entries which exceed both the minKeepCount and the minKeepTime
+        for nTime in range(len(self._ts) - self.minKeepCount, -1, -1):
+            if self._ts[nTime] + self.minKeepTime < self._ts[-1]:
+                break
+        else:
+            nTime = None
+        if nTime is not None:
+            self._ts = self._ts[nTime:]
+
+        # return events per second as float
+        if len(self._ts) <= 1:
+            return 0.0
+        else:
+            return (len(self._ts) - 1) / (self._ts[-1] - self._ts[0])
+
+
 def _pdeco(callerName, fName, message):
     """
     Formats and prints a message, designed to be used by decorator functions
