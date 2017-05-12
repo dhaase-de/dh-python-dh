@@ -71,4 +71,5 @@ setup(
     ],
     packages=packages,
     package_data={packageName: ["VERSION.txt", "data/*.npy", "data/*.npz", "image/colormaps/*.json"]},
+    scripts=["bin/raspiCameraClient.py", "bin/raspiCameraServer.py"],
 )
