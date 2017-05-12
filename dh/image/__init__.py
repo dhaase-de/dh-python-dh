@@ -168,15 +168,8 @@ def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, win
     Show image `I` on the screen.
     """
 
-    # resize image
-    if scale is None:
-        # try to find a good scale factor automatically
-        (W, H) = dh.gui.screenres()
-        if (W is not None) and (H is not None):
-            scale = 0.85 * min(H / I.shape[0], W / I.shape[1])
-        else:
-            scale = 850.0 / max(I.shape)
-    J = resize(I, scale)
+    # TODO: .copy()?
+    J = I
 
     # normalize intensity values
     if normalize is not None:
@@ -184,6 +177,16 @@ def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, win
 
     # convert to 8 bit
     J = convert(J, "uint8")
+
+    # resize image
+    if scale is None:
+        # try to find a good scale factor automatically
+        (W, H) = dh.gui.screenres()
+        if (W is not None) and (H is not None):
+            scale = 0.85 * min(H / J.shape[0], W / J.shape[1])
+        else:
+            scale = 850.0 / max(I.shape)
+    J = resize(J, scale)
 
     # invert
     if invert:
