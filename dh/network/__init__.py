@@ -11,10 +11,10 @@ import sys
 import time
 import zlib
 
-import dh.utils
-
 import dh.data
+import dh.ejson
 import dh.image
+import dh.utils
 
 # NumPy is only needed for some parts and is optional
 try:
@@ -138,20 +138,20 @@ class ExtendedJsonSocketMessageType(ByteSocketMessageType):
     """
     Class providing `send()` and `recv()` methods for sending and receiving
     JSON-serializable (with extended range of supported types, see
-    `dh.utils.ejson`) objects via the given socket.
+    `dh.ejson`) objects via the given socket.
 
-    .. see:: `dh.utils.ejson`.
+    .. see:: `dh.ejson`.
     """
 
     def send(self, socket, x):
-        j = dh.utils.ejson.dumps(x)
+        j = dh.ejson.dumps(x)
         b = bytes(j, "ascii")
         super().send(socket, b)
 
     def recv(self, socket):
         b = super().recv(socket)
         j = b.decode("ascii")
-        x = dh.utils.ejson.loads(j)
+        x = dh.ejson.loads(j)
         return x
 
 
