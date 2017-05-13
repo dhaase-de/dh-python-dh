@@ -16,17 +16,50 @@ class CameraServer(dh.network.SocketServer):
     # response bytes corresponding to the commands are identical to the command byte - below are therefore just responses which have no command counterpart
     RESPONSE_ERROR  = 0xFF
 
-    #
-    GET_SET_ATTRIBUTE_TYPES = {
-        "analog_gain": float,
-        "brightness": None,
-        "digital_gain": float,
-        "exposure_mode": None,
-        "framerate": float,
-        "resolution": None,
-        "sensor_mode": None,
-        "shutter_speed": None,
-    }
+    # attributes which can be get/set
+    GET_SET_ATTRIBUTES = [
+        "analog_gain",
+        "awb_gains",
+        "awb_mode",
+        "brightness",
+        "contrast",
+        "digital_gain",
+        "drc_strength",
+        "exposure_compensation",
+        "exposure_mode",
+        "exposure_speed",
+        "flash_mode",
+        "framerate",
+        #"framerate_delta",
+        #framerate_range
+        "hflip",
+        "image_denoise",
+        "image_effect",
+        "image_effect_params",
+        "iso",
+        #led
+        "meter_mode",
+        #overlays
+        #preview
+        #preview_alpha
+        #preview_fullscreen
+        #preview_layer
+        #preview_window
+        #recording
+        "resolution",
+        #"revision",
+        "rotation",
+        "saturation",
+        "sensor_mode",
+        "sharpness",
+        "shutter_speed",
+        "still_stats",
+        #"timestamp",
+        "vflip",
+        "video_denoise",
+        "video_stabilization",
+        "zoom",
+    ]
 
     def __init__(self, camera, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -36,12 +69,10 @@ class CameraServer(dh.network.SocketServer):
         result = {}
         for key in keys:
             try:
-                if key not in CameraServer.GET_SET_ATTRIBUTE_TYPES.keys():
+                if key not in CameraServer.GET_SET_ATTRIBUTES:
                     raise AttributeError("Invalid attribute '{}'".format(key))
-                result[key] = getattr(self._camera, key)
-                type_ = CameraServer.GET_SET_ATTRIBUTE_TYPES[key]
-                if type_ is not None:
-                    result[key] = type_(result[key])
+                value = getattr(self._camera, key)
+                result[key] = value
             except Exception as e:
                 result[key] = "{}: {}".format(type(e).__name__, str(e))
         return result
@@ -50,7 +81,7 @@ class CameraServer(dh.network.SocketServer):
         result = {}
         for (key, value) in values.items():
             try:
-                if key not in CameraServer.GET_SET_ATTRIBUTE_TYPES.keys():
+                if key not in CameraServer.GET_SET_ATTRIBUTES:
                     raise AttributeError("Invalid attribute '{}'".format(key))
                 setattr(self._camera, key, value)
             except Exception as e:
@@ -72,25 +103,29 @@ class CameraServer(dh.network.SocketServer):
         # send command byte back as response
         socket.msend(dh.network.ByteSocketMessageType(), command)
 
+        # handle PING command
         command = int(command[0])
         if command == CameraServer.COMMAND_PING:
             return
 
+        # handle GET ommand
         elif command == CameraServer.COMMAND_GET:
-            keys = socket.mrecv(dh.network.JsonSocketMessageType())
+            keys = socket.mrecv(dh.network.ExtendedJsonSocketMessageType())
             result = self.get(keys)
-            socket.msend(dh.network.JsonSocketMessageType(), result)
+            socket.msend(dh.network.ExtendedJsonSocketMessageType(), result)
             return
 
+        # handle SET command
         elif command == CameraServer.COMMAND_SET:
-            values = socket.mrecv(dh.network.JsonSocketMessageType())
+            values = socket.mrecv(dh.network.ExtendedJsonSocketMessageType())
             result = self.set(values)
-            socket.msend(dh.network.JsonSocketMessageType(), result)
+            socket.msend(dh.network.ExtendedJsonSocketMessageType(), result)
             return
 
+        # handle CAPTURE command
         elif command == CameraServer.COMMAND_CAPTURE:
             # receive parameters and overwrite defaults
-            params = socket.mrecv(dh.network.JsonSocketMessageType())
+            params = socket.mrecv(dh.network.ExtendedJsonSocketMessageType())
             captureKwargs = {
                 "use_video_port": True,
                 "format": "jpeg",
@@ -148,17 +183,17 @@ class CameraClient(dh.network.SocketClient):
             return None
 
         elif command == CameraServer.COMMAND_GET:
-            socket.msend(dh.network.JsonSocketMessageType(), kwargs["keys"])
-            return socket.mrecv(dh.network.JsonSocketMessageType())
+            socket.msend(dh.network.ExtendedJsonSocketMessageType(), kwargs["keys"])
+            return socket.mrecv(dh.network.ExtendedJsonSocketMessageType())
 
         elif command == CameraServer.COMMAND_SET:
             # send dict (keys name the attribute to set) and return dict with the same keys as the sent dict, and each value indicates the success of the operation for its specific key
-            socket.msend(dh.network.JsonSocketMessageType(), kwargs["values"])
-            return socket.mrecv(dh.network.JsonSocketMessageType())
+            socket.msend(dh.network.ExtendedJsonSocketMessageType(), kwargs["values"])
+            return socket.mrecv(dh.network.ExtendedJsonSocketMessageType())
 
         elif command == CameraServer.COMMAND_CAPTURE:
             # send params dict and receive and return image as byte array (contains contents of the encoded image file)
-            socket.msend(dh.network.JsonSocketMessageType(), kwargs["params"])
+            socket.msend(dh.network.ExtendedJsonSocketMessageType(), kwargs["params"])
             b = socket.mrecv(dh.network.ByteSocketMessageType())
             return b
 
