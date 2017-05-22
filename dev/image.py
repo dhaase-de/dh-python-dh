@@ -74,5 +74,13 @@ def cdemo():
     dh.image.cdemo()
 
 
+def show():
+    I = dh.data.lena()
+    I = dh.image.asgray(I)
+    dh.image.show(I >= 127, wait=0)
+    dh.image.show(I, wait=0, colormap="jet")
+    dh.image.show(I, wait=0)
+
+
 if __name__ == "__main__":
-    stack()
+    show()
