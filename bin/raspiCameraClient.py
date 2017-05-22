@@ -11,11 +11,14 @@ import dh.hardware.raspi
 
 def main():
     # parse arguments
-    parser = argparse.ArgumentParser(description="Starts a client for remote access to a Raspberry Pi camera.")
+    parser = argparse.ArgumentParser(
+        description="Starts a client for remote access to a Raspberry Pi camera server and shows a live video.",
+        epilog="Example: raspiCameraClient.py 127.0.0.1 --set=resolution:'(640,480)' --set=vflip:true --set=hflip:true"
+    )
     parser.add_argument("host", type=str, help="Host (hostname or IP address) of the server to connect to.")
 
     parser.add_argument("-p", "--port", type=int, default=7220, help="Port of the server to connect to.")
-    parser.add_argument("-s", "--set", nargs="*")
+    parser.add_argument("-s", "--set", action="append", metavar="<KEY>:<VALUE>", help="Allows to specify camera settings via key-value pairs. Each value must be a JSON-formatted string (see example). Can be specified multiple times.")
     args = parser.parse_args()
 
     # start client
@@ -23,22 +26,24 @@ def main():
 
     # apply initial settings
     values = {}
-    for keyValueStr in args.set:
-        m = re.match("^([a-zA-Z0-9_-]+):(.+)$", keyValueStr)
-        if m is None:
-            raise ValueError("Invalid format for set: must be '<key>:<value>' (got '{}')".format(keyValueStr))
-        (key, valueStr) = m.groups()
-        try:
-            value = json.loads(valueStr)
-        except:
-            value = valueStr
-        values[key] = value
-    if len(values) > 0:
-        print("** SET request:")
-        result = C.set(**values)
-        rows = [[key, values[key], result[key]] for key in sorted(result.keys())]
-        dh.utils.ptable(rows, headers=["Attribute", "Value", "Response"])
-        print("")
+    print(args.set)
+    if args.set is not None:
+        for keyValueStr in args.set:
+            m = re.match("^([a-zA-Z0-9_-]+):(.+)$", keyValueStr)
+            if m is None:
+                raise ValueError("Invalid format for set: must be '<key>:<value>' (got '{}')".format(keyValueStr))
+            (key, valueStr) = m.groups()
+            try:
+                value = json.loads(valueStr)
+            except:
+                value = valueStr
+            values[key] = value
+        if len(values) > 0:
+            print("** SET request:")
+            result = C.set(**values)
+            rows = [[key, values[key], result[key]] for key in sorted(result.keys())]
+            dh.utils.ptable(rows, headers=["Attribute", "Value", "Response"])
+            print("")
 
     #
     F = dh.utils.FrequencyEstimator()
