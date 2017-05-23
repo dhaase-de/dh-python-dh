@@ -37,11 +37,18 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.10.1 (2017-05-23)
+-------------------
+
+* slightly purged framework
+* removed accidental debug output
+
+
 0.10.0 (2017-05-23)
 -------------------
 
 * added module `dh.hardware.raspi`, containing client/server functionality for
-  the Raspberry Pi Camera
+  the Raspberry Pi camera
 * refactored `dh.network`
 * moved `dh.utils.ejson` to own module `dh.ejson`
 
