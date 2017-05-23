@@ -8,6 +8,7 @@ Status
 ------
 
 [![Build Status](https://travis-ci.org/dhaase-de/dh-python-dh.svg?branch=master)](https://travis-ci.org/dhaase-de/dh-python-dh)
+[![License](https://img.shields.io/github/license/dhaase-de/dh-python-dh.svg)](LICENSE.txt)
 
 
 Installation
