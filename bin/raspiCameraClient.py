@@ -26,7 +26,6 @@ def main():
 
     # apply initial settings
     values = {}
-    print(args.set)
     if args.set is not None:
         for keyValueStr in args.set:
             m = re.match("^([a-zA-Z0-9_-]+):(.+)$", keyValueStr)
