@@ -9,7 +9,7 @@ List of current modules:
   * atomicwrites-1.1.5 (https://github.com/untitaker/python-atomicwrites)
   * humanize-0.5.1 (https://github.com/jmoiron/humanize)
   * tabulate-0.7.7 (https://bitbucket.org/astanin/python-tabulate)
-  * tqdm-4.7.6 (https://github.com/tqdm/tqdm)
+  * tqdm-4.13.0 (https://github.com/tqdm/tqdm)
 
 List of potential modules to add:
 

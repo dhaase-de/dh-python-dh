@@ -28,23 +28,20 @@ class tqdm_gui(tqdm):  # pragma: no cover
     """
 
     @classmethod
-    def write(cls, s, file=sys.stdout, end="\n"):
+    def write(cls, s, file=None, end="\n"):
         """
         Print a message via tqdm_gui (just an alias for print)
         """
+        if file is None:
+            file = sys.stdout
         # TODO: print text on GUI?
         file.write(s)
         file.write(end)
 
     def __init__(self, *args, **kwargs):
-
-        # try:  # pragma: no cover
         import matplotlib as mpl
         import matplotlib.pyplot as plt
         from collections import deque
-        # except ImportError:  # gui not available
-        #   kwargs['gui'] = False
-        # else:
         kwargs['gui'] = True
 
         super(tqdm_gui, self).__init__(*args, **kwargs)

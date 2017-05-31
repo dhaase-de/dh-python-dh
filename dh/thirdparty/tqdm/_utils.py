@@ -5,9 +5,10 @@ CUR_OS = _curos()
 IS_WIN = CUR_OS in ['Windows', 'cli']
 IS_NIX = (not IS_WIN) and any(
     CUR_OS.startswith(i) for i in
-    ['CYGWIN', 'MSYS', 'Linux', 'Darwin', 'SunOS', 'FreeBSD'])
+    ['CYGWIN', 'MSYS', 'Linux', 'Darwin', 'SunOS', 'FreeBSD', 'NetBSD'])
 
 
+# Py2/3 compat. Empty conditional to avoid coverage
 if True:  # pragma: no cover
     try:
         _range = xrange
@@ -37,6 +38,84 @@ if True:  # pragma: no cover
         from weakref import WeakSet
     except ImportError:
         WeakSet = set
+
+    try:
+        _basestring = basestring
+    except NameError:
+        _basestring = str
+
+    try:  # py>=2.7,>=3.1
+        from collections import OrderedDict as _OrderedDict
+    except ImportError:
+        try:  # older Python versions with backported ordereddict lib
+            from ordereddict import OrderedDict as _OrderedDict
+        except ImportError:  # older Python versions without ordereddict lib
+            # Py2.6,3.0 compat, from PEP 372
+            from collections import MutableMapping
+
+            class _OrderedDict(dict, MutableMapping):
+                # Methods with direct access to underlying attributes
+                def __init__(self, *args, **kwds):
+                    if len(args) > 1:
+                        raise TypeError('expected at 1 argument, got %d',
+                                        len(args))
+                    if not hasattr(self, '_keys'):
+                        self._keys = []
+                    self.update(*args, **kwds)
+
+                def clear(self):
+                    del self._keys[:]
+                    dict.clear(self)
+
+                def __setitem__(self, key, value):
+                    if key not in self:
+                        self._keys.append(key)
+                    dict.__setitem__(self, key, value)
+
+                def __delitem__(self, key):
+                    dict.__delitem__(self, key)
+                    self._keys.remove(key)
+
+                def __iter__(self):
+                    return iter(self._keys)
+
+                def __reversed__(self):
+                    return reversed(self._keys)
+
+                def popitem(self):
+                    if not self:
+                        raise KeyError
+                    key = self._keys.pop()
+                    value = dict.pop(self, key)
+                    return key, value
+
+                def __reduce__(self):
+                    items = [[k, self[k]] for k in self]
+                    inst_dict = vars(self).copy()
+                    inst_dict.pop('_keys', None)
+                    return (self.__class__, (items,), inst_dict)
+
+                # Methods with indirect access via the above methods
+                setdefault = MutableMapping.setdefault
+                update = MutableMapping.update
+                pop = MutableMapping.pop
+                keys = MutableMapping.keys
+                values = MutableMapping.values
+                items = MutableMapping.items
+
+                def __repr__(self):
+                    pairs = ', '.join(map('%r: %r'.__mod__, self.items()))
+                    return '%s({%s})' % (self.__class__.__name__, pairs)
+
+                def copy(self):
+                    return self.__class__(self)
+
+                @classmethod
+                def fromkeys(cls, iterable, value=None):
+                    d = cls()
+                    for key in iterable:
+                        d[key] = value
+                    return d
 
 
 def _is_utf(encoding):
@@ -83,8 +162,8 @@ def _environ_cols_windows(fp):  # pragma: no cover
         csbi = create_string_buffer(22)
         res = windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)
         if res:
-            (bufx, bufy, curx, cury, wattr, left, top, right, bottom,
-             maxx, maxy) = struct.unpack("hhhhHhhhhhh", csbi.raw)
+            (_bufx, _bufy, _curx, _cury, _wattr, left, _top, right, _bottom,
+             _maxx, _maxy) = struct.unpack("hhhhHhhhhhh", csbi.raw)
             # nlines = bottom - top + 1
             return right - left  # +1
     except:
@@ -95,7 +174,6 @@ def _environ_cols_windows(fp):  # pragma: no cover
 def _environ_cols_tput(*args):  # pragma: no cover
     """ cygwin xterm (windows) """
     try:
-        import subprocess
         import shlex
         cols = int(subprocess.check_call(shlex.split('tput cols')))
         # rows = int(subprocess.check_call(shlex.split('tput lines')))
@@ -107,12 +185,6 @@ def _environ_cols_tput(*args):  # pragma: no cover
 
 def _environ_cols_linux(fp):  # pragma: no cover
 
-    # import os
-    # if fp is None:
-    #     try:
-    #         fp = os.open(os.ctermid(), os.O_RDONLY)
-    #     except:
-    #         pass
     try:
         from termios import TIOCGWINSZ
         from fcntl import ioctl
@@ -133,8 +205,3 @@ def _environ_cols_linux(fp):  # pragma: no cover
 
 def _term_move_up():  # pragma: no cover
     return '' if (os.name == 'nt') and (colorama is None) else '\x1b[A'
-
-
-def _sh(*cmd, **kwargs):
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                            **kwargs).communicate()[0].decode('utf-8')
