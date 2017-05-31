@@ -24,6 +24,7 @@ import time
 import warnings
 
 import dh.thirdparty.atomicwrites
+import dh.thirdparty.humanize
 import dh.thirdparty.tabulate
 import dh.thirdparty.tqdm
 
@@ -756,6 +757,114 @@ def dtstr(compact=True):
     else:
         fmt = "%Y-%m-%d %H:%M:%S:%f"
     return datetime.datetime.now().strftime(fmt)
+
+
+def hnum(n):
+    """
+    Format number `n` as human-readable string by adding thousand-separators.
+
+    >>> hnum(1)
+    '1'
+
+    >>> hnum(1000000)
+    '1,000,000'
+
+    >>> hnum(-123456.789)
+    '-123,456.789'
+    """
+
+    return dh.thirdparty.humanize.intcomma(n)
+
+
+def hfrac(n):
+    """
+    Format number `n` as human-readable fractional string.
+
+    >>> hfrac(1)
+    '1'
+
+    >>> hfrac(0.3)
+    '3/10'
+
+    >>> hfrac(1.666666667)
+    '1 2/3'
+
+    >>> hfrac(12.3456789)
+    '12 28/81'
+    """
+
+    return dh.thirdparty.humanize.fractional(n)
+
+
+def hord(n):
+    """
+    Format number `n` as ordinal number string.
+
+    >>> hord(1)
+    '1st'
+
+    >>> hord(2)
+    '2nd'
+
+    >>> hord(3)
+    '3rd'
+
+    >>> hord(11)
+    '11th'
+
+    >>> hord(23)
+    '23rd'
+
+    >>> hord(1234)
+    '1234th'
+    """
+
+    return dh.thirdparty.humanize.ordinal(n)
+
+
+def htime(delta):
+    """
+    Format time delta `delta` as human-readable string. The time delta can
+    be given as numeric type (meaning seconds), or as `datetime.timedelta`.
+
+    >>> htime(12)
+    '12 seconds'
+
+    >>> htime(135)
+    '2 minutes'
+
+    >>> htime(48 * 60 * 60)
+    '2 days'
+
+    >>> import datetime
+    >>> htime(datetime.timedelta(weeks=3, days=2, hours=1))
+    '23 days'
+
+    >>> htime(123456789)
+    '3 years'
+    """
+
+    return dh.thirdparty.humanize.naturaldelta(delta)
+
+
+def hbytes(byteCount):
+    """
+    Format byte count `byteCount` as human-readable string.
+
+    >>> hbytes(1023)
+    '1023 Bytes'
+
+    >>> hbytes(1024)
+    '1.0 KiB'
+
+    >>> hbytes(1.23 * 1024)
+    '1.2 KiB'
+
+    >>> hbytes(12.345 * 1024 * 1024 * 1024)
+    '12.3 GiB'
+    """
+
+    return dh.thirdparty.humanize.naturalsize(byteCount, binary=True)
 
 
 def table(*args, **kwargs):
