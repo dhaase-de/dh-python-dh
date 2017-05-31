@@ -1,15 +1,19 @@
 import contextlib
-import errno
 import os
 import sys
 import tempfile
 
-__version__ = '1.0.0'
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
+
+__version__ = '1.1.5'
 
 
 PY2 = sys.version_info[0] == 2
 
-text_type = unicode if PY2 else str
+text_type = unicode if PY2 else str  # noqa
 
 
 def _path_to_unicode(x):
@@ -18,13 +22,38 @@ def _path_to_unicode(x):
     return x
 
 
+_proper_fsync = os.fsync
+
+
 if sys.platform != 'win32':
+    if hasattr(fcntl, 'F_FULLFSYNC'):
+        def _proper_fsync(fd):
+            # https://lists.apple.com/archives/darwin-dev/2005/Feb/msg00072.html
+            # https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man2/fsync.2.html
+            # https://github.com/untitaker/python-atomicwrites/issues/6
+            fcntl.fcntl(fd, fcntl.F_FULLFSYNC)
+
+    def _sync_directory(directory):
+        # Ensure that filenames are written to disk
+        fd = os.open(directory, 0)
+        try:
+            _proper_fsync(fd)
+        finally:
+            os.close(fd)
+
     def _replace_atomic(src, dst):
         os.rename(src, dst)
+        _sync_directory(os.path.normpath(os.path.dirname(dst)))
 
     def _move_atomic(src, dst):
         os.link(src, dst)
         os.unlink(src)
+
+        src_dir = os.path.normpath(os.path.dirname(src))
+        dst_dir = os.path.normpath(os.path.dirname(dst))
+        _sync_directory(dst_dir)
+        if src_dir != dst_dir:
+            _sync_directory(src_dir)
 else:
     from ctypes import windll, WinError
 
@@ -132,7 +161,7 @@ class AtomicWriter(object):
     def get_fileobject(self, dir=None, **kwargs):
         '''Return the temporary file to use.'''
         if dir is None:
-            dir = os.path.dirname(self._path)
+            dir = os.path.normpath(os.path.dirname(self._path))
         return tempfile.NamedTemporaryFile(mode=self._mode, dir=dir,
                                            delete=False, **kwargs)
 
@@ -140,7 +169,7 @@ class AtomicWriter(object):
         '''responsible for clearing as many file caches as possible before
         commit'''
         f.flush()
-        os.fsync(f.fileno())
+        _proper_fsync(f.fileno())
 
     def commit(self, f):
         '''Move the temporary file to the target location.'''
