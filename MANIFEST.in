@@ -1,2 +1,7 @@
-include README.md
 include LICENSE.txt
+include README.md
+
+# for thirdparty modules
+recursive-include dh/thirdparty LICENSE*
+recursive-include dh/thirdparty LICENCE*
+recursive-include dh/thirdparty README*
