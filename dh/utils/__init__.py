@@ -755,7 +755,7 @@ def dtstr(compact=True):
     if compact:
         fmt = "%Y%m%d-%H%M%S-%f"
     else:
-        fmt = "%Y-%m-%d %H:%M:%S:%f"
+        fmt = "%Y-%m-%d %H:%M:%S.%f"
     return datetime.datetime.now().strftime(fmt)
 
 
