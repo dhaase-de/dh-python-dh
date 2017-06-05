@@ -1,6 +1,6 @@
 from ..core import Machine, Transition, State, Event, listify, MachineError, EventData
 
-from six import string_types
+string_types = str # <-- dh -- orig --> from six import string_types
 import copy
 from functools import partial
 

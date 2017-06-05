@@ -11,7 +11,7 @@ from collections import OrderedDict
 from collections import defaultdict
 from collections import deque
 from functools import partial
-from six import string_types
+string_types = str # <-- dh -- orig --> from six import string_types
 
 import warnings
 warnings.simplefilter('default')

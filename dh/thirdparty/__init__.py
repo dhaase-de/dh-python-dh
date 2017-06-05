@@ -10,10 +10,10 @@ List of current modules:
   * colorama-0.3.9 (https://github.com/tartley/colorama)
   * humanize-0.5.1 (https://github.com/jmoiron/humanize)
   * tabulate-0.7.7 (https://bitbucket.org/astanin/python-tabulate)
+  * transitions-0.5.3 (https://github.com/tyarkoni/transitions)
   * tqdm-4.13.0 (https://github.com/tqdm/tqdm)
 
-List of potential modules to add:
-
-  * pypng (https://github.com/drj11/pypng)
+Note: `transitions` was modified to remove the requirement for the module
+`six`.
 
 """
