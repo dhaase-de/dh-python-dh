@@ -1,4 +1,4 @@
-from transitions.core import Machine, Event, listify
+from dh.thirdparty.transitions.core import Machine, Event, listify
 
 from collections import defaultdict
 from functools import partial
