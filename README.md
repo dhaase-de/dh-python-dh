@@ -37,6 +37,15 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.11.0 (2017-06-06)
+-------------------
+
+* added `colorama`, `humanize`, `transitions` to thirdparty modules
+* updated thirdparty modules to their most recent stable versions
+* added module `dh.log`
+* created examples dir
+
+
 0.10.1 (2017-05-23)
 -------------------
 
