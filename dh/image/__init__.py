@@ -163,7 +163,7 @@ def imshow(*args, **kwargs):
 
 
 @CV2
-def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="show", **kwargs):
+def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="show", closeWindow=False, **kwargs):
     """
     Show image `I` on the screen.
     """
@@ -202,6 +202,9 @@ def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, win
 
     cv2.imshow(windowName, J)
     key = cv2.waitKey(wait)
+
+    if closeWindow:
+        cv2.destroyWindow(windowName)
 
     return key
 
