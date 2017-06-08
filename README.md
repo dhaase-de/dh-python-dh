@@ -37,6 +37,13 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.11.1 (2017-06-09)
+-------------------
+
+* several smaller improvements
+* purged framework
+
+
 0.11.0 (2017-06-06)
 -------------------
 
