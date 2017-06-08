@@ -140,6 +140,50 @@ def minmax(x):
     return (minItem, maxItem)
 
 
+def argmin(x):
+    """
+    Returns the index of the smallest element of the iterable `x`.
+
+    If two or more elements equal the minimum value, the index of the first
+    such element is returned.
+
+    >>> argmin([1, 3, 2, 0])
+    3
+
+    >>> argmin(abs(x) for x in range(-3, 4))
+    3
+    """
+    argmin_ = None
+    min_ = None
+    for (nItem, item) in enumerate(x):
+        if (argmin_ is None) or (item < min_):
+            argmin_ = nItem
+            min_ = item
+    return argmin_
+
+
+def argmax(x):
+    """
+    Returns the index of the largest element of the iterable `x`.
+
+    If two or more elements equal the maximum value, the index of the first
+    such element is returned.
+
+    >>> argmax([1, 3, 2, 0])
+    1
+
+    >>> argmax(-abs(x) for x in range(-3, 4))
+    3
+    """
+    argmax_ = None
+    max_ = None
+    for (nItem, item) in enumerate(x):
+        if (argmax_ is None) or (item > max_):
+            argmax_ = nItem
+            max_ = item
+    return argmax_
+
+
 def unique(x):
     """
     Yields unique values of `x`, preserving the order of the items.
