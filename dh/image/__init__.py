@@ -530,7 +530,7 @@ def nchannels(I):
     elif D == 3:
         return I.shape[-1]
     else:
-        raise ValueError("Urecognized image array shape")
+        raise ValueError("Unrecognized image array shape {}".format(I.shape))
 
 
 def isgray(I):
@@ -634,7 +634,14 @@ def colorize(I, c="jet", reverse=False, bitwise=False):
     C = ascolor(np.zeros_like(J))
 
     # apply mapping defined by colormap dict
-    for (source, target) in sorted(m.items()):
+    for source in range(256):
+        # get color
+        if source in m:
+            target = m[source]
+        else:
+            target = (0, 0, 0)
+
+        # apply color
         if bitwise:
             M = ((J & source) > 0)
         else:

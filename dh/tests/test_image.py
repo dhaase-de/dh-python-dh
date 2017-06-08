@@ -150,8 +150,14 @@ class Test(unittest.TestCase):
             C = dh.image.colorize(I, c)
             self.assertEqual(I.shape + (3,), C.shape)
             for nPixel in range(256):
-                for nChannel in range(3):
-                    self.assertEqual(C[0, nPixel, nChannel], c[nPixel][nChannel])
+                if nPixel in c:
+                    # check colorized result vs. colormap
+                    for nChannel in range(3):
+                        self.assertEqual(C[0, nPixel, nChannel], c[nPixel][nChannel])
+                else:
+                    # no color available in colormap - should be colored as black
+                    for nChannel in range(3):
+                        self.assertEqual(C[0, nPixel, nChannel], 0)
 
     def test_gamma(self):
         I = dh.data.lena()
