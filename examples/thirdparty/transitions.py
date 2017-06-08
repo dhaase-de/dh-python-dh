@@ -12,7 +12,7 @@ class Matter():
     states = ["solid", "liquid", "gas", "plasma"]
 
     def __init__(self):
-        self.fsm = dh.utils.Fsm(model=self, states=Foo.states, initial="solid")
+        self.fsm = dh.utils.Fsm(model=self, states=Matter.states, initial="solid")
         self.fsm.add_transition("melt", "solid", "liquid")
         self.fsm.add_transition("evaporate", "liquid", "gas", before=self.before_evaporate)
         self.fsm.on_enter_liquid(self.entering_liquid)
@@ -41,4 +41,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

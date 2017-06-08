@@ -3,7 +3,7 @@
 import dh.plot
 
 
-if __name__ == "__main__":
+def main():
     C = dh.plot.GoogleCharts()
 
     # column chart
@@ -42,4 +42,10 @@ if __name__ == "__main__":
         yss={"**2": [1, 4, 9, 16, 25], "**3": [1, 8, 27, 64, 125]}
     ))
 
-    C.save("/tmp/dh.plot.html")
+    filename = "plot.html"
+    C.save(filename)
+    print("Saved plot to file '{}'".format(filename))
+
+
+if __name__ == "__main__":
+    main()
