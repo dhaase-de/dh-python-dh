@@ -3,10 +3,75 @@ Tools for data visualization.
 """
 
 import abc
+import collections
 import json
 import textwrap
+import warnings
 
 import dh.utils
+import dh.image
+
+try:
+    from matplotlib import pyplot as plt
+    PLT_ERROR = None
+except ImportError as e:
+    plt = None
+    PLT_ERROR = e
+
+
+###
+#%%
+###
+
+
+def scatter(xs, ys, labels=None, colormap="plot", uniqueLabels=None):
+    """
+    Draws a scatter plot.
+
+    The x coordinates, y coordinates and labels of the points are specified via
+    `xs`, `ys`, `labels`. If no labels are given, the points will not be
+    colored. Otherwise, points will be colored according to their label. The
+    argument `uniqueLabels` can be used to specify the ordering in which the
+    labels should appear in the legend.
+    """
+
+    if plt is None:
+        raise PLT_ERROR
+
+    if labels is None:
+        plt.scatter(xs, ys)
+    else:
+        if uniqueLabels is None:
+            uniqueLabels = tuple(dh.utils.unique(labels))
+
+        # split points based on the labels
+        xss = collections.defaultdict(list)
+        yss = collections.defaultdict(list)
+        for (x, y, label) in zip(xs, ys, labels):
+            try:
+                nUniqueLabel = uniqueLabels.index(label)
+            except ValueError:
+                warnings.warn("Label '{}' is not in the list of provided unique labels - skipping data point".format())
+            else:
+                xss[nUniqueLabel].append(x)
+                yss[nUniqueLabel].append(y)
+
+        c = dh.image.colormap(colormap)
+        plots = []
+        for nUniqueLabel in xss.keys():
+            try:
+                color = c[nUniqueLabel]
+            except KeyError:
+                color = (127, 127, 127)
+                warnings.warn("Colormap '{}' defines no color for value '{}'".format(colormap, nUniqueLabel))
+            print(color)
+            color = tuple(channel / 255.0 for channel in color)
+
+            plot = plt.scatter(xss[nUniqueLabel], yss[nUniqueLabel], color=color)
+            plots.append(plot)
+
+        plt.legend(plots, uniqueLabels, loc="best", scatterpoints=1)
+        plt.show()
 
 
 ###
