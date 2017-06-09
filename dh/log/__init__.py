@@ -56,10 +56,10 @@ def cdeinit():
 
 
 class Logger():
-    LEVEL_DEBUG    = {"value": 10, "name": "DEBUG",    "color": None}
-    LEVEL_INFO     = {"value": 20, "name": "INFO",     "color": None}
-    LEVEL_WARNING  = {"value": 30, "name": "WARNING",  "color": FG_YELLOW}
-    LEVEL_ERROR    = {"value": 40, "name": "ERROR",    "color": FG_RED}
+    LEVEL_DEBUG    = {"value": 10, "name": "DEBUG",    "color": FG_RESET + BG_RESET}
+    LEVEL_INFO     = {"value": 20, "name": "INFO",     "color": FG_RESET + BG_RESET}
+    LEVEL_WARNING  = {"value": 30, "name": "WARNING",  "color": FG_YELLOW + BG_RESET}
+    LEVEL_ERROR    = {"value": 40, "name": "ERROR",    "color": FG_RED + BG_RESET}
     LEVEL_CRITICAL = {"value": 50, "name": "CRITICAL", "color": FG_WHITE + BG_RED}
 
     def __init__(self, minLevel=None, colored=True, inspect=True):
