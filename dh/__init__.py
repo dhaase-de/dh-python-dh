@@ -10,14 +10,14 @@ from warnings import warn
 try:
     _versionFilename = join(dirname(abspath(__file__)), "VERSION.txt")
     with open(_versionFilename, "r") as _f:
-        for line in _f:
-            line = line.strip()
-            if (line == "") or (line[0] == "#"):
+        for _line in _f:
+            _line = _line.strip()
+            if (_line == "") or (_line[0] == "#"):
                 # ignore empty lines and comments
                 continue
             else:
                 # the first valid line will be used as version number
-                __version__ = line
+                __version__ = _line
                 break
         else:
             # end of file, version was not found
@@ -37,3 +37,8 @@ finally:
         del _f
     except NameError:
         pass
+    try:
+        del _line
+    except NameError:
+        pass
+
