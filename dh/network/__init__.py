@@ -223,6 +223,7 @@ class SocketServer(abc.ABC):
             t0 = time.time()
             try:
                 self.communicate(MessageSocket(connectionSocket))
+                connectionSocket.close()
             except Exception as e:
                 self._print("** {}: {}".format(type(e).__name__, e))
             self._print("Finished request from {}:{} after {} ms".format(connectionAddress[0], connectionAddress[1], dh.utils.around((time.time() - t0) * 1000.0)))
