@@ -75,6 +75,46 @@ def grid(shape=(500, 500), d=25, w=1, dtype="uint8"):
     return G
 
 
+def checkerboard(shape=(500, 500), d=25, low=0, high=255):
+    """
+    Returns a gray-scale image of size `shape` containing a checkerboard grid
+    with squares of size `d`. The arguments `low` and `high` specify the gray
+    scale values to be used for the squares.
+
+    >>> checkerboard()[0, 0]
+    0
+    >>> checkerboard()[0, 25]
+    255
+    >>> checkerboard()[25, 25]
+    0
+    """
+
+    import numpy as np
+
+    C = np.zeros(shape=shape, dtype="uint8") + low
+    for y in range(0, shape[0], d):
+        offset = d if ((y % 2) == 0) else 0
+        for x in range(offset, shape[1], 2 * d):
+            C[y:(y + d), x:(x + d)] = high
+
+    return C
+
+
+def background(shape=(500, 500), d=25):
+    """
+    Returns a gray-scale image of size `shape` containing a checkerboard grid
+    of light and dark gray squares of size `d`.
+
+    >>> background()[0, 0]
+    80
+    >>> background()[0, 25]
+    120
+    >>> background()[25, 25]
+    80
+    """
+    return checkerboard(shape=shape, d=d, low=80, high=120)
+
+
 def lena():
     """
     The famous Lena image, widely used in image processing.
