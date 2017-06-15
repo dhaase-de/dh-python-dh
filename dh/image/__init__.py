@@ -166,10 +166,23 @@ def imshow(*args, **kwargs):
 def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="show", closeWindow=False, **kwargs):
     """
     Show image `I` on the screen.
+
+    If `I` is a list of images, they are auto-stacked via `dh.image.astack()`.
+    If `I` is a list of lists of images, they are stacked via
+    `dh.image.stack()`. Otherwise, `I` is used as is.
     """
 
-    # TODO: .copy()?
-    J = I
+    if isinstance(I, np.ndarray):
+        # I is an image, use it as it is
+        J = I
+    elif isinstance(I, (list, tuple)) and (len(I) > 0) and isinstance(I[0], np.ndarray):
+        # I is a list of images: auto-stack them into one image
+        J = astack(I)
+    elif isinstance(I, (list, tuple)) and (len(I) > 0) and isinstance(I[0], (list, tuple)) and (len(I[0]) > 0) and isinstance(I[0][0], np.ndarray):
+        # I is a list of lists of images: stack them into one image
+        J = stack(I)
+    else:
+        raise ValueError("Invalid value for parameter `I` ({}) - it must be an image, a non-empty list of images or a non-empty list of non-empty lists of images".format(I))
 
     # normalize intensity values
     if normalize is not None:
