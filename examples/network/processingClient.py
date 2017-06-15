@@ -19,6 +19,7 @@ def main():
     # input
     I = dh.data.lena()
     params = {"gamma": 0.5}
+    print("Input:")
     dh.image.pinfo(I)
 
     # result
@@ -27,6 +28,7 @@ def main():
     t1 = time.time()
 
     # show result
+    print("Output:")
     dh.image.pinfo(J)
     print("Received result after {} ms".format(dh.utils.around((t1 - t0) * 1000.0)))
     dh.image.show(dh.image.stack([I, J]), wait=0)
