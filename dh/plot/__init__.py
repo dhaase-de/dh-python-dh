@@ -64,7 +64,6 @@ def scatter(xs, ys, labels=None, colormap="plot", uniqueLabels=None):
             except KeyError:
                 color = (127, 127, 127)
                 warnings.warn("Colormap '{}' defines no color for value '{}'".format(colormap, nUniqueLabel))
-            print(color)
             color = tuple(channel / 255.0 for channel in color)
 
             plot = plt.scatter(xss[nUniqueLabel], yss[nUniqueLabel], color=color)
