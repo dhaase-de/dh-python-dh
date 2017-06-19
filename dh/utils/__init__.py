@@ -19,6 +19,7 @@ import itertools
 import math
 import os
 import pprint
+import re
 import shutil
 import time
 import warnings
@@ -331,6 +332,30 @@ def powerset(x):
 
     L = list(x)
     return itertools.chain.from_iterable(itertools.combinations(L, k) for k in range(len(L) + 1))
+
+
+def dntup(x, n):
+    """
+    Return an `n`-tuple of the values of `x`. If `x` is a scalar, it is
+    repeated `n` tmes.
+
+    Useful when an `n`-tuple is needed, but the user should be able to also
+    specify a scalar which is then repeated accordingly.
+
+    >>> dntup('a', 2)
+    ('a', 'a')
+    >>> dntup(['a', 'b'], 2)
+    ('a', 'b')
+    >>> dntup(['a', 'b', 'c'], 2)
+    ('a', 'b')
+    >>> dntup(['a', 'b'], 5)
+    ('a', 'b', 'a', 'b', 'a')
+    """
+    if isinstance(x, (tuple, list)):
+        xTuple = tuple(x)
+    else:
+        xTuple = (x,)
+    return tuple(cycle(xTuple, n))
 
 
 ###
@@ -730,6 +755,15 @@ def capitalize(s):
     """
 
     return s[:1].upper() + s[1:]
+
+
+def uncolorize(s):
+    """
+    Remove ANSI color escape codes from the string `s` and return the result.
+
+    Works with text colorized with the `colorama` module.
+    """
+    return re.sub("\033\[([0-9]+;)*[0-9]*m", "", s, flags=re.UNICODE)
 
 
 def tstr(s, maxLength=80, ellipsis="..."):
