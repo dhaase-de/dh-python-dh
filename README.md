@@ -37,6 +37,13 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.11.3 (2017-06-20)
+-------------------
+
+* improved logger
+* some smaller improvements
+
+
 0.11.2 (2017-06-15)
 -------------------
 
