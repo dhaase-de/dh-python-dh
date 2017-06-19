@@ -3,6 +3,7 @@ Tools for logging.
 """
 
 import abc
+import datetime
 import os.path
 import pprint
 
@@ -57,6 +58,147 @@ def cdeinit():
 ###
 
 
+class LoggerFormatter(abc.ABC):
+    """
+    Base class for logger formatters.
+
+    A simple way to create a new formatter is to implement the method
+    `getPreAndPostfixes()`. For absolute freedom, implement the `apply()`
+    method.
+    """
+
+    def getLevelColor(self, level):
+        """
+        Return a color for the given log level.
+        """
+        if level >= Logger.LEVEL_CRITICAL:
+            return FG_WHITE + BG_RED
+        elif level >= Logger.LEVEL_ERROR:
+            return FG_RED + BG_RESET
+        elif level >= Logger.LEVEL_WARNING:
+            return FG_YELLOW + BG_RESET
+        elif level >= Logger.LEVEL_SUCCESS:
+            return FG_GREEN + BG_RESET
+        elif level >= Logger.LEVEL_INFO:
+            return FG_RESET + BG_RESET
+        else:
+            return FG_CYAN + BG_RESET
+
+    def getLevelName(self, level):
+        """
+        Return a name for the given log level.
+        """
+        if level >= Logger.LEVEL_CRITICAL:
+            return "CRITICAL"
+        elif level >= Logger.LEVEL_ERROR:
+            return "ERROR"
+        elif level >= Logger.LEVEL_WARNING:
+            return "WARNING"
+        elif level >= Logger.LEVEL_SUCCESS:
+            return "SUCCESS"
+        elif level >= Logger.LEVEL_INFO:
+            return "INFO"
+        else:
+            return "DEBUG"
+
+    @abc.abstractmethod
+    def getPreAndPostfixes(self, level, **kwargs):
+        pass
+
+    def apply(self, text, level, **kwargs):
+        """
+        Takes the log message `text`, the log level `level`, and returns the
+        formatted (final) output string.
+        """
+        (pre1, pre2, post1, post2) = self.getPreAndPostfixes(level=level, **kwargs)
+        outLines = []
+        for (nLine, line) in enumerate(text.splitlines()):
+            if nLine == 0:
+                s = pre1 + line + post1
+            else:
+                s = pre2 + line + post2
+            outLines.append(s)
+        return "\n".join(outLines)
+
+
+class PlainLoggerFormatter(LoggerFormatter):
+    """
+    This formatter returns the log text as-is.
+    """
+    def getPreAndPostfixes(self, level, **kwargs):
+        return ("",) * 4
+
+
+class MinimalLoggerFormatter(LoggerFormatter):
+    """
+    This formatter only colorizes the log messages according to their level and
+    adds an indent for multi-line log messages.
+    """
+    def getPreAndPostfixes(self, level, **kwargs):
+        color = self.getLevelColor(level)
+        pre1 = color
+        pre2 = color + "  "
+        post1 = post2 = FG_RESET + BG_RESET
+        return (pre1, pre2, post1, post2)
+
+
+class BulletLoggerFormatter(LoggerFormatter):
+    """
+    This formatter creates colorized, bulleted log messages.
+    """
+    def getPreAndPostfixes(self, level, **kwargs):
+        color = self.getLevelColor(level)
+        pre1 = color + "* "
+        pre2 = color + "  "
+        post1 = post2 = FG_RESET + BG_RESET
+        return (pre1, pre2, post1, post2)
+
+
+class ShortLoggerFormatter(LoggerFormatter):
+    """
+    This formatter creates an output containing the log message level.
+    """
+    def getLevelName(self, level):
+        name = super().getLevelName(level)
+        if name == "DEBUG":
+            name = "DBUG"
+        elif name == "SUCCESS":
+            name = " OK "
+        elif name == "ERROR":
+            name = "FAIL"
+        return name[:4]
+
+    def getPreAndPostfixes(self, level, **kwargs):
+        # color and level name
+        color = self.getLevelColor(level)
+        name = self.getLevelName(level)
+        pre1 = FG_RESET + "[" + color + name + FG_RESET + BG_RESET + "]  "
+        pre2 = " " * 8
+        post1 = FG_RESET + BG_RESET
+        post2 = FG_RESET + BG_RESET
+        return (pre1, pre2, post1, post2)
+
+
+class LongLoggerFormatter(LoggerFormatter):
+    """
+    This formatter creates a long output including the time of the log message.
+    """
+    def getLevelName(self, level):
+        name = super().getLevelName(level)
+        return name[0]
+
+    def getPreAndPostfixes(self, level, timestamp, **kwargs):
+        # color and level name
+        color = self.getLevelColor(level)
+        name = self.getLevelName(level)
+        dtstr = timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
+        pre1 = color + "[" + dtstr + "]" + "  " + name + "  "
+        pre2 = color + " " * (len(dtstr) + len(name) + 6)
+        post1 = FG_RESET + BG_RESET
+        post2 = FG_RESET + BG_RESET
+        return (pre1, pre2, post1, post2)
+
+
 class PendingLoggerMessage():
     def __init__(self, logger, text):
         self.logger = logger
@@ -75,80 +217,6 @@ class PendingLoggerMessage():
         self.log(self.logger.failed, *args, **kwargs)
 
 
-class LoggerFormatter(abc.ABC):
-    def __init__(self):
-        pass
-
-    def getLevelColor(self, level):
-        if level >= Logger.LEVEL_CRITICAL:
-            return FG_WHITE + BG_RED
-        elif level >= Logger.LEVEL_ERROR:
-            return FG_RED + BG_RESET
-        elif level >= Logger.LEVEL_WARNING:
-            return FG_YELLOW + BG_RESET
-        elif level >= Logger.LEVEL_SUCCESS:
-            return FG_GREEN + BG_RESET
-        elif level >= Logger.LEVEL_INFO:
-            return FG_RESET + BG_RESET
-        else:
-            return FG_CYAN + BG_RESET
-
-    def getLevelName(self, level):
-        if level >= Logger.LEVEL_CRITICAL:
-            return "CRITICAL"
-        elif level >= Logger.LEVEL_ERROR:
-            return "ERROR"
-        elif level >= Logger.LEVEL_WARNING:
-            return "WARNING"
-        elif level >= Logger.LEVEL_SUCCESS:
-            return "SUCCESS"
-        elif level >= Logger.LEVEL_INFO:
-            return "INFO"
-        else:
-            return "DEBUG"
-
-    @abc.abstractmethod
-    def apply(self, level):
-        """
-        Must return a tuple `(pre1, pre2, post1, post2)`.
-        """
-        pass
-
-
-class LongLoggerFormatter(LoggerFormatter):
-    def apply(self, level):
-        # color and level name
-        color = self.getLevelColor(level)
-        name = self.getLevelName(level)[0]
-        dtstr = dh.utils.dtstr(compact=False)
-
-        pre1 = color + "[" + dtstr + "]" + "  " + name + "  "
-        pre2 = color + " " * (len(dtstr) + len(name) + 6)
-        post1 = FG_RESET + BG_RESET
-        post2 = FG_RESET + BG_RESET
-        return (pre1, pre2, post1, post2)
-
-
-class ShortLoggerFormatter(LoggerFormatter):
-    def apply(self, level):
-        # color and level name
-        color = self.getLevelColor(level)
-        name = self.getLevelName(level)
-        if name == "DEBUG":
-            name = "DBUG"
-        elif name == "SUCCESS":
-            name = " OK "
-        elif name == "ERROR":
-            name = "FAIL"
-        name = name[:4]
-
-        pre1 = FG_RESET + "[" + color + name + FG_RESET + BG_RESET + "]  "
-        pre2 = " " * 8
-        post1 = FG_RESET + BG_RESET
-        post2 = FG_RESET + BG_RESET
-        return (pre1, pre2, post1, post2)
-
-
 class Logger():
     # levels
     LEVEL_DEBUG    = 10
@@ -158,45 +226,67 @@ class Logger():
     LEVEL_ERROR    = 40
     LEVEL_CRITICAL = 50
 
-    def __init__(self, printFormatter="long", filename=None, printMinLevel=None, fileMinLevel=None, fileFormatter=None):
-        #if minLevel is not None:
-        #    self.setMinLevel(minLevel)
-        #else:
-        #    self.setMinLevel(Logger.LEVEL_DEBUG)
+    def __init__(self, formatter="long", filename=None, minLevel=None, color=True):
+        """
+        Creates a logger instance which can be used to create log messages
+        which can be printed on the screen and saved to file.
 
+        The argument `formatter` can be a scalar (either string or an instance
+        of `LoggerFormatter`) in which case it is used for printing to screen
+        and saving to file. Alternatively, it can be a 2-tuple specifying
+        different formatters for printing and saving.
+
+        If `filename` is `None`, no log messages are written to file. If it is
+        a directory name, a file with a timestamped name is created in that
+        directory and used for saving log messages. If is is a regular
+        filename, that file is used for saving log messages. Log messages are
+        always appended to the log file.
+
+        `minLevel` specifies the minimum level of a log message in order to be
+        shown. It can be either a scalar (one of `Logger.LEVEL_*`) in which
+        case it is used for both printing on screen and saving to file.
+        Otherwise, it can be a 2-tuple allowing different settings for printing
+        and saving.
+
+        If `color` is `False`, colorized outputs are disabled when printing log
+        messages on the screen.
+        """
+
+        # set print and save formatter and min level
+        self.setFormatter(formatter)
+        self.setMinLevel(minLevel)
+        self.color = color
+        if color:
+            cinit()
+
+        # filename for saving
         if filename is None:
-            self.filename = None
+            self.saveFilename = None
         elif isinstance(filename, str):
             if os.path.isdir(filename):
-                self.filename = "{}.log".format(dh.utils.dtstr(compact=True))
+                self.saveFilename = "{}.log".format(dh.utils.dtstr(compact=True))
             else:
-                self.filename = filename
-
-        # get formatters for printing and saving
-        self.printFormatter = self.getFormatter(printFormatter)
-        if fileFormatter is None:
-            self.fileFormatter = self.printFormatter
-        else:
-            self.fileFormatter = self.getFormatter(fileFormatter)
-
-        #self.fileFormat = fileFormat
+                self.saveFilename = filename
 
         #self.colored = colored
         #self.inspect = inspect
         #if self.colored:
         #    cinit()
 
-    #def setMinLevel(self, level):
-    #    self.minLevel = level
-
     @staticmethod
-    def getFormatter(formatter):
+    def getFormatterInstance(formatter):
         if isinstance(formatter, str):
             formatter = formatter.lower()
-            if formatter == "long":
-                return LongLoggerFormatter()
+            if formatter == "plain":
+                return PlainLoggerFormatter()
+            elif formatter == "minimal":
+                return MinimalLoggerFormatter()
+            elif formatter == "bullet":
+                return BulletLoggerFormatter()
             elif formatter == "short":
                 return ShortLoggerFormatter()
+            elif formatter == "long":
+                return LongLoggerFormatter()
             else:
                 raise ValueError("Invalid formatter '{}'".format(formatter))
         elif isinstance(formatter, LoggerFormatter):
@@ -204,22 +294,26 @@ class Logger():
         else:
             raise ValueError("Invalid formatter '{}'".format(formatter))
 
+    def setFormatter(self, formatter):
+        (self.printFormatter, self.saveFormatter) = [self.getFormatterInstance(f) for f in dh.utils.dntup(formatter, 2)]
+
+    def setMinLevel(self, level):
+        (self.printMinLevel, self.saveMinLevel) = dh.utils.dntup(level, 2)
+
     def log(self, text, level):
-        # print log message
-        if level >= self.printMinLevel:
-            (pre1, pre2, post1, post2) = self.printFormatter.apply(level)
-            for (nLine, line) in enumerate(text.splitlines()):
-                if nLine == 0:
-                    s = pre1 + line + post1
-                else:
-                    s = pre2 + line + post2
-                print(s)
+        timestamp = datetime.datetime.now()
+
+        if (self.printMinLevel is None) or (level >= self.printMinLevel):
+            s = self.printFormatter.apply(text=text, level=level, timestamp=timestamp)
+            if not self.color:
+                s = dh.utils.uncolorize(s)
+            print(s)
 
         # write log message to file
-        if (self.filename is not None) and (level >= self.fileMinLevel):
-            with open(self.filename, "a") as f:
-                ### TODO: un-colorize before writing to file
-                f.write(s + "\n")
+        if (self.saveFilename is not None) and ((self.saveMinLevel is None) or (level >= self.saveMinLevel)):
+            with open(self.saveFilename, "a") as f:
+                s = self.saveFormatter.apply(text=text, level=level, timestamp=timestamp)
+                f.write(dh.utils.uncolorize(s) + "\n")
 
     ###
     #%% basic log types
@@ -261,9 +355,28 @@ class Logger():
     ###
 
     def pending(self, text):
+        """
+        Returns a pending log message (see class `PendingLoggerMessage`), i.e.
+        a log message with unknown log level. The message is logged once a
+        method such as `ok()` or `fail()` is called.
+
+        Useful if the the log level is not known when the log text is specified
+        (e.g., when an operation can succeed or fail).
+
+        Example:
+            msg = logger.pending("Starting service...")
+            if ok:
+                msg.ok()
+            else:
+                msg.fail("Error at step 7")
+        """
         return PendingLoggerMessage(logger=self, text=text)
 
     def pprint(self, x, name=None, **kwargs):
+        """
+        Creates a debug log message of the pretty printed object `x`. If `name`
+        is given, it is added at the beginning of the debug output.
+        """
         text = pprint.pformat(x, **kwargs)
         if name is not None:
             text = str(name) + " = " + text

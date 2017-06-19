@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import os.path
+
 import dh.log
 
 
@@ -9,8 +11,14 @@ import dh.log
 
 
 def main():
-    for fmt in ("long", "short"):
-        L = dh.log.Logger(fmt, "./")
+    for fmt in ("plain", "minimal", "bullet", "short", "long"):
+        print("=" * 20)
+        L = dh.log.Logger(
+            formatter=(fmt, "long"),
+            filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), "out.log"),
+            minLevel=(dh.log.Logger.LEVEL_DEBUG, dh.log.Logger.LEVEL_INFO),
+            color=True,
+        )
         L.debug("This is a debug message")
         L.info("This is an info message")
         L.success("This is a success message")
