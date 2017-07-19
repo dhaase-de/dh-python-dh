@@ -70,6 +70,12 @@ setup(
         "Topic :: Utilities",
     ],
     packages=packages,
-    package_data={packageName: ["VERSION.txt", "data/*.npy", "data/*.npz", "image/colormaps/*.json"]},
+    package_data={packageName: [
+        "VERSION.txt",
+        "data/*.npy",
+        "data/*.npz",
+        "data/icons/ionicons/png/512/*.png",
+        "image/colormaps/*.json",
+    ]},
     scripts=["bin/raspiCameraClient.py", "bin/raspiCameraServer.py"],
 )
