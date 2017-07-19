@@ -4,8 +4,9 @@ Provides/handles example data (e.g., images, text files, etc.).
 
 import os.path
 
-# path into which setup.py installs all data files
+# paths into which setup.py installs all data files
 _DATA_DIR = os.path.abspath(os.path.dirname(__file__))
+_ICON_DIR = os.path.join(_DATA_DIR, "icons")
 
 
 ###
@@ -135,3 +136,19 @@ def pal():
     """
 
     return _loadNpz("pal.npz")
+
+
+###
+#%% icons
+###
+
+
+def ionfn(name):
+    """
+    Returns the absolute path to the Ion Icon identified by `name` (which must
+    be given without extension).
+    """
+    filename = os.path.abspath(os.path.join(_ICON_DIR, "ionicons", "png", "512", "{}.png".format(name)))
+    if not os.path.exists(filename):
+        raise FileNotFoundError("Icon file '{}' does not exist".format(filename))
+    return filename
