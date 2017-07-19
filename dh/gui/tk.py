@@ -17,7 +17,11 @@ else:
     _IMAGECANVAS_ERROR=None
 
 
-class Window(tkinter.Tk):
+def fepack(widget, side, fill=tkinter.BOTH, expand=True, **kwargs):
+    widget.pack(side=side, fill=fill, expand=expand, **kwargs)
+
+
+class Application(tkinter.Tk):
     def __init__(self, title=None, minSize=None):
         super().__init__()
 
@@ -32,25 +36,54 @@ class Window(tkinter.Tk):
     def initWidgets(self):
         pass
 
-    def show(self):
+    def run(self):
         self.mainloop()
 
-    def close(self):
-        self.destroy()
+
+class ImageButton(tkinter.ttk.Button):
+    def __init__(self, master, imageFilename, imageSize=None, **kwargs):
+        I = PIL.Image.open(imageFilename)
+        if imageSize is not None:
+            I = I.resize(imageSize, PIL.Image.ANTIALIAS)
+        self.image = PIL.ImageTk.PhotoImage(I)
+        super().__init__(master=master, image=self.image, **kwargs)
 
 
-class StatusBar(tkinter.Frame):
+class Toolbar(tkinter.ttk.Frame):
+    def __init__(self, master, imageSize=(32, 32), **kwargs):
+        super().__init__(master=master, **kwargs)
+        self.imageSize = imageSize
+        self.buttons = []
+
+    def addButton(self, iconFilename, **kwargs):
+        button = ImageButton(master=self, imageFilename=iconFilename, imageSize=self.imageSize, **kwargs)
+        button.pack(side=tkinter.LEFT, fill=tkinter.NONE, expand=False)
+        self.buttons.append(button)
+
+    def apack(self):
+        """
+        Auto-pack this widget.
+        """
+        self.pack(side=tkinter.TOP, fill=tkinter.X, expand=False)
+
+
+class StatusBar(tkinter.ttk.Label):
     """
-    Status bar frame.
+    Status bar label.
     """
 
-    def __init__(self, parent, text=""):
-        super().__init__(parent)
+    def __init__(self, master, anchor=tkinter.W):
         self.variable = tkinter.StringVar()
-        tkinter.ttk.Label(parent, textvariable=self.variable, anchor=tkinter.W, relief=tkinter.SUNKEN).pack(fill=tkinter.X)
+        super().__init__(master=master, textvariable=self.variable, anchor=anchor, relief=tkinter.SUNKEN)
+
+    def getText(self):
+        return self.variable.get()
 
     def setText(self, text):
         self.variable.set(text)
+
+    def apack(self):
+        self.pack(side=tkinter.BOTTOM, fill=tkinter.X)
 
 
 class ImageCanvas(tkinter.Canvas):
