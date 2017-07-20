@@ -69,7 +69,7 @@ class Viewer():
 
     def show(self):
         window = _ViewerWindow(self)
-        window.show()
+        window.run()
 
     def view(self, I):
         self.add(I)
@@ -82,7 +82,7 @@ class Viewer():
         return self.pipeline(self.selectedImage())
 
 
-class _ViewerWindow(dh.gui.tk.Window):
+class _ViewerWindow(dh.gui.tk.Application):
     def __init__(self, viewer):
         super(_ViewerWindow, self).__init__(
             title="Viewer",
