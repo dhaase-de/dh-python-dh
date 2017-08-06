@@ -17,14 +17,59 @@ class Application(dh.gui.tk.Application):
         self.windowFrame = tkinter.ttk.Frame(self)
         self.windowFrame.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=True)
 
+        ##
+        ## menu
+        ##
+
+        menuItems = [
+            {"label": "Quit", "command": self.destroy},
+            {"label": "Print", "command": lambda: print("Hello world!")},
+            {"label": "Window", "items": [
+                    {"label": "Enter fullscreen", "command": self.enterFullscreen},
+                    {"label": "Leave fullscreen", "command": self.leaveFullscreen},
+                    None,
+                    {"label": "Maximized", "items": [
+                            {"label": "on", "command": self.enterMaximized},
+                            {"label": "off", "command": self.leaveMaximized},
+                        ]
+                    },
+                ],
+            },
+            {"label": "No-op"},
+        ]
+        self.menu = dh.gui.tk.Menu(self, items=menuItems)
+        self.menu.apack()
+
+        ##
+        ## toolbar
+        ##
+
+        def click(n):
+            def f():
+                self.statusbar.setText("Clicked toolbar button #{}".format(n))
+            return f
+
         self.toolbar = dh.gui.tk.Toolbar(self.windowFrame)
-        self.toolbar.addButton(dh.data.ionfn("document"), command=self.destroy)
-        self.toolbar.addButton(dh.data.ionfn("clipboard"), command=self.destroy)
-        self.toolbar.addButton(dh.data.ionfn("folder"), command=self.destroy)
+        self.toolbar.addButton(dh.data.ionfn("document"), command=click(1))
+        self.toolbar.addButton(dh.data.ionfn("clipboard"), command=click(2))
+        self.toolbar.addButton(dh.data.ionfn("folder"), command=click(3))
         self.toolbar.apack()
+
+        ##
+        ## frames
+        ##
 
         self.mainFrame = tkinter.ttk.Frame(self.windowFrame)
         dh.gui.tk.fepack(self.mainFrame, "top")
+
+        self.imageFrame = dh.gui.tk.ImageCanvas(self.mainFrame)
+        self.imageFrame.apack()
+        I = dh.data.pal()
+        self.imageFrame.setImage(I)
+
+        ##
+        ## status bar
+        ##
 
         self.statusbar = dh.gui.tk.StatusBar(self.windowFrame)
         self.statusbar.apack()
@@ -32,7 +77,7 @@ class Application(dh.gui.tk.Application):
 
 
 def main():
-    A = Application("Window Name", (400, 300))
+    A = Application("Window Name", (400, 300), True, True)
     A.run()
 
 

@@ -270,3 +270,10 @@ class ImageCanvas(tkinter.Canvas):
 
         # keep reference to the PhotoImage to avoid garbage collection
         self.drawn = P
+
+    def apack(self):
+        """
+        Auto-pack this widget.
+        """
+        self.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=True)
+
