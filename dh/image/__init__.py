@@ -800,7 +800,7 @@ def clip(I, lower=None, upper=None):
     dtype = J.dtype
     (tLower, tUpper) = trange(dtype)
     if lower is not None:
-        J = np.maximum(I, np.array((dh.utils.sclip(lower, tLower, tUpper),), dtype=dtype))
+        J = np.maximum(J, np.array((dh.utils.sclip(lower, tLower, tUpper),), dtype=dtype))
     if upper is not None:
         J = np.minimum(J, np.array((dh.utils.sclip(upper, tLower, tUpper),), dtype=dtype))
     return J
