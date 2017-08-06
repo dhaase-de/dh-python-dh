@@ -26,10 +26,10 @@ def fepack(widget, side, fill=tkinter.BOTH, expand=True, **kwargs):
 
 
 class Application(tkinter.Tk):
-    """
-    Main application window.
-    """
-    def __init__(self, title=None, minSize=None):
+    def __init__(self, title=None, minSize=None, maximized=False, fullscreen=False):
+        """
+        Main application window.
+        """
         super().__init__()
 
         if title is not None:
@@ -38,12 +38,49 @@ class Application(tkinter.Tk):
         if minSize is not None:
             self.minsize(*minSize)
 
+        if maximized:
+            self.enterMaximized()
+
+        if fullscreen:
+            self.enterFullscreen()
+
         self.initWidgets()
 
+    def enterMaximized(self):
+        """
+        Maximize this window.
+        """
+        self.wm_attributes("-zoomed", 1)
+
+    def leaveMaximized(self):
+        """
+        Un-maximize this window.
+        """
+        self.wm_attributes("-zoomed", 0)
+
+    def enterFullscreen(self):
+        """
+        Set this window to fullscreen mode.
+        """
+        self.wm_attributes("-fullscreen", 1)
+
+    def leaveFullscreen(self):
+        """
+        Un-set this window from fullscreen mode.
+        """
+        self.wm_attributes("-fullscreen", 0)
+
     def initWidgets(self):
+        """
+        Derived classes should implement this method and initialize their
+        widgets here.
+        """
         pass
 
     def run(self):
+        """
+        Start main loop.
+        """
         self.mainloop()
 
 
