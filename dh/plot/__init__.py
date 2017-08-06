@@ -9,7 +9,7 @@ import textwrap
 import warnings
 
 import dh.utils
-import dh.image
+import dh.data
 
 try:
     from matplotlib import pyplot as plt
@@ -56,7 +56,7 @@ def scatter(xs, ys, labels=None, colormap="plot", uniqueLabels=None):
                 xss[nUniqueLabel].append(x)
                 yss[nUniqueLabel].append(y)
 
-        c = dh.image.colormap(colormap)
+        c = dh.data.colormap(colormap)
         plots = []
         for nUniqueLabel in xss.keys():
             try:

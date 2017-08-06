@@ -142,7 +142,7 @@ class Test(unittest.TestCase):
         self.assertEqual(I.shape, (1, 256))
 
         # use each colormap...
-        cs = dh.image.colormaps()
+        cs = dh.data.colormaps()
         self.assertIsInstance(cs, dict)
         self.assertGreaterEqual(len(cs), 75)
         for (cName, c) in cs.items():

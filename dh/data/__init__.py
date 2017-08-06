@@ -1,12 +1,16 @@
 """
-Provides/handles example data (e.g., images, text files, etc.).
+Provides/handles data (e.g., images, colormaps, text files, etc.).
 """
 
+import glob
+import json
 import os.path
 
 # paths into which setup.py installs all data files
 _DATA_DIR = os.path.abspath(os.path.dirname(__file__))
+_COLORMAP_DIR = os.path.join(_DATA_DIR, "colormaps")
 _ICON_DIR = os.path.join(_DATA_DIR, "icons")
+_IMAGE_DIR = os.path.join(_DATA_DIR, "images")
 
 
 ###
@@ -14,14 +18,14 @@ _ICON_DIR = os.path.join(_DATA_DIR, "icons")
 ###
 
 
-def _loadNpy(basename):
+def _loadNpy(filename):
     import numpy as np
-    return np.load(os.path.join(_DATA_DIR, basename))
+    return np.load(filename)
 
 
-def _loadNpz(basename):
+def _loadNpz(filename):
     import numpy as np
-    X = np.load(os.path.join(_DATA_DIR, basename))
+    X = np.load(filename)
     return X[X.keys()[0]]
 
 
@@ -37,10 +41,46 @@ def M(rows=3, columns=4):
     The returned matrix is of size `rows`x`columns` and contains the integers
     from 0 to (`rows` * `columns` - 1).
     """
-
     import numpy as np
-
     return np.array(range(rows * columns)).reshape((rows, columns))
+
+
+###
+#%% colormaps
+###
+
+
+def colormap(c):
+    """
+    If `c` is a dict, it is assumed to be a valid colormap (see below) and is
+    returned. Otherwise, `c` is interpreted as colormap name (not as filename)
+    and is loaded from the colormap dir.
+
+    A colormap is a dict, where the keys are 8 bit unsigned gray values which
+    are mapped to 8 bit unsigned 3-tuples (RGB) each.
+    """
+
+    if isinstance(c, dict):
+        # `c` is already a dict and assumed to be a valid colormap
+        m = c
+    else:
+        # `c` is interpreted as colormap name, and the dict is loaded from the colormap dir
+        filename = os.path.join(_COLORMAP_DIR, "{}.{}".format(c.lower(), "json"))
+        with open(filename, "r") as f:
+            m = json.load(f)
+
+    # json stores dict keys as strings, so we must convert them to ints
+    return {int(key): tuple(value) for (key, value) in m.items()}
+
+
+def colormaps():
+    """
+    Returns a dict of all available colormaps. The keys are the colormap names.
+    """
+
+    filenames = glob.glob(os.path.join(_COLORMAP_DIR, "*.json"))
+    names = list(sorted(os.path.splitext(os.path.basename(filename))[0] for filename in filenames))
+    return {name: colormap(name) for name in names}
 
 
 ###
@@ -123,7 +163,7 @@ def lena():
     Source: The USC-SIPI Image Database (http://sipi.usc.edu/database/).
     """
 
-    return _loadNpz("lena.npz")
+    return _loadNpz(os.path.join(_IMAGE_DIR, "lena.npz"))
 
 
 def pal():
@@ -135,7 +175,7 @@ def pal():
     The image is released into the public domain.
     """
 
-    return _loadNpz("pal.npz")
+    return _loadNpz(os.path.join(_IMAGE_DIR, "pal.npz"))
 
 
 ###

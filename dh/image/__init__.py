@@ -9,12 +9,11 @@ mahotas, PIL) are optional.
 """
 
 import collections
-import glob
-import json
 import os.path
 
 import numpy as np
 
+import dh.data
 import dh.gui
 import dh.utils
 
@@ -592,31 +591,14 @@ def ascolor(I):
         return np.dstack((I,) * 3)
 
 
-# path into which setup.py installs all colormap files
-_COLORMAP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "colormaps"))
+def colormap(*args, **kwargs):
+    dh.utils.deprecated("'dh.image.colormap' is deprecated, use 'dh.data.colormap' instead")
+    return dh.data.colormap(*args, **kwargs)
 
 
-def colormap(c):
-    """
-    If `c` is a dict, it is assumed to be a valid colormap (see below) and is
-    returned. Otherwise, `c` is interpreted as colormap name (not as filename)
-    and is loaded from the colormap dir.
-
-    A colormap is a dict, where the keys are 8 bit unsigned gray values which
-    are mapped to 8 bit unsigned 3-tuples (RGB) each.
-    """
-
-    if isinstance(c, dict):
-        # `c` is already a dict and assumed to be a valid colormap
-        m = c
-    else:
-        # `c` is interpreted as colormap name, and the dict is loaded from the colormap dir
-        filename = os.path.join(_COLORMAP_DIR, "{}.{}".format(c.lower(), "json"))
-        with open(filename, "r") as f:
-            m = json.load(f)
-
-    # json stores dict keys as strings, so we must convert them to ints
-    return {int(key): tuple(value) for (key, value) in m.items()}
+def colormaps(*args, **kwargs):
+    dh.utils.deprecated("'dh.image.colormaps' is deprecated, use 'dh.data.colormaps' instead")
+    return dh.data.colormaps(*args, **kwargs)
 
 
 def colorize(I, c="jet", reverse=False, bitwise=False):
@@ -641,7 +623,7 @@ def colorize(I, c="jet", reverse=False, bitwise=False):
         J = invert(J)
 
     # mapping from source (one channel) to target (three channel) color
-    m = colormap(c)
+    m = dh.data.colormap(c)
 
     # empty color image
     C = ascolor(np.zeros_like(J))
@@ -663,16 +645,6 @@ def colorize(I, c="jet", reverse=False, bitwise=False):
             C[:,:,nChannel][M] = target[nChannel]
 
     return C
-
-
-def colormaps():
-    """
-    Returns a dict of all available colormaps. The keys are the colormap names.
-    """
-
-    filenames = glob.glob(os.path.join(_COLORMAP_DIR, "*.json"))
-    names = list(sorted(os.path.splitext(os.path.basename(filename))[0] for filename in filenames))
-    return {name: colormap(name) for name in names}
 
 
 def cdemo(I=None):
