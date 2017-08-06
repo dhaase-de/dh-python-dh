@@ -133,8 +133,8 @@ def checkerboard(shape=(500, 500), d=25, low=0, high=255):
     import numpy as np
 
     C = np.zeros(shape=shape, dtype="uint8") + low
-    for y in range(0, shape[0], d):
-        offset = d if ((y % 2) == 0) else 0
+    for (nRow, y) in enumerate(range(0, shape[0], d)):
+        offset = d if ((nRow % 2) == 0) else 0
         for x in range(offset, shape[1], 2 * d):
             C[y:(y + d), x:(x + d)] = high
 
