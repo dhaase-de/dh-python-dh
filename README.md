@@ -37,6 +37,14 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.12.0 (2017-08-06)
+-------------------
+
+* improved `dh.gui.tk` for Tkinter-based GUIs
+* added Ion icon images to data files
+* moved colormaps from `dh.image` to `dh.data` module
+
+
 0.11.3 (2017-06-20)
 -------------------
 
