@@ -18,10 +18,17 @@ else:
 
 
 def fepack(widget, side, fill=tkinter.BOTH, expand=True, **kwargs):
+    """
+    Pack `widget` on `side`, with default of fiiling in both dimensions and
+    turned on expansion.
+    """
     widget.pack(side=side, fill=fill, expand=expand, **kwargs)
 
 
 class Application(tkinter.Tk):
+    """
+    Main application window.
+    """
     def __init__(self, title=None, minSize=None):
         super().__init__()
 
@@ -40,7 +47,54 @@ class Application(tkinter.Tk):
         self.mainloop()
 
 
+class Menu(tkinter.Menu):
+    def __init__(self, master, items=[], **kwargs):
+        """
+        Menu that can be attached to an application window (`master`).
+
+        The items are specified in the list `items` as follows: each item must
+        be one of
+        (i)   `None`: a separator is inserted,
+        (ii)  a dict containing the keys `"label"` (string) and `"items"`
+              (list): a submenu containing with the specified items is inserted
+        (iii) a dict containing the key `"label"` (string) and, optionally
+                  `"command"` (callable): a menu entry is insered.
+        """
+        super().__init__(master=master, **kwargs)
+        self.master = master
+        self.submenus = []
+        self.addItems(items)
+
+    def addItems(self, items):
+        """
+        Populate this menu with the specified items.
+        """
+        for item in items:
+            assert (item is None) or isinstance(item, dict)
+            if item is None:
+                # menu separator
+                self.add_separator()
+            elif "items" in item.keys():
+                # submenu
+                submenu = Menu(master=self, items=item["items"], tearoff=False)
+                self.submenus.append(submenu)
+                self.add_cascade(label=item["label"], menu=submenu)
+            else:
+                # menu entry
+                self.add_command(**item)
+
+    def apack(self):
+        """
+        Configure the master of this element (usually the main application
+        window) to use this as its menu.
+        """
+        self.master.config(menu=self)
+
+
 class ImageButton(tkinter.ttk.Button):
+    """
+    Button containing an image given by `imageFilename`.
+    """
     def __init__(self, master, imageFilename, imageSize=None, **kwargs):
         I = PIL.Image.open(imageFilename)
         if imageSize is not None:
@@ -51,11 +105,17 @@ class ImageButton(tkinter.ttk.Button):
 
 class Toolbar(tkinter.ttk.Frame):
     def __init__(self, master, imageSize=(32, 32), **kwargs):
+        """
+        Button toolbar.
+        """
         super().__init__(master=master, **kwargs)
         self.imageSize = imageSize
         self.buttons = []
 
     def addButton(self, iconFilename, **kwargs):
+        """
+        Add a button to the toolbar.
+        """
         button = ImageButton(master=self, imageFilename=iconFilename, imageSize=self.imageSize, **kwargs)
         button.pack(side=tkinter.LEFT, fill=tkinter.NONE, expand=False)
         self.buttons.append(button)
@@ -68,33 +128,40 @@ class Toolbar(tkinter.ttk.Frame):
 
 
 class StatusBar(tkinter.ttk.Label):
-    """
-    Status bar label.
-    """
-
     def __init__(self, master, anchor=tkinter.W):
+        """
+        Status bar label.
+        """
         self.variable = tkinter.StringVar()
         super().__init__(master=master, textvariable=self.variable, anchor=anchor, relief=tkinter.SUNKEN)
 
     def getText(self):
+        """
+        Get the text which is displayed in this status bar.
+        """
         return self.variable.get()
 
     def setText(self, text):
+        """
+        Set the text which is displayed in this status bar.
+        """
         self.variable.set(text)
 
     def apack(self):
+        """
+        Auto-pack this widget.
+        """
         self.pack(side=tkinter.BOTTOM, fill=tkinter.X)
 
 
 class ImageCanvas(tkinter.Canvas):
-    """
-    Canvas which can display one image represented by a NumPy array.
-
-    The image is always resized to match the canvas size, but keeps the
-    original aspect ratio.
-    """
-
     def __init__(self, parent, **kwargs):
+        """
+        Canvas which can display one image represented by a NumPy array.
+
+        The image is always resized to match the canvas size, but keeps the
+        original aspect ratio.
+        """
         # check if all required modules were imported
         if _IMAGECANVAS_ERROR is not None:
             raise _IMAGECANVAS_ERROR
@@ -125,6 +192,9 @@ class ImageCanvas(tkinter.Canvas):
         self.draw()
 
     def setImage(self, I):
+        """
+        Set the image which is displayed in this widget. Must be a NumPy array.
+        """
         self.original = I.copy()
         self.draw()
 
