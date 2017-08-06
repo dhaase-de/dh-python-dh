@@ -72,10 +72,10 @@ setup(
     packages=packages,
     package_data={packageName: [
         "VERSION.txt",
-        "data/*.npy",
-        "data/*.npz",
+        "data/colormaps/*.json",
         "data/icons/ionicons/png/512/*.png",
-        "image/colormaps/*.json",
+        "data/images/*.npy",
+        "data/images/*.npz",
     ]},
     scripts=["bin/raspiCameraClient.py", "bin/raspiCameraServer.py"],
 )
