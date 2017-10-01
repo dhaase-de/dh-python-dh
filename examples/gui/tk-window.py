@@ -50,22 +50,36 @@ class Application(dh.gui.tk.Application):
             return f
 
         self.toolbar = dh.gui.tk.Toolbar(self.windowFrame)
-        self.toolbar.addButton(dh.data.ionfn("document"), command=click(1))
-        self.toolbar.addButton(dh.data.ionfn("clipboard"), command=click(2))
-        self.toolbar.addButton(dh.data.ionfn("folder"), command=click(3))
+        self.toolbar.addButton(dh.data.ionfn("document"), text="New", compound="top", command=click(1))
+        self.toolbar.addButton(dh.data.ionfn("clipboard"), text="Copy", compound="top", command=click(2))
+        self.toolbar.addButton(dh.data.ionfn("folder"), text="Open", compound="top", command=click(3))
         self.toolbar.apack()
 
         ##
         ## frames
         ##
 
+        self.leftFrame = tkinter.ttk.Frame(self.windowFrame)
+        dh.gui.tk.fepack(self.leftFrame, "left", expand=False)
+
+        self.radioVar = tkinter.StringVar()
+        self.radioVar.set("A")
+        self.radioButtons = []
+        for value in ("A", "B", "C"):
+            radioButton = dh.gui.tk.ImageRadiobutton(self.leftFrame, dh.data.ionfn("document"), imageSize=(32, 32), text=value, compound="left", variable=self.radioVar, value=value, indicatoron=0)
+            dh.gui.tk.fepack(radioButton, "top")
+            self.radioButtons.append(radioButton)
+
         self.mainFrame = tkinter.ttk.Frame(self.windowFrame)
-        dh.gui.tk.fepack(self.mainFrame, "top")
+        dh.gui.tk.fepack(self.mainFrame, "left")
 
         self.imageFrame = dh.gui.tk.ImageCanvas(self.mainFrame)
         self.imageFrame.apack()
         I = dh.data.pal()
         self.imageFrame.setImage(I)
+
+        self.rightFrame = tkinter.ttk.Frame(self.windowFrame)
+        dh.gui.tk.fepack(self.rightFrame, "left", expand=False)
 
         ##
         ## status bar

@@ -140,6 +140,18 @@ class ImageButton(tkinter.ttk.Button):
         super().__init__(master=master, image=self.image, **kwargs)
 
 
+class ImageRadiobutton(tkinter.Radiobutton):
+    """
+    Radio button containing an image given by `imageFilename`.
+    """
+    def __init__(self, master, imageFilename, imageSize=None, **kwargs):
+        I = PIL.Image.open(imageFilename)
+        if imageSize is not None:
+            I = I.resize(imageSize, PIL.Image.ANTIALIAS)
+        self.image = PIL.ImageTk.PhotoImage(I)
+        super().__init__(master=master, image=self.image, **kwargs)
+
+
 class Toolbar(tkinter.ttk.Frame):
     def __init__(self, master, imageSize=(32, 32), **kwargs):
         """
