@@ -37,6 +37,13 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.12.1 (2017-10-01)
+-------------------
+
+* added config parser using JSON encoding for values
+* added wrapper for Tk radio buttons with image support
+
+
 0.12.0 (2017-08-06)
 -------------------
 
