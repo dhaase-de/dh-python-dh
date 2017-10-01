@@ -8,6 +8,7 @@ third-party modules included in this package to ensure maximum compatibility.
 import base64
 import collections
 import colorsys
+import configparser
 import copy
 import datetime
 import errno
@@ -16,6 +17,7 @@ import hashlib
 import importlib
 import inspect
 import itertools
+import json
 import math
 import os
 import pprint
@@ -1061,6 +1063,18 @@ def awopen(*args, **kwargs):
     """
 
     return dh.thirdparty.atomicwrites.atomic_write(*args, **kwargs)
+
+
+class JsonConfigParser(configparser.ConfigParser):
+    """
+    ConfigParser where the config values are JSON-encoded.
+    """
+
+    def get(self, *args, **kwargs):
+        return json.loads(super().get(*args, **kwargs))
+
+    def set(self, section, option, value):
+        return super().set(section=section, option=option, value=json.dumps(value))
 
 
 ###

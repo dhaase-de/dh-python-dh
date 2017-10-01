@@ -2,6 +2,7 @@
 Unit tests for `dh.utils`.
 """
 
+import io
 import unittest
 
 import dh.utils
@@ -44,3 +45,29 @@ class Test(unittest.TestCase):
             list(dh.utils.which(x)),
             [0, 1, 2, 3, 4, 5, 6, 7]
         )
+
+    def test_JsonConfigParser(self):
+        # values to be tested
+        values = (False, True, 0, 1, -1, 1.0, -1e100, "A string", '"Another String"', [True, 1, "a"], [["x"]])
+        keys = tuple("entry{}".format(nValue) for (nValue, _) in enumerate(values))
+
+        # set up config parser
+        config = dh.utils.JsonConfigParser()
+        config.add_section("Test")
+
+        # store values in the config and write it to (virtual) file
+        for (key, value) in zip(keys, values):
+            config.set("Test", key, value)
+        f = io.StringIO()
+        config.write(f)
+        f.seek(0)
+
+        # re-load the config
+        config = dh.utils.JsonConfigParser()
+        config.read_file(f)
+
+        # check values
+        for (key, value) in zip(keys, values):
+            v = config.get("Test", key)
+            self.assertEqual(value, v)
+
