@@ -37,6 +37,13 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.13.0 (2018-09-25)
+-------------------
+
+* added module 'audio' with very basic functionality
+* bugfixes
+
+
 0.12.1 (2017-10-01)
 -------------------
 
