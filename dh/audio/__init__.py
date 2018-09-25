@@ -12,8 +12,6 @@ import wave
 
 import numpy as np
 import pyaudio
-import scipy.io.wavfile
-import scipy.signal
 
 import dh.utils
 import dh.image
@@ -31,6 +29,7 @@ def load(filename):
     Returns a 2-tuple consisting of the data as NumPy array and the sampling
     rate as float scalar.
     """
+    import scipy.io.wavfile
     (rate, data) = scipy.io.wavfile.read(filename=filename)
     return (data, rate)
 
@@ -39,6 +38,8 @@ def save(filename, data, rate=44100):
     """
     Save audio data to WAVE file.
     """
+    import scipy.io.wavfile
+    dh.utils.mkpdir(filename)
     scipy.io.wavfile.write(filename=filename, rate=rate, data=data)
 
 
@@ -48,7 +49,7 @@ def play(data, rate):
     """
     # save to temporary WAVE file
     chunkSize = 1024
-    filename = "/tmp/play.wav"
+    filename = "/tmp/__dh.audio.play.wav"
     save(filename, data, rate)
 
     # open and read from this temporary WAVE file
@@ -252,6 +253,7 @@ def clip(x, lower=None, upper=None):
 
 
 def spectrogram(x, rate):
+    import scipy.signal
     y = convert(x[:, 0], "float")
     res = scipy.signal.spectrogram(y, fs=rate, mode="magnitude")
     S = res[2]
