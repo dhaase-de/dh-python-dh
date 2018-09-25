@@ -5,8 +5,8 @@ python:
     - "3.5"
     - "3.6"
 
-#before_install:
-#    - "sudo apt-get install -y libportaudio2"
+before_install:
+    - "sudo apt-get install -y python3-pyaudio"
 
 install:
     - "pip install --upgrade pip"
