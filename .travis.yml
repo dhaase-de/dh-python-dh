@@ -6,7 +6,7 @@ python:
     - "3.6"
 
 before_install:
-    - "sudo apt-get install -y python3-pyaudio"
+    - "sudo apt-get install -y portaudio19-dev"
 
 install:
     - "pip install --upgrade pip"
