@@ -100,7 +100,7 @@ def decode(b, color=None):
     Load image from the byte array `b` containing the *encoded* image and
     return NumPy array.
 
-    .. see: `dh.image.load()` for details.
+    .. seealso:: `dh.image.load()` for details.
     """
 
     # flags - select grayscale or color mode

@@ -140,7 +140,7 @@ class ExtendedJsonSocketMessageType(ByteSocketMessageType):
     JSON-serializable (with extended range of supported types, see
     `dh.ejson`) objects via the given socket.
 
-    .. see:: `dh.ejson`.
+    .. seealso:: `dh.ejson`.
     """
 
     def send(self, socket, x):
