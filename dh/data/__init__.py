@@ -26,7 +26,7 @@ def _loadNpy(filename):
 def _loadNpz(filename):
     import numpy as np
     X = np.load(filename)
-    return X[X.keys()[0]]
+    return X[next(X.keys())]
 
 
 ###
