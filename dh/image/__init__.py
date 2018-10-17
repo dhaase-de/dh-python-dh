@@ -162,7 +162,7 @@ def imshow(*args, **kwargs):
 
 
 @CV2
-def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="show", closeWindow=False, **kwargs):
+def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, windowName="show", closeWindow=False, engine=None, **kwargs):
     """
     Show image `I` on the screen.
 
@@ -208,15 +208,30 @@ def show(I, wait=0, scale=None, normalize=None, invert=False, colormap=None, win
     if colormap is not None:
         J = colorize(asgray(J), c=colormap)
 
-    # RGB -> BGR (for OpenCV)
-    if iscolor(J):
-        J = J[:,:,::-1]
+    # determine how to display the image
+    if engine is None:
+        # TODO: auto-detect if in notebook, then use IPython as engine
+        engine = "cv2"
 
-    cv2.imshow(windowName, J)
-    key = cv2.waitKey(wait)
-
-    if closeWindow:
-        cv2.destroyWindow(windowName)
+    if engine == "cv2":
+        # RGB -> BGR (for OpenCV)
+        if iscolor(J):
+            J = J[:,:,::-1]
+        cv2.imshow(windowName, J)
+        key = cv2.waitKey(wait)
+        if closeWindow:
+            cv2.destroyWindow(windowName)
+    elif engine == "ipython":
+        # source: https://gist.github.com/uduse/e3122b708a8871dfe9643908e6ef5c54
+        import PIL.Image
+        from io import BytesIO
+        import IPython.display
+        f = BytesIO()
+        PIL.Image.fromarray(J).save(f, "png")
+        IPython.display.display(IPython.display.Image(data=f.getvalue()))
+        key = 0
+    else:
+        raise RuntimeError("Unsupported engine '{}'".format(engine))
 
     return key
 
