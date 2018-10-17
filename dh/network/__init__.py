@@ -343,3 +343,68 @@ class ImageProcessingClient(SocketClient):
         to the server's `process` method).
         """
         return self.query(data=data, params=params)
+
+
+class ImageProcessingServer2(SocketServer):
+    """
+    Special case of `SocketServer` which accepts a NumPy array and JSON-encoded
+    parameters and returns a NumPy array plus a JSON-encodable object. The
+    counterpart is the `ImageProcessingClient2` class.
+
+    To specify the processing behavior, sub-class this class and implement
+    the static method `process(data, params)`.
+    """
+
+    def communicate(self, socket):
+        # receive input image and parameters
+        data = socket.mrecv(NumpySocketMessageType())
+        params = socket.mrecv(JsonSocketMessageType())
+
+        # process
+        try:
+            (result, info) = self.process(data=data, params=params)
+        except Exception as e:
+            self._print("** {}: {}".format(type(e).__name__, e))
+            result = np.zeros(shape=(0, 0), dtype="uint8")
+
+        # send result image and info
+        socket.msend(NumpySocketMessageType(), result)
+        socket.msend(JsonSocketMessageType(), info)
+
+    @staticmethod
+    @abc.abstractmethod
+    def process(data, params):
+        """
+        This function specifies the processing behavior of this server and must
+        be implemeted by the user.
+        """
+        pass
+
+
+class ImageProcessingClient2(SocketClient):
+    """
+    Special case of `SocketClient` which sends a NumPy array and JSON-encoded
+    parameters and receives a NumPy array and a JSON-encoded object. The
+    counterpart is the `ImageProcessingServer2` class.
+
+    The processing behavior is specified by sub-classing
+    `ImageProcessingServer` and implementing the static method
+    `process(data, params)`.
+    """
+
+    def communicate(self, socket, data, params):
+        # send input image and parameters
+        socket.msend(NumpySocketMessageType(), data)
+        socket.msend(JsonSocketMessageType(), params)
+
+        # receive result image
+        result = socket.mrecv(NumpySocketMessageType())
+        info = socket.mrecv(JsonSocketMessageType())
+        return (result, info)
+
+    def process(self, data, params):
+        """
+        Just another name for the `query` method (to better show the connection
+        to the server's `process` method).
+        """
+        return self.query(data=data, params=params)

@@ -9,13 +9,15 @@ import dh.network
 ###
 
 
-class Server(dh.network.ImageProcessingServer):
+class Server(dh.network.ImageProcessingServer2):
     @staticmethod
     def process(data, params):
+        info = {"message": "OK"}
         if ("gamma" in params) and (params["gamma"] is not None):
-            return dh.image.gamma(data, params["gamma"])
+            result = dh.image.gamma(data, params["gamma"])
         else:
-            return data
+            result = data
+        return (result, info)
 
 
 def main():
