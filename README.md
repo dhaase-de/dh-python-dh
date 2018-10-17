@@ -37,6 +37,14 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.13.1 (2018-10-18)
+-------------------
+
+* added versions of image processing client/server with updated protocol (JSON-ecoded object is now returned by the server in addition to the actual result)
+* added option to display image via IPython in 'dh.image.show'
+* updated plot colormaps to map 255 to white
+
+
 0.13.0 (2018-09-25)
 -------------------
 
