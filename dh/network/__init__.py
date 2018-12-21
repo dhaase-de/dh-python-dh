@@ -366,6 +366,7 @@ class ImageProcessingServer2(SocketServer):
         except Exception as e:
             self._print("** {}: {}".format(type(e).__name__, e))
             result = np.zeros(shape=(0, 0), dtype="uint8")
+            info = None
 
         # send result image and info
         socket.msend(NumpySocketMessageType(), result)
