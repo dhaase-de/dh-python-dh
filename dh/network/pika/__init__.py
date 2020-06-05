@@ -33,23 +33,27 @@ class RobustConnection():
     
     def connect(self):
         if (self._connection is None) or self._connection.is_closed:
-            self._connect()
+            while True:
+                try:
+                    self._connect()
+                    break
+                except (pika.exceptions.ConnectionClosedByBroker, pika.exceptions.AMQPConnectionError, pika.exceptions.AMQPChannelError, pika.exceptions.IncompatibleProtocolError):
+                    time.sleep(1.0)
+                    continue
         
     def disconnect(self):
         if self._connection is not None:
             self._connection.close()
         
     def retry(self, f, *args, **kwargs):
-        wait_time = 0.25
-        wait_time_max = 4.0
         while True:
             try:
+                self._setup_exchange()
                 f(*args, **kwargs)
                 break
-            except (pika.exceptions.ConnectionClosedByBroker, pika.exceptions.AMQPConnectionError):
-                time.sleep(wait_time)
-                self._connect()
-                wait_time = min(wait_time_max, 2.0 * wait_time)
+            except (pika.exceptions.ConnectionClosedByBroker, pika.exceptions.AMQPConnectionError, pika.exceptions.AMQPChannelError, pika.exceptions.IncompatibleProtocolError) as e:
+                time.sleep(1.0)
+                self.connect()
                 continue
         
 
