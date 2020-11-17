@@ -110,7 +110,7 @@ def decode(b, color=None):
         flags = cv2.IMREAD_ANYDEPTH | (cv2.IMREAD_COLOR if color else cv2.IMREAD_GRAYSCALE)
 
     # read image
-    n = np.fromstring(b, dtype="uint8")
+    n = np.frombuffer(b, dtype="uint8")
     I = cv2.imdecode(buf=n, flags=flags)
 
     # BGR -> RGB
