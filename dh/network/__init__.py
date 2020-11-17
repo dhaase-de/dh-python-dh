@@ -11,9 +11,7 @@ import sys
 import time
 import zlib
 
-import dh.data
 import dh.ejson
-import dh.image
 import dh.utils
 
 # NumPy is only needed for some parts and is optional
