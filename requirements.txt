@@ -16,3 +16,6 @@ numpy>=1.10.1
 # optional for dh.audio module
 pyaudio>=0.2.11
 scipy>=0.17.0
+
+# optional for dh.network.pika
+pika>=1.1.0
