@@ -372,7 +372,7 @@ def astack(Is, padding=0, dtype=None, gray=None, aspect=1.77):
 
 
 @CV2
-def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", padding=1.0):
+def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", padding=1.0, color=(255, 255, 255), backgroundColor=0):
     """
     Draws the text `message` into the image `I`.
 
@@ -429,7 +429,8 @@ def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", p
         pass
 
     offset = dh.image.tir(offset)
-    I[max(0, offset[1] - H - padding):min(I.shape[0], offset[1] + max(baseline, padding)), max(0, offset[0] - padding):min(I.shape[1], offset[0] + W + padding), ...] = 0
+    if backgroundColor is not None:
+        I[max(0, offset[1] - H - padding):min(I.shape[0], offset[1] + max(baseline, padding)), max(0, offset[0] - padding):min(I.shape[1], offset[0] + W + padding), ...] = backgroundColor
 
     # draw text
     cv2.putText(
@@ -438,7 +439,7 @@ def text(I, message, font="sans", scale=1.0, position=(0.0, 0.0), anchor="lt", p
         org=offset,
         fontFace=fontFace,
         fontScale=fontScale,
-        color=(255, 255, 255),
+        color=color,
         thickness=fontThickness,
         lineType=cv2.LINE_8,
         bottomLeftOrigin=False,
