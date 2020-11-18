@@ -190,7 +190,7 @@ def trange(dtype):
 
     if dtype is None:
         # np.issubdtype(None, "float") is True, therefore we have to check for this error here explicitly
-        raise ValueError("Invalid image type '{dtype}'".format(dtype=dtype))
+        raise ValueError("Invalid data type '{dtype}'".format(dtype=dtype))
     elif dtype == "int8":
         return (-128, 127)
     elif dtype == "int16":
