@@ -184,7 +184,11 @@ def trange(dtype):
 
     >>> trange('int8')
     (-128, 127)
+    >>> trange('int16')
+    (-32768, 32767)
     >>> trange('float32')
+    (-1.0, 1.0)
+    >>> trange('float64')
     (-1.0, 1.0)
     """
 
@@ -197,7 +201,7 @@ def trange(dtype):
         return (-32768, 32767)
     elif dtype == "int32":
         return (-2147483648, 2147483647)
-    elif np.issubdtype(dtype, "float"):
+    elif np.issubdtype(dtype, np.floating):
         return (-1.0, 1.0)
     else:
         raise ValueError("Unsupported data type '{dtype}'".format(dtype=dtype))

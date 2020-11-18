@@ -480,19 +480,23 @@ def tcommon(dtypes):
     'uint8'
     >>> tcommon(['uint8', 'uint16'])
     'uint16'
-    >>> tcommon(['uint8', 'float'])
-    'float'
+    >>> tcommon(['uint8', 'float32'])
+    'float32'
+    >>> tcommon(['uint8', 'float64'])
+    'float64'
+    >>> tcommon(['float32', 'float64'])
+    'float64'
     """
 
-    hierarchy = ("bool", "uint8", "uint16", "float")
+    hierarchy = ("bool", "uint8", "uint16", "float32", "float64")
     maxIndex = 0
     for dtype in dtypes:
-        try:
-            index = hierarchy.index(dtype)
-        except ValueError:
+        for (index, entry) in enumerate(hierarchy):
+            if dtype == np.dtype(entry):
+                maxIndex = max(maxIndex, index)
+                break
+        else:
             raise RuntimeError("Invalid image type '{dtype}'".format(dtype=dtype))
-        maxIndex = max(maxIndex, index)
-
     return hierarchy[maxIndex]
 
 
@@ -507,7 +511,11 @@ def trange(dtype):
 
     >>> trange('uint8')
     (0, 255)
+    >>> trange('uint16')
+    (0, 65535)
     >>> trange('float32')
+    (0.0, 1.0)
+    >>> trange('float64')
     (0.0, 1.0)
     """
 
@@ -520,7 +528,7 @@ def trange(dtype):
         return (0, 255)
     elif dtype == "uint16":
         return (0, 65535)
-    elif np.issubdtype(dtype, "float"):
+    elif np.issubdtype(dtype, np.floating):
         return (0.0, 1.0)
     else:
         raise ValueError("Invalid image type '{dtype}'".format(dtype=dtype))
