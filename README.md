@@ -37,6 +37,14 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.14.1 (2020-12-02)
+-------------------
+
+* added robust pika wrappers to `dh.network`
+* multiple bugfixes
+* (version 0.14.0 was not tagged along the way and thus is skipped)
+
+
 0.13.1 (2018-10-18)
 -------------------
 
