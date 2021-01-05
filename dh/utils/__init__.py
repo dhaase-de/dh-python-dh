@@ -13,6 +13,7 @@ import copy
 import datetime
 import errno
 import functools
+import glob
 import hashlib
 import importlib
 import inspect
@@ -20,6 +21,7 @@ import itertools
 import json
 import math
 import os
+import os.path
 import pprint
 import re
 import shutil
@@ -1028,6 +1030,14 @@ def mkpdir(filename):
     """
 
     mkdir(os.path.dirname(filename))
+
+
+def sgo(*args, **kwargs):
+    return sorted(glob.glob(os.path.join(*args, **kwargs)))
+
+
+def igo(*args, **kwargs):
+    return glob.iglob(os.path.join(*args, **kwargs))
 
 
 def fbak(filename):
