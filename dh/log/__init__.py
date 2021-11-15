@@ -226,7 +226,7 @@ class Logger():
     LEVEL_ERROR    = 40
     LEVEL_CRITICAL = 50
 
-    def __init__(self, formatter="long", filename=None, minLevel=None, color=True):
+    def __init__(self, formatter="long", filename=None, minLevel=None, color=True, silent=False):
         """
         Creates a logger instance which can be used to create log messages
         which can be printed on the screen and saved to file.
@@ -250,6 +250,9 @@ class Logger():
 
         If `color` is `False`, colorized outputs are disabled when printing log
         messages on the screen.
+
+        If `silent` is `True`, the messages are not printed on the screen. In
+        this case, `filename` should be set.
         """
 
         # set print and save formatter and min level
@@ -258,7 +261,9 @@ class Logger():
         self.color = color
         if color:
             cinit()
-
+        if silent:
+            self.printMinLevel = 999
+        
         # filename for saving
         if filename is None:
             self.saveFilename = None
@@ -267,11 +272,6 @@ class Logger():
                 self.saveFilename = "{}.log".format(dh.utils.dtstr(compact=True))
             else:
                 self.saveFilename = filename
-
-        #self.colored = colored
-        #self.inspect = inspect
-        #if self.colored:
-        #    cinit()
 
     @staticmethod
     def getFormatterInstance(formatter):
@@ -303,6 +303,7 @@ class Logger():
     def log(self, text, level):
         timestamp = datetime.datetime.now()
 
+        # print log message on the screen
         if (self.printMinLevel is None) or (level >= self.printMinLevel):
             s = self.printFormatter.apply(text=text, level=level, timestamp=timestamp)
             if not self.color:
