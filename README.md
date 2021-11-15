@@ -37,6 +37,14 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.14.2 (2021-11-16)
+-------------------
+
+* servers now use `dh.log.Logger` for info messages, which now also show the current port and can be customized
+* added explicit argument 'silent' for loggers to prevent printing on the screen
+* added helper functions `sgo` and `igo`
+
+
 0.14.1 (2020-12-02)
 -------------------
 
