@@ -12,6 +12,7 @@ import time
 import zlib
 
 import dh.ejson
+import dh.log
 import dh.utils
 
 # NumPy is only needed for some parts and is optional
@@ -186,6 +187,18 @@ class MessageSocket():
 ###
 
 
+class ServerLoggerFormatter(dh.log.LongLoggerFormatter):
+    def __init__(self, host, port):
+        super().__init__()
+        self.host = host
+        self.port = port
+
+    def getPreAndPostfixes(self, level, timestamp, **kwargs):
+        (pre1, pre2, post1, post2) = super().getPreAndPostfixes(level=level, timestamp=timestamp, **kwargs)
+        customPre = "[{}:{}]  ".format(self.host, self.port)
+        return (customPre + pre1, " " * len(customPre) + pre2, post1, post2)
+
+
 class SocketServer(abc.ABC):
     """
     Simple socket server which accepts connections on the specified `host`
@@ -196,35 +209,43 @@ class SocketServer(abc.ABC):
     `nodelay`.
     """
 
-    def __init__(self, host="", port=7214, backlog=5, nodelay=True):
-        print("Creating socket...")
+    def __init__(self, host="", port=7214, backlog=5, nodelay=True, logger=None):
+        hostStr = host if len(host) > 0 else "*"
+
+        # set up logger
+        self.logger = logger
+        if self.logger is None:
+            self.logger = dh.log.Logger(ServerLoggerFormatter(host=hostStr, port=port))
+
+        self.logger.info("Creating socket...")
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if nodelay:
             self._socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-        print("Binding socket to {}:{}...".format(host if len(host) > 0 else "*", port))
+        self.logger.info("Binding socket to {}:{}...".format(hostStr, port))
         self._socket.bind((host, port))
         self._backlog = backlog
         self._nodelay = nodelay
-
-    def _print(self, text):
-        print("[{}]  {}".format(dh.utils.dtstr(compact=False), text))
+        
+        self.requestCount = 0
 
     def run(self):
         self._socket.listen(self._backlog)
         while True:
-            self._print("Waiting for connection...")
+            self.logger.info("Waiting for connection...")
             sys.stdout.flush()
             (connectionSocket, connectionAddress) = self._socket.accept()
-            self._print("Accepted connection from {}:{}".format(connectionAddress[0], connectionAddress[1]))
+            self.requestCount += 1
+            self.logger.info("[request #{}]  Accepted connection from {}:{}".format(self.requestCount, connectionAddress[0], connectionAddress[1]))
             t0 = time.time()
             try:
                 self.communicate(MessageSocket(connectionSocket))
                 connectionSocket.close()
             except Exception as e:
-                self._print("** {}: {}".format(type(e).__name__, e))
-            self._print("Finished request from {}:{} after {} ms".format(connectionAddress[0], connectionAddress[1], dh.utils.around((time.time() - t0) * 1000.0)))
+                self.logger.error("[request #{}]  {}: {}".format(self.requestCount, type(e).__name__, e))
+            else:
+                self.logger.success("[request #{}]  Finished request from {}:{} after {} ms".format(self.requestCount, connectionAddress[0], connectionAddress[1], dh.utils.around((time.time() - t0) * 1000.0)))
 
     @abc.abstractmethod
     def communicate(self, socket):
@@ -300,7 +321,7 @@ class ImageProcessingServer(SocketServer):
         try:
             result = self.process(data=data, params=params)
         except Exception as e:
-            self._print("** {}: {}".format(type(e).__name__, e))
+            self.logger.error("[request #{}]  {}: {}".format(self.requestCount, type(e).__name__, e))
             result = np.zeros(shape=(0, 0), dtype="uint8")
 
         # send result image
@@ -362,7 +383,7 @@ class ImageProcessingServer2(SocketServer):
         try:
             (result, info) = self.process(data=data, params=params)
         except Exception as e:
-            self._print("** {}: {}".format(type(e).__name__, e))
+            self.logger.error("[request #{}]  {}: {}".format(self.requestCount, type(e).__name__, e))
             result = np.zeros(shape=(0, 0), dtype="uint8")
             info = None
 
