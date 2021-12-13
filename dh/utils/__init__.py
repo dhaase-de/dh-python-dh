@@ -1136,7 +1136,7 @@ def rupdate(d, u, deepcopy=True):
         d = copy.deepcopy(d)
 
     for (key, value) in u.items():
-        if isinstance(value, collections.Mapping):
+        if isinstance(value, collections.abc.Mapping):
             r = rupdate(d.get(key, {}), value)
             d[key] = r
         else:
