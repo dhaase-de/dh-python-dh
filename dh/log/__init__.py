@@ -4,8 +4,10 @@ Tools for logging.
 
 import abc
 import datetime
+import inspect
 import os.path
 import pprint
+import warnings
 
 import dh.utils
 import dh.thirdparty.colorama
@@ -300,7 +302,7 @@ class Logger():
     def setMinLevel(self, level):
         (self.printMinLevel, self.saveMinLevel) = dh.utils.dntup(level, 2)
 
-    def log(self, text, level):
+    def log(self, text, level, exception=None):
         timestamp = datetime.datetime.now()
 
         # print log message on the screen
@@ -316,40 +318,52 @@ class Logger():
                 s = self.saveFormatter.apply(text=text, level=level, timestamp=timestamp)
                 f.write(dh.utils.uncolorize(s) + "\n")
 
+        # raise exception/warning if specified
+        if isinstance(exception, Warning):
+            warnings.warn(exception)
+        elif inspect.isclass(exception) and issubclass(exception, Warning):
+            warnings.warn(exception(text))
+        elif isinstance(exception, Exception):
+            raise exception
+        elif inspect.isclass(exception) and issubclass(exception, Exception):
+            raise exception(text)
+        elif exception is not None:
+            raise ValueError("Invalid value for argument 'exception': {}".format(exception))
+
     ###
     #%% basic log types
     ###
 
-    def debug(self, text):
-        self.log(text=text, level=Logger.LEVEL_DEBUG)
+    def debug(self, text, exception=None):
+        self.log(text=text, level=Logger.LEVEL_DEBUG, exception=exception)
 
-    def info(self, text):
-        self.log(text=text, level=Logger.LEVEL_INFO)
+    def info(self, text, exception=None):
+        self.log(text=text, level=Logger.LEVEL_INFO, exception=exception)
 
-    def success(self, text):
-        self.log(text=text, level=Logger.LEVEL_SUCCESS)
+    def success(self, text, exception=None):
+        self.log(text=text, level=Logger.LEVEL_SUCCESS, exception=exception)
 
-    def warning(self, text):
-        self.log(text=text, level=Logger.LEVEL_WARNING)
+    def warning(self, text, exception=None):
+        self.log(text=text, level=Logger.LEVEL_WARNING, exception=exception)
 
-    def error(self, text):
-        self.log(text=text, level=Logger.LEVEL_ERROR)
+    def error(self, text, exception=None):
+        self.log(text=text, level=Logger.LEVEL_ERROR, exception=exception)
 
-    def critical(self, text):
-        self.log(text=text, level=Logger.LEVEL_CRITICAL)
+    def critical(self, text, exception=None):
+        self.log(text=text, level=Logger.LEVEL_CRITICAL, exception=exception)
 
     ###
     #%% aliases
     ###
 
-    def ok(self, text):
-        self.success(text=text)
+    def ok(self, text, exception=None):
+        self.success(text=text, exception=exception)
 
-    def fail(self, text):
-        self.error(text=text)
+    def fail(self, text, exception=None):
+        self.error(text=text, exception=exception)
 
-    def failed(self, text):
-        self.error(text=text)
+    def failed(self, text, exception=None):
+        self.error(text=text, exception=exception)
 
     ###
     #%% extended log functionality
