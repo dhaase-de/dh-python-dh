@@ -37,6 +37,13 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.14.3 (2021-12-14)
+-------------------
+
+* log messages can now optionally raise warnings or exceptions
+* fixed deprecation warning
+
+
 0.14.2 (2021-11-16)
 -------------------
 
