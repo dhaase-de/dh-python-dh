@@ -1,4 +1,6 @@
 # framework
+.idea/
+bak/
 sandbox/
 tmp/
 venv-*/
