@@ -1406,7 +1406,7 @@ class FrequencyEstimator():
         self.minKeepTime = minKeepTime
         self._ts = [time.time()]
 
-    def event(self):
+    def update(self):
         # save event time
         self._ts.append(time.time())
 
@@ -1419,11 +1419,16 @@ class FrequencyEstimator():
         if nTime is not None:
             self._ts = self._ts[nTime:]
 
+    def get_frequency(self):
         # return events per second as float
         if len(self._ts) <= 1:
             return 0.0
         else:
             return (len(self._ts) - 1) / (self._ts[-1] - self._ts[0])
+
+    def event(self):
+        self.update()
+        return self.get_frequency()
 
 
 def _pdeco(callerName, fName, message):
