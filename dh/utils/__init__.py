@@ -1040,6 +1040,23 @@ def igo(*args, **kwargs):
     return glob.iglob(os.path.join(*args, **kwargs))
 
 
+def fmatch1(*args, **kwargs):
+    """
+    If the given filename pattern (specified by handing `*args` and `**kwargs`
+    to `os.path.join`) matches exactly one filename, return this filename.
+    Otherwise raise an error.
+    """
+    filename_pattern = os.path.join(*args, **kwargs)
+    filenames = tuple(glob.glob(filename_pattern))
+    filename_count = len(filenames)
+    if filename_count == 1:
+        return filenames[0]
+    elif filename_count == 0:
+        raise FileNotFoundError("No filename matches the pattern '{}'".format(filename_pattern))
+    else:
+        raise RuntimeError("Multiple ({}) filenames match the pattern '{}'".format(filename_count, filename_pattern))
+
+
 def fbak(filename):
     """
     Backs up the file given by `filename` by creating a copy in the same dir,
