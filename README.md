@@ -37,6 +37,14 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.14.4 (2022-03-06)
+-------------------
+
+* added function `dh.utils.fmatch1`
+* made `dh.utils.Timer` more flexible
+* improved `dh.utils.FrequencyEstimator`
+
+
 0.14.3 (2021-12-14)
 -------------------
 
