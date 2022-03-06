@@ -1360,15 +1360,8 @@ class Timer():
     def __init__(self, name=None, unit="ms"):
         self._name = name
         self._unit = unit
-        for u in self._units:
-            if u[0] == unit:
-                self._unit = unit
-                self._scale = 1.0 / u[1]
-                break
-        else:
-            unitNames = tuple(u[0] for u in self._units)
-            raise ValueError("Invalid unit name '{}', must be one of '{}'".format(unit, "', '".join(unitNames)))
-
+        assert any(u[0] == self._unit for u in self._units)
+        self.start()
 
     def __enter__(self):
         self.start()
@@ -1376,6 +1369,15 @@ class Timer():
 
     def __exit__(self, exType, exValue, exTraceback):
         self.stop()
+
+    def _getUnitScale(self, unit):
+        for u in self._units:
+            if u[0] == unit:
+                scale = 1.0 / u[1]
+                return scale
+        else:
+            unitNames = tuple(u[0] for u in self._units)
+            raise ValueError("Invalid unit name '{}', must be one of '{}'".format(unit, "', '".join(unitNames)))
 
     def reset(self):
         self._splits = []
@@ -1397,24 +1399,35 @@ class Timer():
             "t": t,
         })
 
-    def __str__(self):
+    def getTable(self, unit=None):
         """
-        Return a string of the measured results formatted as a table.
+        Return the measured results as a table (list of lists).
         """
+        if unit is None:
+            unit = self._unit
+        scale = self._getUnitScale(unit=unit)
 
         ts = [split["t"] for split in self._splits]
         dts = list(diff(ts))
-        #dts.append(0.0)
 
         rows = []
         for (splitFrom, splitTo, dt) in zip(self._splits[:-1], self._splits[1:], dts):
             rows.append((
                 ("" if self._name is None else "{}.".format(self._name)) + splitFrom["name"],
-                 ("" if self._name is None else "{}.".format(self._name)) + splitTo["name"],
-                dt * self._scale,
-                splitTo["t"] * self._scale,
+                ("" if self._name is None else "{}.".format(self._name)) + splitTo["name"],
+                dt * scale,
+                splitTo["t"] * scale,
             ))
-        return table(rows, headers=("From", "To", "Duration [{}]".format(self._unit), "Cumulative [{}]".format(self._unit)))
+        return table(rows, headers=("From", "To", "Duration [{}]".format(unit), "Cumulative [{}]".format(unit)))
+
+    def print(self, *args, **kwargs):
+        print(self.getTable(*args, **kwargs))
+
+    def __str__(self):
+        """
+        Return a string of the measured results formatted as a table.
+        """
+        return self.getTable()
 
 
 class FrequencyEstimator():
