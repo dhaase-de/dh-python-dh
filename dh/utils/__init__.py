@@ -25,6 +25,7 @@ import os.path
 import pprint
 import re
 import shutil
+import subprocess
 import time
 import warnings
 
@@ -1044,6 +1045,15 @@ def pbar(*args, **kwargs):
 ###
 #%% file-related
 ###
+
+
+def sh(*args):
+    """
+    Run shell command and return its outputs.
+    """
+    ps = subprocess.Popen(args, stdout=subprocess.PIPE)
+    (stdout, stderr) = ps.communicate()
+    return {"stdout": stdout, "stderr": stderr, "ps": ps}
 
 
 def absdir(path):
