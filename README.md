@@ -37,6 +37,13 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.14.5 (2022-10-28)
+-------------------
+
+* extended functionality of `dh.utils.dtstr` (backwards compatible)
+* added function `dh.utils.sh`
+
+
 0.14.4 (2022-03-06)
 -------------------
 
