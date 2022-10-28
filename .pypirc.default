@@ -1,14 +1,8 @@
 [distutils]
 index-servers =
     pypi
-    test
 
 [pypi]
-repository: https://pypi.python.org/pypi
-username: dhaase-de
-password: 
+repository: https://upload.pypi.org/legacy/
+username: __token__
 
-[test]
-repository: https://testpypi.python.org/pypi
-username: dhaase-de
-password: 
