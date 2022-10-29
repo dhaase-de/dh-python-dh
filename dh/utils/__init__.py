@@ -33,7 +33,6 @@ import dh.thirdparty.atomicwrites
 import dh.thirdparty.humanize
 import dh.thirdparty.tabulate
 import dh.thirdparty.tqdm
-import dh.thirdparty.transitions
 
 
 ###
@@ -1173,15 +1172,6 @@ class JsonConfigParser(configparser.ConfigParser):
 ###
 #%% general helpers
 ###
-
-
-class Fsm(dh.thirdparty.transitions.Machine):
-    """
-    Finite-state-machine class.
-
-    This class is an alias of :func:`dh.thirdparty.transitions.Machine()`.
-    """
-    pass
 
 
 def rupdate(d, u, deepcopy=True):
