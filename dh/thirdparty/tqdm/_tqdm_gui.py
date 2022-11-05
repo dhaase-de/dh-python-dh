@@ -3,7 +3,7 @@ GUI progressbar decorator for iterators.
 Includes a default (x)range iterator printing to stderr.
 
 Usage:
-  >>> from tqdm_gui import tgrange[, tqdm_gui]
+  >>> from tqdm import tgrange[, tqdm_gui]
   >>> for i in tgrange(10): #same as: for i in tqdm_gui(xrange(10))
   ...     ...
 """
@@ -11,11 +11,12 @@ Usage:
 # a result precise floating numbers (instead of truncated int)
 from __future__ import division, absolute_import
 # import compatibility functions and utilities
-import sys
+# import sys
 from time import time
 from ._utils import _range
 # to inherit from the tqdm class
-from ._tqdm import tqdm
+from ._tqdm import tqdm, TqdmExperimentalWarning
+from warnings import warn
 
 
 __author__ = {"github.com/": ["casperdcl", "lrq3000"]}
@@ -27,16 +28,7 @@ class tqdm_gui(tqdm):  # pragma: no cover
     Experimental GUI version of tqdm!
     """
 
-    @classmethod
-    def write(cls, s, file=None, end="\n"):
-        """
-        Print a message via tqdm_gui (just an alias for print)
-        """
-        if file is None:
-            file = sys.stdout
-        # TODO: print text on GUI?
-        file.write(s)
-        file.write(end)
+    # TODO: @classmethod: write() on GUI?
 
     def __init__(self, *args, **kwargs):
         import matplotlib as mpl
@@ -50,7 +42,7 @@ class tqdm_gui(tqdm):  # pragma: no cover
         if self.disable or not kwargs['gui']:
             return
 
-        self.fp.write('Warning: GUI is experimental/alpha\n')
+        warn('GUI is experimental/alpha', TqdmExperimentalWarning)
         self.mpl = mpl
         self.plt = plt
         self.sp = None
@@ -148,11 +140,9 @@ class tqdm_gui(tqdm):  # pragma: no cover
                 if delta_t >= mininterval:
                     elapsed = cur_t - start_t
                     # EMA (not just overall average)
-                    if smoothing and delta_t:
-                        avg_time = delta_t / delta_it \
-                            if avg_time is None \
-                            else smoothing * delta_t / delta_it + \
-                            (1 - smoothing) * avg_time
+                    if smoothing and delta_t and delta_it:
+                        rate = delta_t / delta_it
+                        avg_time = self.ema(rate, avg_time, smoothing)
 
                     # Inline due to multiple calls
                     total = self.total
@@ -216,11 +206,12 @@ class tqdm_gui(tqdm):  # pragma: no cover
                         elif mininterval and delta_t:
                             # EMA-weight miniters to converge
                             # towards the timeframe of mininterval
-                            miniters = smoothing * delta_it * mininterval \
-                                / delta_t + (1 - smoothing) * miniters
+                            rate = delta_it
+                            if mininterval and delta_t:
+                                rate *= mininterval / delta_t
+                            miniters = self.ema(rate, miniters, smoothing)
                         else:
-                            miniters = smoothing * delta_it + \
-                                (1 - smoothing) * miniters
+                            miniters = self.ema(delta_it, miniters, smoothing)
 
                     # Store old values for next call
                     last_print_n = n
@@ -250,11 +241,10 @@ class tqdm_gui(tqdm):  # pragma: no cover
             if delta_t >= self.mininterval:
                 elapsed = cur_t - self.start_t
                 # EMA (not just overall average)
-                if self.smoothing and delta_t:
-                    self.avg_time = delta_t / delta_it \
-                        if self.avg_time is None \
-                        else self.smoothing * delta_t / delta_it + \
-                        (1 - self.smoothing) * self.avg_time
+                if self.smoothing and delta_t and delta_it:
+                    rate = delta_t / delta_it
+                    self.avg_time = self.ema(
+                        rate, self.avg_time, self.smoothing)
 
                 # Inline due to multiple calls
                 total = self.total

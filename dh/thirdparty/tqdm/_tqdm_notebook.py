@@ -3,7 +3,7 @@ IPython/Jupyter Notebook progressbar decorator for iterators.
 Includes a default (x)range iterator printing to stderr.
 
 Usage:
-  >>> from tqdm_notebook import tnrange[, tqdm_notebook]
+  >>> from tqdm import tnrange[, tqdm_notebook]
   >>> for i in tnrange(10): #same as: for i in tqdm_notebook(xrange(10))
   ...     ...
 """
@@ -19,9 +19,15 @@ from ._tqdm import tqdm
 
 if True:  # pragma: no cover
     # import IPython/Jupyter base widget and display utilities
+    IPY = 0
+    IPYW = 0
     try:  # IPython 4.x
         import ipywidgets
         IPY = 4
+        try:
+            IPYW = int(ipywidgets.__version__.split('.')[0])
+        except AttributeError:  # __version__ may not exist in old versions
+            pass
     except ImportError:  # IPython 3.x / 2.x
         IPY = 32
         import warnings
@@ -80,7 +86,7 @@ class tqdm_notebook(tqdm):
     """
 
     @staticmethod
-    def status_printer(_, total=None, desc=None):
+    def status_printer(_, total=None, desc=None, ncols=None):
         """
         Manage the printing of an IPython/Jupyter Notebook progress bar widget.
         """
@@ -92,21 +98,44 @@ class tqdm_notebook(tqdm):
         # fp = file
 
         # Prepare IPython progress bar
-        if total:
-            pbar = IntProgress(min=0, max=total)
-        else:  # No total? Show info style bar with no progress tqdm status
-            pbar = IntProgress(min=0, max=1)
-            pbar.value = 1
-            pbar.bar_style = 'info'
+        try:
+            if total:
+                pbar = IntProgress(min=0, max=total)
+            else:  # No total? Show info style bar with no progress tqdm status
+                pbar = IntProgress(min=0, max=1)
+                pbar.value = 1
+                pbar.bar_style = 'info'
+        except NameError:
+            # #187 #451 #558
+            raise ImportError(
+                "IntProgress not found. Please update jupyter and ipywidgets."
+                " See https://ipywidgets.readthedocs.io/en/stable"
+                "/user_install.html")
+
         if desc:
             pbar.description = desc
+            if IPYW >= 7:
+                pbar.style.description_width = 'initial'
         # Prepare status text
         ptext = HTML()
         # Only way to place text to the right of the bar is to use a container
         container = HBox(children=[pbar, ptext])
+        # Prepare layout
+        if ncols is not None:  # use default style of ipywidgets
+            # ncols could be 100, "100px", "100%"
+            ncols = str(ncols)  # ipywidgets only accepts string
+            try:
+                if int(ncols) > 0:  # isnumeric and positive
+                    ncols += 'px'
+            except ValueError:
+                pass
+            pbar.layout.flex = '2'
+            container.layout.width = ncols
+            container.layout.display = 'inline-flex'
+            container.layout.flex_flow = 'row wrap'
         display(container)
 
-        def print_status(s='', close=False, bar_style=None):
+        def print_status(s='', close=False, bar_style=None, desc=None):
             # Note: contrary to native tqdm, s='' does NOT clear bar
             # goal is to keep all infos if error happens so user knows
             # at which iteration the loop failed.
@@ -116,12 +145,12 @@ class tqdm_notebook(tqdm):
 
             # Get current iteration value from format_meter string
             if total:
-                n = None
+                # n = None
                 if s:
                     npos = s.find(r'/|/')  # cause we use bar_format=r'{n}|...'
                     # Check that n can be found in s (else n > total)
                     if npos >= 0:
-                        n = int(s[:npos])  # get n from string
+                        n = float(s[:npos])  # get n from string
                         s = s[npos + 3:]  # remove from string
 
                         # Update bar with current n value
@@ -136,27 +165,25 @@ class tqdm_notebook(tqdm):
 
             # Change bar style
             if bar_style:
-                # Hack-ish way to avoid the danger bar_style being overriden by
+                # Hack-ish way to avoid the danger bar_style being overridden by
                 # success because the bar gets closed after the error...
                 if not (pbar.bar_style == 'danger' and bar_style == 'success'):
                     pbar.bar_style = bar_style
 
             # Special signal to close the bar
             if close and pbar.bar_style != 'danger':  # hide only if no error
-                container.visible = False
+                try:
+                    container.close()
+                except AttributeError:
+                    container.visible = False
+
+            # Update description
+            if desc:
+                pbar.description = desc
+                if IPYW >= 7:
+                    pbar.style.description_width = 'initial'
 
         return print_status
-
-    @classmethod
-    def write(cls, s, file=None, end="\n"):
-        """
-        Print a message via tqdm_notebook (just an alias for print)
-        """
-        if file is None:
-            file = sys.stdout
-        # Just an alias for print because overlap is impossible with ipywidgets
-        file.write(s)
-        file.write(end)
 
     def __init__(self, *args, **kwargs):
         # Setup default output
@@ -176,8 +203,15 @@ class tqdm_notebook(tqdm):
         # Delete first pbar generated from super() (wrong total and text)
         # DEPRECATED by using gui=True
         # self.sp('', close=True)
+
+        # Get bar width
+        self.ncols = '100%' if self.dynamic_ncols else kwargs.get("ncols", None)
+
         # Replace with IPython progress bar display (with correct total)
-        self.sp = self.status_printer(self.fp, self.total, self.desc)
+        unit_scale = 1 if self.unit_scale is True else self.unit_scale or 1
+        total = self.total * unit_scale if self.total else self.total
+        self.sp = self.status_printer(
+            self.fp, total, self.desc, self.ncols)
         self.desc = None  # trick to place description before the bar
 
         # Print initial bar state
@@ -190,7 +224,7 @@ class tqdm_notebook(tqdm):
                 # return super(tqdm...) will not catch exception
                 yield obj
         # NB: except ... [ as ...] breaks IPython async KeyboardInterrupt
-        except:
+        except:  # NOQA
             self.sp(bar_style='danger')
             raise
 
@@ -220,6 +254,16 @@ class tqdm_notebook(tqdm):
     def moveto(self, *args, **kwargs):
         # void -> avoid extraneous `\n` in IPython output cell
         return
+
+    def set_description(self, desc=None, **_):
+        """
+        Set/modify description of the progress bar.
+
+        Parameters
+        ----------
+        desc  : str, optional
+        """
+        self.sp(desc=desc)
 
 
 def tnrange(*args, **kwargs):

@@ -1,6 +1,7 @@
 # framework
 .idea/
 bak/
+docker/
 sandbox/
 tmp/
 venv-*/

@@ -3,15 +3,14 @@
 tqdm
 ====
 
-|PyPI-Status| |PyPI-Versions| |Conda-Forge-Status|
+|PyPI-Versions| |PyPI-Status| |Conda-Forge-Status| |Docker| |Snapcraft|
 
-|Build-Status| |Coverage-Status| |Branch-Coverage-Status| |Codacy-Grade|
+|Build-Status| |Coverage-Status| |Branch-Coverage-Status| |Codacy-Grade| |Libraries-Rank| |PyPI-Downloads|
 
-|DOI-URI| |LICENCE|
+|DOI| |LICENCE| |OpenHub-Status| |binder-demo| |notebook-demo| |awesome-python|
 
-
-``tqdm`` means "progress" in Arabic (taqadum, تقدّم)
-and an abbreviation for "I love you so much" in Spanish (te quiero demasiado).
+``tqdm`` means "progress" in Arabic (*taqadum*, تقدّم)
+and is an abbreviation for "I love you so much" in Spanish (*te quiero demasiado*).
 
 Instantly make your loops show a smart progress meter - just wrap any
 iterable with ``tqdm(iterable)``, and you're done!
@@ -34,8 +33,8 @@ It can also be executed as a module with pipes:
 
 .. code:: sh
 
-    $ seq 9999999 | tqdm --unit_scale | wc -l
-    10.0Mit [00:02, 3.58Mit/s]
+    $ seq 9999999 | tqdm --bytes | wc -l
+    75.2MB [00:00, 217MB/s]
     9999999
     $ 7z a -bd -r backup.7z docs/ | grep Compressing | \
         tqdm --total $(find docs/ -type f | wc -l) --unit files >> backup.log
@@ -43,7 +42,7 @@ It can also be executed as a module with pipes:
 
 Overhead is low -- about 60ns per iteration (80ns with ``tqdm_gui``), and is
 unit tested against performance regression.
-By comparison, the well established
+By comparison, the well-established
 `ProgressBar <https://github.com/niltonvolpato/python-progressbar>`__ has
 an 800ns/iter overhead.
 
@@ -55,7 +54,7 @@ for a negligible overhead in most cases.
 (Linux, Windows, Mac, FreeBSD, NetBSD, Solaris/SunOS),
 in any console or in a GUI, and is also friendly with IPython/Jupyter notebooks.
 
-``tqdm`` does not require any dependecies (not even ``curses``!), just
+``tqdm`` does not require any dependencies (not even ``curses``!), just
 Python and an environment supporting ``carriage return \r`` and
 ``line feed \n`` control characters.
 
@@ -72,16 +71,16 @@ Installation
 Latest PyPI stable release
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-|PyPI-Status|
+|PyPI-Status| |PyPI-Downloads| |Libraries-Dependents|
 
 .. code:: sh
 
     pip install tqdm
 
-Latest development release on github
+Latest development release on GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-|GitHub-Status| |GitHub-Stars| |GitHub-Forks|
+|GitHub-Status| |GitHub-Stars| |GitHub-Commits| |GitHub-Forks| |GitHub-Updated|
 
 Pull and install in the current directory:
 
@@ -98,12 +97,32 @@ Latest Conda release
 
     conda install -c conda-forge tqdm
 
+Latest Snapcraft release
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+|Snapcraft|
+
+.. code:: sh
+
+    snap install tqdm
+
+Latest Docker release
+~~~~~~~~~~~~~~~~~~~~~
+
+|Docker|
+
+.. code:: sh
+
+    docker pull tqdm/tqdm
+    docker run -i --rm tqdm/tqdm --help
 
 Changelog
 ---------
 
 The list of all changes is available either on GitHub's Releases:
-|GitHub-Status| or on crawlers such as
+|GitHub-Status|, on the
+`wiki <https://github.com/tqdm/tqdm/wiki/Releases>`__, on the
+`website <https://tqdm.github.io/releases/>`__, or on crawlers such as
 `allmychanges.com <https://allmychanges.com/p/python/tqdm/>`_.
 
 
@@ -120,8 +139,12 @@ Wrap ``tqdm()`` around any iterable:
 
 .. code:: python
 
+    from tqdm import tqdm
+    import time
+
     text = ""
     for char in tqdm(["a", "b", "c", "d"]):
+        time.sleep(0.25)
         text = text + char
 
 ``trange(i)`` is a special optimised instance of ``tqdm(range(i))``:
@@ -129,7 +152,7 @@ Wrap ``tqdm()`` around any iterable:
 .. code:: python
 
     for i in trange(100):
-        pass
+        time.sleep(0.01)
 
 Instantiation outside of the loop allows for manual control over ``tqdm()``:
 
@@ -137,6 +160,7 @@ Instantiation outside of the loop allows for manual control over ``tqdm()``:
 
     pbar = tqdm(["a", "b", "c", "d"])
     for char in pbar:
+        time.sleep(0.25)
         pbar.set_description("Processing %s" % char)
 
 Manual
@@ -148,6 +172,7 @@ Manual control on ``tqdm()`` updates by using a ``with`` statement:
 
     with tqdm(total=100) as pbar:
         for i in range(10):
+            time.sleep(0.1)
             pbar.update(10)
 
 If the optional variable ``total`` (or an iterable with ``len()``) is
@@ -160,6 +185,7 @@ but in this case don't forget to ``del`` or ``close()`` at the end:
 
     pbar = tqdm(total=100)
     for i in range(10):
+        time.sleep(0.1)
         pbar.update(10)
     pbar.close()
 
@@ -170,19 +196,19 @@ Perhaps the most wonderful use of ``tqdm`` is in a script or on the command
 line. Simply inserting ``tqdm`` (or ``python -m tqdm``) between pipes will pass
 through all ``stdin`` to ``stdout`` while printing progress to ``stderr``.
 
-The example below demonstrated counting the number of lines in all python files
+The example below demonstrated counting the number of lines in all Python files
 in the current directory, with timing information included.
 
 .. code:: sh
 
-    $ time find . -name '*.py' -exec cat \{} \; | wc -l
+    $ time find . -name '*.py' -type f -exec cat \{} \; | wc -l
     857365
 
     real    0m3.458s
     user    0m0.274s
     sys     0m3.325s
 
-    $ time find . -name '*.py' -exec cat \{} \; | tqdm | wc -l
+    $ time find . -name '*.py' -type f -exec cat \{} \; | tqdm | wc -l
     857366it [00:03, 246471.31it/s]
     857365
 
@@ -194,7 +220,7 @@ Note that the usual arguments for ``tqdm`` can also be specified.
 
 .. code:: sh
 
-    $ find . -name '*.py' -exec cat \{} \; |
+    $ find . -name '*.py' -type f -exec cat \{} \; |
         tqdm --unit loc --unit_scale --total 857366 >> /dev/null
     100%|███████████████████████████████████| 857K/857K [00:04<00:00, 246Kloc/s]
 
@@ -210,20 +236,36 @@ Backing up a large directory?
 FAQ and Known Issues
 --------------------
 
+|GitHub-Issues|
+
 The most common issues relate to excessive output on multiple lines, instead
 of a neat one-line progress bar.
 
 - Consoles in general: require support for carriage return (``CR``, ``\r``).
 - Nested progress bars:
-    * Consoles in general: require support for moving cursors up to the
-      previous line. For example,
-      `IDLE <https://github.com/tqdm/tqdm/issues/191#issuecomment-230168030>`__,
-      `ConEmu <https://github.com/tqdm/tqdm/issues/254>`__ and
-      `PyCharm <https://github.com/tqdm/tqdm/issues/203>`__ (also
-      `here <https://github.com/tqdm/tqdm/issues/208>`__ and
-      `here <https://github.com/tqdm/tqdm/issues/307>`__)
-      lack full support.
-    * Windows: additionally may require the python module ``colorama``.
+
+  * Consoles in general: require support for moving cursors up to the
+    previous line. For example,
+    `IDLE <https://github.com/tqdm/tqdm/issues/191#issuecomment-230168030>`__,
+    `ConEmu <https://github.com/tqdm/tqdm/issues/254>`__ and
+    `PyCharm <https://github.com/tqdm/tqdm/issues/203>`__ (also
+    `here <https://github.com/tqdm/tqdm/issues/208>`__,
+    `here <https://github.com/tqdm/tqdm/issues/307>`__, and
+    `here <https://github.com/tqdm/tqdm/issues/454#issuecomment-335416815>`__)
+    lack full support.
+  * Windows: additionally may require the Python module ``colorama``
+    to ensure nested bars stay within their respective lines.
+
+- Unicode:
+
+  * Environments which report that they support unicode will have solid smooth
+    progressbars. The fallback is an ```ascii``-only bar.
+  * Windows consoles often only partially support unicode and thus
+    `often require explicit ascii=True <https://github.com/tqdm/tqdm/issues/454#issuecomment-335416815>`__
+    (also `here <https://github.com/tqdm/tqdm/issues/499>`__). This is due to
+    either normal-width unicode characters being incorrectly displayed as
+    "wide", or some unicode characters not rendering.
+
 - Wrapping enumerated iterables: use ``enumerate(tqdm(...))`` instead of
   ``tqdm(enumerate(...))``. The same applies to ``numpy.ndenumerate``.
   This is because enumerate functions tend to hide the length of iterables.
@@ -231,9 +273,11 @@ of a neat one-line progress bar.
 - Wrapping zipped iterables has similar issues due to internal optimisations.
   ``tqdm(zip(a, b))`` should be replaced with ``zip(tqdm(a), b)`` or even
   ``zip(tqdm(a), tqdm(b))``.
+- `Hanging pipes in python2 <https://github.com/tqdm/tqdm/issues/359>`__:
+  when using ``tqdm`` on the CLI, you may need to use python 3.5+ for correct
+  buffering.
 
-If you come across any other difficulties, browse/open issues
-`here <https://github.com/tqdm/tqdm/issues?q=is%3Aissue>`__.
+If you come across any other difficulties, browse and file |GitHub-Issues|.
 
 Documentation
 -------------
@@ -242,7 +286,7 @@ Documentation
 
 .. code:: python
 
-    class tqdm(object):
+    class tqdm():
       """
       Decorate an iterable object, returning an iterator which acts exactly
       like the original iterable, but prints a dynamically updating
@@ -254,7 +298,7 @@ Documentation
                    maxinterval=10.0, miniters=None, ascii=None, disable=False,
                    unit='it', unit_scale=False, dynamic_ncols=False,
                    smoothing=0.3, bar_format=None, initial=0, position=None,
-                   postfix=None):
+                   postfix=None, unit_divisor=1000):
 
 Parameters
 ~~~~~~~~~~
@@ -265,9 +309,10 @@ Parameters
 * desc  : str, optional  
     Prefix for the progressbar.
 * total  : int, optional  
-    The number of expected iterations. If (default: None),
-    len(iterable) is used if possible. As a last resort, only basic
-    progress statistics are displayed (no ETA, no progressbar).
+    The number of expected iterations. If unspecified,
+    len(iterable) is used if possible. If float("inf") or as a last
+    resort, only basic progress statistics are displayed
+    (no ETA, no progressbar).
     If ``gui`` is True and this parameter needs subsequent updating,
     specify an initial arbitrary large positive integer,
     e.g. int(9e9).
@@ -277,7 +322,7 @@ Parameters
 * file  : ``io.TextIOWrapper`` or ``io.StringIO``, optional  
     Specifies where to output the progress messages
     (default: sys.stderr). Uses ``file.write(str)`` and ``file.flush()``
-    methods.
+    methods.  For encoding, see ``write_bytes``.
 * ncols  : int, optional  
     The width of the entire output message. If specified,
     dynamically resizes the progressbar to stay within this bound.
@@ -285,9 +330,9 @@ Parameters
     fallback is a meter width of 10 and no limit for the counter and
     statistics. If 0, will not print any meter (only stats).
 * mininterval  : float, optional  
-    Minimum progress display update interval, in seconds [default: 0.1].
+    Minimum progress display update interval [default: 0.1] seconds.
 * maxinterval  : float, optional  
-    Maximum progress display update interval, in seconds [default: 10].
+    Maximum progress display update interval [default: 10] seconds.
     Automatically adjusts ``miniters`` to correspond to ``mininterval``
     after long display update lag. Only works if ``dynamic_miniters``
     or monitor thread is enabled.
@@ -299,20 +344,21 @@ Parameters
     Tweak this and ``mininterval`` to get very efficient loops.
     If your progress is erratic with both fast and slow iterations
     (network, skipping items, etc) you should set miniters=1.
-* ascii  : bool, optional  
+* ascii  : bool or str, optional  
     If unspecified or False, use unicode (smooth blocks) to fill
-    the meter. The fallback is to use ASCII characters ``1-9 #``.
+    the meter. The fallback is to use ASCII characters " 123456789#".
 * disable  : bool, optional  
     Whether to disable the entire progressbar wrapper
-    [default: False].
+    [default: False]. If set to None, disable on non-TTY.
 * unit  : str, optional  
     String that will be used to define the unit of each iteration
     [default: it].
-* unit_scale  : bool, optional  
-    If set, the number of iterations will be reduced/scaled
+* unit_scale  : bool or int or float, optional  
+    If 1 or True, the number of iterations will be reduced/scaled
     automatically and a metric prefix following the
     International System of Units standard will be added
-    (kilo, mega, etc.) [default: False].
+    (kilo, mega, etc.) [default: False]. If any other non-zero
+    number, will scale ``total`` and ``n``.
 * dynamic_ncols  : bool, optional  
     If set, constantly alters ``ncols`` to the environment (allowing
     for window resizes) [default: False].
@@ -322,11 +368,16 @@ Parameters
     (current/instantaneous speed) [default: 0.3].
 * bar_format  : str, optional  
     Specify a custom bar string formatting. May impact performance.
-    If unspecified, will use '{l_bar}{bar}{r_bar}', where l_bar is
-    '{desc}{percentage:3.0f}%|' and r_bar is
-    '| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]'
-    Possible vars: bar, n, n_fmt, total, total_fmt, percentage,
-    rate, rate_fmt, elapsed, remaining, l_bar, r_bar, desc.
+    [default: '{l_bar}{bar}{r_bar}'], where
+    l_bar='{desc}: {percentage:3.0f}%|' and
+    r_bar='| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, '
+    '{rate_fmt}{postfix}]'
+    Possible vars: l_bar, bar, r_bar, n, n_fmt, total, total_fmt,
+    percentage, rate, rate_fmt, rate_noinv, rate_noinv_fmt,
+    rate_inv, rate_inv_fmt, elapsed, elapsed_s, remaining,
+    remaining_s, desc, postfix, unit.
+    Note that a trailing ": " is automatically removed after {desc}
+    if the latter is empty.
 * initial  : int, optional  
     The initial counter value. Useful when restarting a progress
     bar [default: 0].
@@ -334,8 +385,15 @@ Parameters
     Specify the line offset to print this bar (starting from 0)
     Automatic if unspecified.
     Useful to manage multiple bars at once (eg, from threads).
-* postfix  : dict, optional  
+* postfix  : dict or ``*``, optional  
     Specify additional stats to display at the end of the bar.
+    Calls ``set_postfix(**postfix)`` if possible (dict).
+* unit_divisor  : float, optional  
+    [default: 1000], ignored unless ``unit_scale`` is True.
+* write_bytes  : bool, optional  
+    If (default: None) and ``file`` is unspecified,
+    bytes will be written in Python 2. If ``True`` will also write
+    bytes. In all other cases will default to unicode.
 
 Extra CLI Options
 ~~~~~~~~~~~~~~~~~
@@ -347,15 +405,21 @@ Extra CLI Options
     String buffer size in bytes [default: 256]
     used when ``delim`` is specified.
 * bytes  : bool, optional  
-    If true, will count bytes and ignore ``delim``.
+    If true, will count bytes, ignore ``delim``, and default
+    ``unit_scale`` to True, ``unit_divisor`` to 1024, and ``unit`` to 'B'.
+* manpath  : str, optional  
+    Directory in which to install tqdm man pages.
+* log  : str, optional  
+    CRITICAL|FATAL|ERROR|WARN(ING)|[default: 'INFO']|DEBUG|NOTSET.
 
 Returns
 ~~~~~~~
 
-* out  : decorated iterator.
+* out  : decorated iterator.  
 
 .. code:: python
 
+    class tqdm():
       def update(self, n=1):
           """
           Manually update the progress bar, useful for streams
@@ -372,40 +436,78 @@ Returns
 
           Parameters
           ----------
-          n  : int
+          n  : int, optional
               Increment to add to the internal counter of iterations
               [default: 1].
           """
 
       def close(self):
-          """
-          Cleanup and (if leave=False) close the progressbar.
-          """
+          """Cleanup and (if leave=False) close the progressbar."""
 
-      def clear(self):
-          """
-          Clear current bar display
-          """
+      def clear(self, nomove=False):
+          """Clear current bar display."""
 
       def refresh(self):
+          """Force refresh the display of this bar."""
+
+      def unpause(self):
+          """Restart tqdm timer from last print time."""
+
+      def reset(self, total=None):
           """
-          Force refresh the display of this bar
+          Resets to 0 iterations for repeated use.
+
+          Consider combining with ``leave=True``.
+
+          Parameters
+          ----------
+          total  : int, optional. Total to use for the new bar.
           """
 
-      def write(cls, s, file=sys.stdout, end="\n"):
-          """
-          Print a message via tqdm (without overlap with bars)
-          """
-
-      def set_description(self, desc=None):
+      def set_description(self, desc=None, refresh=True):
           """
           Set/modify description of the progress bar.
+
+          Parameters
+          ----------
+          desc  : str, optional
+          refresh  : bool, optional
+              Forces refresh [default: True].
           """
 
-      def set_postfix(self, **kwargs):
+      def set_postfix(self, ordered_dict=None, refresh=True, **kwargs):
           """
           Set/modify postfix (additional stats)
           with automatic formatting based on datatype.
+
+          Parameters
+          ----------
+          ordered_dict  : dict or OrderedDict, optional
+          refresh  : bool, optional
+              Forces refresh [default: True].
+          kwargs  : dict, optional
+          """
+
+      @classmethod
+      def write(cls, s, file=sys.stdout, end="\n"):
+          """Print a message via tqdm (without overlap with bars)."""
+
+      @property
+      def format_dict(self):
+          """Public API for read-only member access."""
+
+      def display(self, msg=None, pos=None):
+          """
+          Use ``self.sp`` to display ``msg`` in the specified ``pos``.
+
+          Consider overloading this function when inheriting to use e.g.:
+          ``self.some_frontend(**self.format_dict)`` instead of ``self.sp``.
+
+          Parameters
+          ----------
+          msg  : str, optional. What to display (default: ``repr(self)``).
+          pos  : int, optional. Position to ``moveto``
+            (default: ``abs(self.pos)``).
           """
 
     def trange(*args, **kwargs):
@@ -415,24 +517,16 @@ Returns
         """
 
     class tqdm_gui(tqdm):
-        """
-        Experimental GUI version of tqdm!
-        """
+        """Experimental GUI version"""
 
     def tgrange(*args, **kwargs):
-        """
-        Experimental GUI version of trange!
-        """
+        """Experimental GUI version of trange"""
 
     class tqdm_notebook(tqdm):
-        """
-        Experimental IPython/Jupyter Notebook widget using tqdm!
-        """
+        """Experimental IPython/Jupyter Notebook widget"""
 
     def tnrange(*args, **kwargs):
-        """
-        Experimental IPython/Jupyter Notebook widget using tqdm!
-        """
+        """Experimental IPython/Jupyter Notebook widget version of trange"""
 
 
 Examples and Advanced Usage
@@ -440,11 +534,15 @@ Examples and Advanced Usage
 
 - See the `examples <https://github.com/tqdm/tqdm/tree/master/examples>`__
   folder;
-- import the module and run ``help()``, or
-- consult the `wiki <https://github.com/tqdm/tqdm/wiki>`__.
-    - this has an
+- import the module and run ``help()``;
+- consult the `wiki <https://github.com/tqdm/tqdm/wiki>`__;
+
+    * this has an
       `excellent article <https://github.com/tqdm/tqdm/wiki/How-to-make-a-great-Progress-Bar>`__
-      on how to make a **great** progressbar.
+      on how to make a **great** progressbar;
+
+- run the |notebook-demo| or |binder-demo|, or
+- check out the `slides from PyData London <https://tqdm.github.io/PyData2019/slides.html>`__.
 
 Description and additional stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -458,14 +556,71 @@ with the ``desc`` and ``postfix`` arguments:
     from random import random, randint
     from time import sleep
 
-    t = trange(100)
-    for i in t:
-        # Description will be displayed on the left
-        t.set_description('GEN %i' % i)
-        # Postfix will be displayed on the right, and will format automatically 
-        # based on argument's datatype
-        t.set_postfix(loss=random(), gen=randint(1,999), str='h', lst=[1, 2])
-        sleep(0.1)
+    with trange(10) as t:
+        for i in t:
+            # Description will be displayed on the left
+            t.set_description('GEN %i' % i)
+            # Postfix will be displayed on the right,
+            # formatted automatically based on argument's datatype
+            t.set_postfix(loss=random(), gen=randint(1,999), str='h',
+                          lst=[1, 2])
+            sleep(0.1)
+
+    with tqdm(total=10, bar_format="{postfix[0]} {postfix[1][value]:>8.2g}",
+              postfix=["Batch", dict(value=0)]) as t:
+        for i in range(10):
+            sleep(0.1)
+            t.postfix[1]["value"] = i / 2
+            t.update()
+
+Points to remember when using ``{postfix[...]}`` in the ``bar_format`` string:
+
+- ``postfix`` also needs to be passed as an initial argument in a compatible
+  format, and
+- ``postfix`` will be auto-converted to a string if it is a ``dict``-like
+  object. To prevent this behaviour, insert an extra item into the dictionary
+  where the key is not a string.
+
+Additional ``bar_format`` parameters may also be defined by overriding
+``format_dict``, and the bar itself may be modified using ``ascii``:
+
+.. code:: python
+
+    from tqdm import tqdm
+    class TqdmExtraFormat(tqdm):
+        """Provides a `total_time` format parameter"""
+        @property
+        def format_dict(self):
+            d = super(TqdmExtraFormat, self).format_dict
+            total_time = d["elapsed"] * (d["total"] or 0) / max(d["n"], 1)
+            d.update(total_time=self.format_interval(total_time) + " in total")
+            return d
+
+    for i in TqdmExtraFormat(
+          range(10), ascii=" .oO0",
+          bar_format="{total_time}: {percentage:.0f}%|{bar}{r_bar}"):
+        pass
+
+.. code::
+
+    00:01 in total: 40%|000o     | 4/10 [00:00<00:00,  9.96it/s]
+
+Note that ``{bar}`` also supports a format specifier ``[width][type]``.
+
+- ``width``
+
+  * unspecified (default): automatic to fill ``ncols``
+  * ``int >= 0``: fixed width overriding ``ncols`` logic
+  * ``int < 0``: subtract from the automatic default
+
+- ``type``
+
+  * ``a``: ascii (``ascii=True`` override)
+  * ``u``: unicode (``ascii=False`` override)
+  * ``b``: blank (``ascii="  "`` override)
+
+This means a fixed bar with right-justified text may be created by using:
+``bar_format="{l_bar}{bar:10}|{bar:-10b}right-justified"``
 
 Nested progress bars
 ~~~~~~~~~~~~~~~~~~~~
@@ -477,17 +632,40 @@ Nested progress bars
     from tqdm import trange
     from time import sleep
 
-    for i in trange(10, desc='1st loop'):
-        for j in trange(5, desc='2nd loop', leave=False):
-            for k in trange(100, desc='3nd loop'):
+    for i in trange(4, desc='1st loop'):
+        for j in trange(5, desc='2nd loop'):
+            for k in trange(50, desc='3nd loop', leave=False):
                 sleep(0.01)
 
 On Windows `colorama <https://github.com/tartley/colorama>`__ will be used if
-available to produce a beautiful nested display.
+available to keep nested bars on their respective lines.
 
 For manual control over positioning (e.g. for multi-threaded use),
 you may specify ``position=n`` where ``n=0`` for the outermost bar,
-``n=1`` for the next, and so on.
+``n=1`` for the next, and so on:
+
+.. code:: python
+
+    from time import sleep
+    from tqdm import trange, tqdm
+    from multiprocessing import Pool, freeze_support, RLock
+
+    L = list(range(9))
+
+    def progresser(n):
+        interval = 0.001 / (n + 2)
+        total = 5000
+        text = "#{}, est. {:<04.2}s".format(n, interval * total)
+        for i in trange(total, desc=text, position=n):
+            sleep(interval)
+
+    if __name__ == '__main__':
+        freeze_support()  # for Windows support
+        p = Pool(len(L),
+                 # again, for Windows support
+                 initializer=tqdm.set_lock, initargs=(RLock(),))
+        p.map(progresser, L)
+        print("\n" * (len(L) - 2))
 
 Hooks and callbacks
 ~~~~~~~~~~~~~~~~~~~
@@ -509,41 +687,30 @@ Here's an example with ``urllib``:
     import urllib, os
     from tqdm import tqdm
 
-    def my_hook(t):
-      """
-      Wraps tqdm instance. Don't forget to close() or __exit__()
-      the tqdm instance once you're done with it (easiest using `with` syntax).
-
-      Example
-      -------
-
-      >>> with tqdm(...) as t:
-      ...     reporthook = my_hook(t)
-      ...     urllib.urlretrieve(..., reporthook=reporthook)
-
-      """
-      last_b = [0]
-
-      def inner(b=1, bsize=1, tsize=None):
-        """
-        b  : int, optional
-            Number of blocks just transferred [default: 1].
-        bsize  : int, optional
-            Size of each block (in tqdm units) [default: 1].
-        tsize  : int, optional
-            Total size (in tqdm units). If [default: None] remains unchanged.
-        """
-        if tsize is not None:
-            t.total = tsize
-        t.update((b - last_b[0]) * bsize)
-        last_b[0] = b
-      return inner
+    class TqdmUpTo(tqdm):
+        """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
+        def update_to(self, b=1, bsize=1, tsize=None):
+            """
+            b  : int, optional
+                Number of blocks transferred so far [default: 1].
+            bsize  : int, optional
+                Size of each block (in tqdm units) [default: 1].
+            tsize  : int, optional
+                Total size (in tqdm units). If [default: None] remains unchanged.
+            """
+            if tsize is not None:
+                self.total = tsize
+            self.update(b * bsize - self.n)  # will also set self.n = b * bsize
 
     eg_link = "https://caspersci.uk.to/matryoshka.zip"
-    with tqdm(unit='B', unit_scale=True, miniters=1,
-              desc=eg_link.split('/')[-1]) as t:  # all optional kwargs
+    with TqdmUpTo(unit='B', unit_scale=True, miniters=1,
+                  desc=eg_link.split('/')[-1]) as t:  # all optional kwargs
         urllib.urlretrieve(eg_link, filename=os.devnull,
-                           reporthook=my_hook(t), data=None)
+                           reporthook=t.update_to, data=None)
+
+Inspired by `twine#242 <https://github.com/pypa/twine/pull/242>`__.
+Functional alternative in
+`examples/tqdm_wget.py <https://github.com/tqdm/tqdm/blob/master/examples/tqdm_wget.py>`__.
 
 It is recommend to use ``miniters=1`` whenever there is potentially
 large differences in iteration speed (e.g. downloading a file over
@@ -588,21 +755,103 @@ IPython/Jupyter is supported via the ``tqdm_notebook`` submodule:
     from tqdm import tnrange, tqdm_notebook
     from time import sleep
 
-    for i in tnrange(10, desc='1st loop'):
-        for j in tqdm_notebook(xrange(100), desc='2nd loop'):
+    for i in tnrange(3, desc='1st loop'):
+        for j in tqdm_notebook(range(100), desc='2nd loop'):
             sleep(0.01)
 
 In addition to ``tqdm`` features, the submodule provides a native Jupyter
 widget (compatible with IPython v1-v4 and Jupyter), fully working nested bars
-and color hints (blue: normal, green: completed, red: error/interrupt,
+and colour hints (blue: normal, green: completed, red: error/interrupt,
 light blue: no ETA); as demonstrated below.
 
 |Screenshot-Jupyter1|
 |Screenshot-Jupyter2|
 |Screenshot-Jupyter3|
 
+It is also possible to let ``tqdm`` automatically choose between
+console or notebook versions by using the ``autonotebook`` submodule:
+
+.. code:: python
+
+    from tqdm.autonotebook import tqdm
+    tqdm.pandas()
+
+Note that this will issue a ``TqdmExperimentalWarning`` if run in a notebook
+since it is not meant to be possible to distinguish between ``jupyter notebook``
+and ``jupyter console``. Use ``auto`` instead of ``autonotebook`` to suppress
+this warning.
+
+Custom Integration
+~~~~~~~~~~~~~~~~~~
+
+``tqdm`` may be inherited from to create custom callbacks (as with the
+``TqdmUpTo`` example `above <#hooks-and-callbacks>`__) or for custom frontends
+(e.g. GUIs such as notebook or plotting packages). In the latter case:
+
+1. ``def __init__()`` to call ``super().__init__(..., gui=True)`` to disable
+   terminal ``status_printer`` creation.
+2. Redefine: ``close()``, ``clear()``, ``display()``.
+
+Consider overloading ``display()`` to use e.g.
+``self.frontend(**self.format_dict)`` instead of ``self.sp(repr(self))``.
+
+Dynamic Monitor/Meter
+~~~~~~~~~~~~~~~~~~~~~
+
+You can use a ``tqdm`` as a meter which is not monotonically increasing.
+This could be because ``n`` decreases (e.g. a CPU usage monitor) or ``total``
+changes.
+
+One example would be recursively searching for files. The ``total`` is the
+number of objects found so far, while ``n`` is the number of those objects which
+are files (rather than folders):
+
+.. code:: python
+
+    from tqdm import tqdm
+    import os.path
+
+    def find_files_recursively(path, show_progress=True):
+        files = []
+        # total=1 assumes `path` is a file
+        t = tqdm(total=1, unit="file", disable=not show_progress)
+        if not os.path.exists(path):
+            raise IOError("Cannot find:" + path)
+
+        def append_found_file(f):
+            files.append(f)
+            t.update()
+
+        def list_found_dir(path):
+            """returns os.listdir(path) assuming os.path.isdir(path)"""
+            listing = os.listdir(path)
+            # subtract 1 since a "file" we found was actually this directory
+            t.total += len(listing) - 1
+            # fancy way to give info without forcing a refresh
+            t.set_postfix(dir=path[-10:], refresh=False)
+            t.update(0)  # may trigger a refresh
+            return listing
+
+        def recursively_search(path):
+            if os.path.isdir(path):
+                for f in list_found_dir(path):
+                    recursively_search(os.path.join(path, f))
+            else:
+                append_found_file(path)
+
+        recursively_search(path)
+        t.set_postfix(dir=path)
+        t.close()
+        return files
+
+Using ``update(0)`` is a handy way to let ``tqdm`` decide when to trigger a
+display refresh to avoid console spamming.
+
 Writing messages
 ~~~~~~~~~~~~~~~~
+
+This is a work in progress (see
+`#737 <https://github.com/tqdm/tqdm/issues/737>`__).
 
 Since ``tqdm`` uses a simple printing mechanism to display progress bars,
 you should not write any message in the terminal using ``print()`` while
@@ -644,10 +893,8 @@ A reusable canonical example is given below:
 .. code:: python
 
     from time import sleep
-
     import contextlib
     import sys
-
     from tqdm import tqdm
 
     class DummyTqdmFile(object):
@@ -661,68 +908,73 @@ A reusable canonical example is given below:
             if len(x.rstrip()) > 0:
                 tqdm.write(x, file=self.file)
 
+        def flush(self):
+            return getattr(self.file, "flush", lambda: None)()
+
     @contextlib.contextmanager
-    def stdout_redirect_to_tqdm():
-        save_stdout = sys.stdout
+    def std_out_err_redirect_tqdm():
+        orig_out_err = sys.stdout, sys.stderr
         try:
-            sys.stdout = DummyTqdmFile(sys.stdout)
-            yield save_stdout
+            sys.stdout, sys.stderr = map(DummyTqdmFile, orig_out_err)
+            yield orig_out_err[0]
         # Relay exceptions
         except Exception as exc:
             raise exc
-        # Always restore sys.stdout if necessary
+        # Always restore sys.stdout/err if necessary
         finally:
-            sys.stdout = save_stdout
+            sys.stdout, sys.stderr = orig_out_err
 
-    def blabla():
-        print("Foo blabla")
+    def some_fun(i):
+        print("Fee, fi, fo,".split()[i])
 
     # Redirect stdout to tqdm.write() (don't forget the `as save_stdout`)
-    with stdout_redirect_to_tqdm() as save_stdout:
-        # tqdm call need to specify sys.stdout, not sys.stderr (default)
+    with std_out_err_redirect_tqdm() as orig_stdout:
+        # tqdm needs the original stdout
         # and dynamic_ncols=True to autodetect console width
-        for _ in tqdm(range(3), file=save_stdout, dynamic_ncols=True):
-            blabla()
+        for i in tqdm(range(3), file=orig_stdout, dynamic_ncols=True):
             sleep(.5)
+            some_fun(i)
 
     # After the `with`, printing is restored
-    print('Done!')
+    print("Done!")
 
 Monitoring thread, intervals and miniters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``tqdm`` implements a few tricks to to increase efficiency and reduce overhead.
 
-1. Avoid unnecessary frequent bar refreshing: ``mininterval`` defines how long
-   to wait between each refresh. ``tqdm`` always gets updated in the background,
-   but it will diplay only every ``mininterval``.
-2. Reduce number of calls to check system clock/time.
-3. ``mininterval`` is more intuitive to configure than ``miniters``.
-   A clever adjustment system ``dynamic_miniters`` will automatically adjust
-   ``miniters`` to the amount of iterations that fit into time ``mininterval``.
-   Essentially, ``tqdm`` will check if it's time to print without actually
-   checking time. This behavior can be still be bypassed by manually setting
-   ``miniters``.
+- Avoid unnecessary frequent bar refreshing: ``mininterval`` defines how long
+  to wait between each refresh. ``tqdm`` always gets updated in the background,
+  but it will display only every ``mininterval``.
+- Reduce number of calls to check system clock/time.
+- ``mininterval`` is more intuitive to configure than ``miniters``.
+  A clever adjustment system ``dynamic_miniters`` will automatically adjust
+  ``miniters`` to the amount of iterations that fit into time ``mininterval``.
+  Essentially, ``tqdm`` will check if it's time to print without actually
+  checking time. This behaviour can be still be bypassed by manually setting
+  ``miniters``.
 
 However, consider a case with a combination of fast and slow iterations.
 After a few fast iterations, ``dynamic_miniters`` will set ``miniters`` to a
-large number. When interation rate subsequently slows, ``miniters`` will
+large number. When iteration rate subsequently slows, ``miniters`` will
 remain large and thus reduce display update frequency. To address this:
 
-4. ``maxinterval`` defines the maximum time between display refreshes.
-   A concurrent monitoring thread checks for overdue updates and forces one
-   where necessary.
+- ``maxinterval`` defines the maximum time between display refreshes.
+  A concurrent monitoring thread checks for overdue updates and forces one
+  where necessary.
 
 The monitoring thread should not have a noticeable overhead, and guarantees
 updates at least every 10 seconds by default.
 This value can be directly changed by setting the ``monitor_interval`` of
 any ``tqdm`` instance (i.e. ``t = tqdm.tqdm(...); t.monitor_interval = 2``).
 The monitor thread may be disabled application-wide by setting
-``tqdm.tqdm.monitor_interval = 0`` before instantiatiation of any ``tqdm`` bar.
+``tqdm.tqdm.monitor_interval = 0`` before instantiation of any ``tqdm`` bar.
 
 
 Contributions
 -------------
+
+|GitHub-Commits| |GitHub-Issues| |GitHub-PRs| |OpenHub-Status| |GitHub-Contributions|
 
 All source code is hosted on `GitHub <https://github.com/tqdm/tqdm>`__.
 Contributions are welcome.
@@ -731,61 +983,118 @@ See the
 `CONTRIBUTING <https://raw.githubusercontent.com/tqdm/tqdm/master/CONTRIBUTING.md>`__
 file for more information.
 
+Developers who have made significant contributions, ranked by *LoC*
+(surviving lines of code,
+`git fame <https://github.com/casperdcl/git-fame>`__ ``-wMC``),
+are:
+
+==================== ================================================== ==== ================================
+Name                 ID                                                 LoC  Notes
+==================== ================================================== ==== ================================
+Casper da Costa-Luis `casperdcl <https://github.com/casperdcl>`__       ~3/4 primary maintainer |Gift-Casper|
+Stephen Larroque     `lrq3000 <https://github.com/lrq3000>`__           ~10% team member
+Kyle Altendorf       `altendky <https://github.com/altendky>`__         ~2%
+Guangshuo Chen       `chengs <https://github.com/chengs>`__             ~1%
+Matthew Stevens      `mjstevens777 <https://github.com/mjstevens777>`__ ~1%
+Noam Yorav-Raphael   `noamraph <https://github.com/noamraph>`__         ~1%  original author
+Hadrien Mary         `hadim <https://github.com/hadim>`__               ~1%  team member
+Mikhail Korobov      `kmike <https://github.com/kmike>`__               ~1%  team member
+==================== ================================================== ==== ================================
+
+|sourcerer-0| |sourcerer-1| |sourcerer-2| |sourcerer-3| |sourcerer-4| |sourcerer-5| |sourcerer-7|
+
+Ports to Other Languages
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+A list is available on
+`this wiki page <https://github.com/tqdm/tqdm/wiki/tqdm-ports>`__.
+
 
 LICENCE
 -------
 
 Open Source (OSI approved): |LICENCE|
 
-Citation information: |DOI-URI|
-
-
-Authors
--------
-
-Ranked by contributions.
-
--  Casper da Costa-Luis (casperdcl)
--  Stephen Larroque (lrq3000)
--  Hadrien Mary (hadim)
--  Noam Yorav-Raphael (noamraph)*
--  Ivan Ivanov (obiwanus)
--  Mikhail Korobov (kmike)
-
-`*` Original author
+Citation information: |DOI| (publication), |DOI-code| (code)
 
 |README-Hits| (Since 19 May 2016)
 
 .. |Logo| image:: https://raw.githubusercontent.com/tqdm/tqdm/master/images/logo.gif
 .. |Screenshot| image:: https://raw.githubusercontent.com/tqdm/tqdm/master/images/tqdm.gif
-.. |Build-Status| image:: https://travis-ci.org/tqdm/tqdm.svg?branch=master
+.. |Build-Status| image:: https://img.shields.io/travis/tqdm/tqdm/master.svg?logo=travis
    :target: https://travis-ci.org/tqdm/tqdm
-.. |Coverage-Status| image:: https://coveralls.io/repos/tqdm/tqdm/badge.svg
-   :target: https://coveralls.io/r/tqdm/tqdm
-.. |Branch-Coverage-Status| image:: https://codecov.io/github/tqdm/tqdm/coverage.svg?branch=master
-   :target: https://codecov.io/github/tqdm/tqdm?branch=master
+.. |Coverage-Status| image:: https://coveralls.io/repos/tqdm/tqdm/badge.svg?branch=master
+   :target: https://coveralls.io/github/tqdm/tqdm
+.. |Branch-Coverage-Status| image:: https://codecov.io/gh/tqdm/tqdm/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/tqdm/tqdm
 .. |Codacy-Grade| image:: https://api.codacy.com/project/badge/Grade/3f965571598f44549c7818f29cdcf177
-   :target: https://www.codacy.com/app/tqdm/tqdm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tqdm/tqdm&amp;utm_campaign=Badge_Grade
-.. |GitHub-Status| image:: https://img.shields.io/github/tag/tqdm/tqdm.svg?maxAge=2592000
+   :target: https://www.codacy.com/app/tqdm/tqdm/dashboard
+.. |GitHub-Status| image:: https://img.shields.io/github/tag/tqdm/tqdm.svg?maxAge=86400&logo=github&logoColor=white
    :target: https://github.com/tqdm/tqdm/releases
-.. |GitHub-Forks| image:: https://img.shields.io/github/forks/tqdm/tqdm.svg
+.. |GitHub-Forks| image:: https://img.shields.io/github/forks/tqdm/tqdm.svg?logo=github&logoColor=white
    :target: https://github.com/tqdm/tqdm/network
-.. |GitHub-Stars| image:: https://img.shields.io/github/stars/tqdm/tqdm.svg
+.. |GitHub-Stars| image:: https://img.shields.io/github/stars/tqdm/tqdm.svg?logo=github&logoColor=white
    :target: https://github.com/tqdm/tqdm/stargazers
+.. |GitHub-Commits| image:: https://img.shields.io/github/commit-activity/y/tqdm/tqdm.svg?logo=git&logoColor=white
+   :target: https://github.com/tqdm/tqdm/graphs/commit-activity
+.. |GitHub-Issues| image:: https://img.shields.io/github/issues-closed/tqdm/tqdm.svg?logo=github&logoColor=white
+   :target: https://github.com/tqdm/tqdm/issues?q=
+.. |GitHub-PRs| image:: https://img.shields.io/github/issues-pr-closed/tqdm/tqdm.svg?logo=github&logoColor=white
+   :target: https://github.com/tqdm/tqdm/pulls
+.. |GitHub-Contributions| image:: https://img.shields.io/github/contributors/tqdm/tqdm.svg?logo=github&logoColor=white
+   :target: https://github.com/tqdm/tqdm/graphs/contributors
+.. |GitHub-Updated| image:: https://img.shields.io/github/last-commit/tqdm/tqdm/master.svg?logo=github&logoColor=white&label=pushed
+   :target: https://github.com/tqdm/tqdm/pulse
+.. |Gift-Casper| image:: https://img.shields.io/badge/dynamic/json.svg?color=ff69b4&label=gifts%20received&prefix=%C2%A3&query=%24..sum&url=https%3A%2F%2Fcaspersci.uk.to%2Fgifts.json
+   :target: https://caspersci.uk.to/donate
 .. |PyPI-Status| image:: https://img.shields.io/pypi/v/tqdm.svg
-   :target: https://pypi.python.org/pypi/tqdm
-.. |PyPI-Downloads| image:: https://img.shields.io/pypi/dm/tqdm.svg
-   :target: https://pypi.python.org/pypi/tqdm
-.. |PyPI-Versions| image:: https://img.shields.io/pypi/pyversions/tqdm.svg
-   :target: https://pypi.python.org/pypi/tqdm
-.. |Conda-Forge-Status| image:: https://anaconda.org/conda-forge/tqdm/badges/version.svg
+   :target: https://pypi.org/project/tqdm
+.. |PyPI-Downloads| image:: https://img.shields.io/pypi/dm/tqdm.svg?label=pypi%20downloads&logo=python&logoColor=white
+   :target: https://pypi.org/project/tqdm
+.. |PyPI-Versions| image:: https://img.shields.io/pypi/pyversions/tqdm.svg?logo=python&logoColor=white
+   :target: https://pypi.org/project/tqdm
+.. |Conda-Forge-Status| image:: https://img.shields.io/conda/v/conda-forge/tqdm.svg?label=conda-forge&logo=conda-forge
    :target: https://anaconda.org/conda-forge/tqdm
+.. |Snapcraft| image:: https://img.shields.io/badge/snap-install-82BEA0.svg?logo=snapcraft
+   :target: https://snapcraft.io/tqdm
+.. |Docker| image:: https://img.shields.io/badge/docker-pull-blue.svg?logo=docker
+   :target: https://hub.docker.com/r/tqdm/tqdm
+.. |Libraries-Rank| image:: https://img.shields.io/librariesio/sourcerank/pypi/tqdm.svg?logo=koding&logoColor=white
+   :target: https://libraries.io/pypi/tqdm
+.. |Libraries-Dependents| image:: https://img.shields.io/librariesio/dependent-repos/pypi/tqdm.svg?logo=koding&logoColor=white
+    :target: https://github.com/tqdm/tqdm/network/dependents
+.. |OpenHub-Status| image:: https://www.openhub.net/p/tqdm/widgets/project_thin_badge?format=gif
+   :target: https://www.openhub.net/p/tqdm?ref=Thin+badge
+.. |awesome-python| image:: https://awesome.re/mentioned-badge.svg
+   :target: https://github.com/vinta/awesome-python
 .. |LICENCE| image:: https://img.shields.io/pypi/l/tqdm.svg
    :target: https://raw.githubusercontent.com/tqdm/tqdm/master/LICENCE
-.. |DOI-URI| image:: https://zenodo.org/badge/21637/tqdm/tqdm.svg
-   :target: https://zenodo.org/badge/latestdoi/21637/tqdm/tqdm
+.. |DOI| image:: https://img.shields.io/badge/DOI-10.21105/joss.01277-green.svg
+   :target: https://doi.org/10.21105/joss.01277
+.. |DOI-code| image:: https://img.shields.io/badge/DOI-10.5281/zenodo.595120-blue.svg
+   :target: https://doi.org/10.5281/zenodo.595120
+.. |notebook-demo| image:: https://img.shields.io/badge/launch-notebook-orange.svg?logo=jupyter
+   :target: https://notebooks.ai/demo/gh/tqdm/tqdm
+.. |binder-demo| image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/tqdm/tqdm/master?filepath=DEMO.ipynb
 .. |Screenshot-Jupyter1| image:: https://raw.githubusercontent.com/tqdm/tqdm/master/images/tqdm-jupyter-1.gif
 .. |Screenshot-Jupyter2| image:: https://raw.githubusercontent.com/tqdm/tqdm/master/images/tqdm-jupyter-2.gif
 .. |Screenshot-Jupyter3| image:: https://raw.githubusercontent.com/tqdm/tqdm/master/images/tqdm-jupyter-3.gif
 .. |README-Hits| image:: https://caspersci.uk.to/cgi-bin/hits.cgi?q=tqdm&style=social&r=https://github.com/tqdm/tqdm&l=https://caspersci.uk.to/images/tqdm.png&f=https://raw.githubusercontent.com/tqdm/tqdm/master/images/logo.gif
    :target: https://caspersci.uk.to/cgi-bin/hits.cgi?q=tqdm&a=plot&r=https://github.com/tqdm/tqdm&l=https://caspersci.uk.to/images/tqdm.png&f=https://raw.githubusercontent.com/tqdm/tqdm/master/images/logo.gif&style=social
+.. |sourcerer-0| image:: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/images/0
+   :target: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/links/0
+.. |sourcerer-1| image:: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/images/1
+   :target: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/links/1
+.. |sourcerer-2| image:: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/images/2
+   :target: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/links/2
+.. |sourcerer-3| image:: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/images/3
+   :target: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/links/3
+.. |sourcerer-4| image:: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/images/4
+   :target: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/links/4
+.. |sourcerer-5| image:: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/images/5
+   :target: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/links/5
+.. |sourcerer-6| image:: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/images/6
+   :target: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/links/6
+.. |sourcerer-7| image:: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/images/7
+   :target: https://sourcerer.io/fame/casperdcl/tqdm/tqdm/links/7

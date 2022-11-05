@@ -25,6 +25,7 @@ import os.path
 import pprint
 import re
 import shutil
+import subprocess
 import time
 import warnings
 
@@ -32,7 +33,6 @@ import dh.thirdparty.atomicwrites
 import dh.thirdparty.humanize
 import dh.thirdparty.tabulate
 import dh.thirdparty.tqdm
-import dh.thirdparty.transitions
 
 
 ###
@@ -829,16 +829,72 @@ def ftime(secs):
     return res
 
 
-def dtstr(compact=True):
+def dtstr(compact=True, mode=None, date=True, time=True, microtime=True):
     """
     Returns the current timestamp string including date, time, and
     microseconds.
     """
 
-    if compact:
-        fmt = "%Y%m%d-%H%M%S-%f"
+    # handle 'compact' and 'mode' arguments
+    # we only need 'mode', but 'compact' is there for backwards compatibility
+    if mode is None:
+        if compact is None:
+            # neither 'compact' nor 'mode' are set -> error
+            raise ValueError("One argument of 'compact' and 'mode' must be set")
+        else:
+            # only 'compact' is set -> convert
+            if isinstance(compact, str):
+                mode = compact
+            else:
+                mode = "compact" if compact else "print"
     else:
-        fmt = "%Y-%m-%d %H:%M:%S.%f"
+        if compact is None:
+            # only 'mode' is set -> leave as is
+            pass
+        else:
+            # 'mode' and 'compact' are both set -> error
+            raise ValueError("Arguments 'compact' and 'mode' can not be set at the same time")
+            
+    # check arguments
+    if not (date or time or microtime):
+        raise ValueError("At least one of 'date', 'time', 'microtime' must be `True`")
+
+    # select format string parts based on mode
+    if mode == "compact":
+        date_fmt = "%Y%m%d"
+        time_sep = "_"
+        time_fmt = "%H%M%S"
+        micro_sep = "_"
+        micro_fmt = "%f"
+    elif mode == "readable":
+        date_fmt = "%Y-%m-%d"
+        time_sep = "__"
+        time_fmt = "%H-%M-%S"
+        micro_sep = "__"
+        micro_fmt = "%f"
+    elif mode == "print":
+        date_fmt = "%Y-%m-%d"
+        time_sep = " "
+        time_fmt = "%H:%M:%S"
+        micro_sep = "."
+        micro_fmt = "%f"
+    else:
+        raise ValueError("Invalid mode '{}".format(mode))
+
+    # build final format string
+    fmt = ""
+    if date:
+        fmt += date_fmt
+    if time:
+        if fmt != "":
+            fmt += time_sep
+        fmt += time_fmt
+    if microtime:
+        if fmt != "":
+            fmt += micro_sep
+        fmt += micro_fmt
+
+    # return formatted date and/or time
     return datetime.datetime.now().strftime(fmt)
 
 
@@ -990,6 +1046,15 @@ def pbar(*args, **kwargs):
 ###
 
 
+def sh(*args):
+    """
+    Run shell command and return its outputs.
+    """
+    ps = subprocess.Popen(args, stdout=subprocess.PIPE)
+    (stdout, stderr) = ps.communicate()
+    return {"stdout": stdout, "stderr": stderr, "ps": ps}
+
+
 def absdir(path):
     """
     Returns the absolute path of the directory name of `path`.
@@ -1107,15 +1172,6 @@ class JsonConfigParser(configparser.ConfigParser):
 ###
 #%% general helpers
 ###
-
-
-class Fsm(dh.thirdparty.transitions.Machine):
-    """
-    Finite-state-machine class.
-
-    This class is an alias of :func:`dh.thirdparty.transitions.Machine()`.
-    """
-    pass
 
 
 def rupdate(d, u, deepcopy=True):
