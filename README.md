@@ -37,6 +37,14 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.15.0 (2023-01-08)
+-------------------
+
+* updated thirdparty packages `colorama`, `tabulate`, and `tqdm` to fix
+  problems with Python 3.10
+* removed thirdparty packages `atomicwrites` and `transitions`
+
+
 0.14.5 (2022-10-28)
 -------------------
 
