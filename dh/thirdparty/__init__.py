@@ -6,7 +6,6 @@ non-standard dependencies.
 
 List of current modules:
 
-  * atomicwrites-1.1.5 (https://github.com/untitaker/python-atomicwrites)
   * colorama-0.4.6 (https://github.com/tartley/colorama)
   * humanize-0.5.1 (https://github.com/jmoiron/humanize)
   * tabulate-0.9.0-14 (https://bitbucket.org/astanin/python-tabulate)

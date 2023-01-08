@@ -29,7 +29,6 @@ import subprocess
 import time
 import warnings
 
-import dh.thirdparty.atomicwrites
 import dh.thirdparty.humanize
 import dh.thirdparty.tabulate
 import dh.thirdparty.tqdm
@@ -1144,17 +1143,6 @@ def bopen(file, *args, **kwargs):
 
     fbak(filename=file)
     return open(file, *args, **kwargs)
-
-
-def awopen(*args, **kwargs):
-    """
-    Like :func:`open()`, but ensures that writing is atomic.
-
-    This function is an alias for
-    :func:`dh.thirdparty.atomicwrites.atomic_write()`.
-    """
-
-    return dh.thirdparty.atomicwrites.atomic_write(*args, **kwargs)
 
 
 class JsonConfigParser(configparser.ConfigParser):
