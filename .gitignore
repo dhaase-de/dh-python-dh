@@ -4,7 +4,7 @@ bak/
 docker/
 sandbox/
 tmp/
-venv-*/
+venv*/
 todo.txt
 
 # Python-generated files
