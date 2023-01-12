@@ -20,6 +20,7 @@ import inspect
 import itertools
 import json
 import math
+import multiprocessing
 import os
 import os.path
 import pprint
@@ -359,6 +360,30 @@ def dntup(x, n):
     else:
         xTuple = (x,)
     return tuple(cycle(xTuple, n))
+
+
+###
+#%% parallelization
+###
+
+
+def prun(func, iterable, chunksize=1, processes=None):
+    """
+    Parallel version of `map()` with a progress bar.
+
+    This function does not use the return values of the function calls, so the
+    use-case consists of functions which are called for their side effects.
+    """
+    try:
+        total = len(iterable)
+    except TypeError:
+        total = None
+
+    pb = pbar(total=total)
+    with multiprocessing.Pool(processes=processes) as pool:
+        for _ in pool.imap_unordered(func=func, iterable=iterable, chunksize=chunksize):
+            pb.update()
+    pb.close()
 
 
 ###
