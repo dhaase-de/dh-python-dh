@@ -37,6 +37,12 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.15.2 (2023-02-27)
+-------------------
+
+* `prun` now returns a list of all worker process return values
+
+
 0.15.1 (2023-02-27)
 -------------------
 
