@@ -371,19 +371,22 @@ def prun(func, iterable, chunksize=1, processes=None):
     """
     Parallel version of `map()` with a progress bar.
 
-    This function does not use the return values of the function calls, so the
-    use-case consists of functions which are called for their side effects.
+    This function returns a list containing the individual return values *in an
+    arbitrary order*.
     """
     try:
         total = len(iterable)
     except TypeError:
         total = None
 
+    results = []
     pb = pbar(total=total)
     with multiprocessing.Pool(processes=processes) as pool:
-        for _ in pool.imap_unordered(func=func, iterable=iterable, chunksize=chunksize):
+        for result in pool.imap_unordered(func=func, iterable=iterable, chunksize=chunksize):
+            results.append(result)
             pb.update()
     pb.close()
+    return results
 
 
 ###
