@@ -201,6 +201,30 @@ class LongLoggerFormatter(LoggerFormatter):
         return (pre1, pre2, post1, post2)
 
 
+class LongLoggerFormatter2(LoggerFormatter):
+    """
+    This formatter creates a long output including the time of the log message.
+
+    In contrast to `LongLoggerFormatter`, this version only indents with four
+    spaces after a line break. This makes it more suited for long multi-line
+    log outputs, such as tables.
+    """
+    def getLevelName(self, level):
+        name = super().getLevelName(level)
+        return name[0]
+
+    def getPreAndPostfixes(self, level, timestamp, **kwargs):
+        # color and level name
+        color = self.getLevelColor(level)
+        name = self.getLevelName(level)
+        dtstr = timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
+        pre1 = color + "[" + dtstr + "]" + "  " + name + "  "
+        pre2 = color + "    "
+        post1 = FG_RESET + BG_RESET
+        post2 = FG_RESET + BG_RESET
+        return (pre1, pre2, post1, post2)
+
+
 class PendingLoggerMessage():
     def __init__(self, logger, text):
         self.logger = logger
@@ -289,6 +313,8 @@ class Logger():
                 return ShortLoggerFormatter()
             elif formatter == "long":
                 return LongLoggerFormatter()
+            elif formatter == "long2":
+                return LongLoggerFormatter2()
             else:
                 raise ValueError("Invalid formatter '{}'".format(formatter))
         elif isinstance(formatter, LoggerFormatter):
