@@ -37,6 +37,13 @@ which provides the `nosetests3` executable.
 Changelog
 =========
 
+0.15.1 (2023-02-27)
+-------------------
+
+* added parallel wrapper `prun`
+* added minor logger improvements
+
+
 0.15.0 (2023-01-08)
 -------------------
 
