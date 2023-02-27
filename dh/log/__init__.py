@@ -251,6 +251,7 @@ class Logger():
     LEVEL_WARNING  = 30
     LEVEL_ERROR    = 40
     LEVEL_CRITICAL = 50
+    LEVEL_ALL      = 100
 
     def __init__(self, formatter="long", filename=None, minLevel=None, color=True, silent=False):
         """
@@ -328,12 +329,14 @@ class Logger():
     def setMinLevel(self, level):
         (self.printMinLevel, self.saveMinLevel) = dh.utils.dntup(level, 2)
 
-    def log(self, text, level, exception=None):
+    def log(self, text, level, exception=None, noFormat=False):
         timestamp = datetime.datetime.now()
 
         # print log message on the screen
         if (self.printMinLevel is None) or (level >= self.printMinLevel):
-            s = self.printFormatter.apply(text=text, level=level, timestamp=timestamp)
+            s = text
+            if not noFormat:
+                s = self.printFormatter.apply(text=s, level=level, timestamp=timestamp)
             if not self.color:
                 s = dh.utils.uncolorize(s)
             print(s)
@@ -341,7 +344,9 @@ class Logger():
         # write log message to file
         if (self.saveFilename is not None) and ((self.saveMinLevel is None) or (level >= self.saveMinLevel)):
             with open(self.saveFilename, "a") as f:
-                s = self.saveFormatter.apply(text=text, level=level, timestamp=timestamp)
+                s = text
+                if not noFormat:
+                    s = self.saveFormatter.apply(text=s, level=level, timestamp=timestamp)
                 f.write(dh.utils.uncolorize(s) + "\n")
 
         # raise exception/warning if specified
@@ -355,6 +360,15 @@ class Logger():
             raise exception(text)
         elif exception is not None:
             raise ValueError("Invalid value for argument 'exception': {}".format(exception))
+
+    def sep(self, title=None, level=LEVEL_ALL):
+        sepLine = "=" * 80
+        if title is None:
+            sepLines = ["", sepLine, ""]
+        else:
+            sepLines = ["", sepLine, "{}".format(title), sepLine, ""]
+        sepText = "\n".join(sepLines)
+        self.log(text=sepText, level=level, exception=None, noFormat=True)
 
     ###
     #%% basic log types
