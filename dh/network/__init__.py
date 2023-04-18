@@ -396,7 +396,7 @@ class ImageProcessingServer2(SocketServer):
     def process(data, params):
         """
         This function specifies the processing behavior of this server and must
-        be implemeted by the user.
+        be implemented by the user.
         """
         pass
 
