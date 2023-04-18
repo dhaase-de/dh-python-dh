@@ -1,5 +1,5 @@
-import os
 import os.path
+import re
 
 
 try:
@@ -13,6 +13,7 @@ except ImportError:
     print("==> module 'setuptools' not found, falling back to 'distutils'")
     setup = distutils.core.setup
 
+
 ##
 ## preparations
 ##
@@ -25,23 +26,16 @@ sourceDir = os.path.join(packageDir, packageName)
 
 
 # read version number from text file
-try:
-    versionFilename = os.path.join(sourceDir, "VERSION.txt")
-    with open(versionFilename, "r") as f:
-        for line in f:
-            line = line.strip()
-            if (line == "") or (line[0] == "#"):
-                # ignore empty lines and comments
-                continue
-            else:
-                # the first valid line will be used as version number
-                version = line
-                break
-        else:
-            # end of file, version was not found
-            raise RuntimeError("Found no valid version number in file '{}' - run 'scripts/version-setFromGit.sh' first or use the build scripts to build/install this package".format(versionFilename))
-except Exception as e:
-    raise RuntimeError("Failed to get version number from file '{}' (error: '{}') - run 'scripts/version-setFromGit.sh' first or use the build scripts to build/install this package".format(versionFilename, e))
+version_filename = os.path.join(sourceDir, "__init__.py")
+with open(version_filename, "r") as f:
+    for line in f:
+        match = re.match(r"__version__\s*=\s*['\"]([a-zA-Z0-9-_.]+)['\"]", line)
+        if match is not None:
+            version = match.group(1)
+            break
+    else:
+        # end of file, version was not found
+        raise RuntimeError("Could not parse version number from file '{}'".format(version_filename))
 
 
 # prepare package list (any directory under the source dir which contains an '__init__.py' file)
@@ -71,7 +65,6 @@ setup(
     ],
     packages=packages,
     package_data={packageName: [
-        "VERSION.txt",
         "data/colormaps/*.json",
         "data/icons/ionicons/png/512/*.png",
         "data/images/*.npy",

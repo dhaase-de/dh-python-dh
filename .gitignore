@@ -20,6 +20,3 @@ dist/
 # concrete config files
 .pypirc
 
-# changes to this file must not be committed - see scripts/version-setFromGit.sh
-dh/VERSION.txt
-
