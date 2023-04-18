@@ -25,6 +25,15 @@ else:
 
 
 ###
+#%% exceptions
+###
+
+
+class InvalidMessageHeaderError(Exception): pass
+class InvalidMessageBodyError(Exception): pass
+
+
+###
 #%% socket message types
 ###
 
@@ -42,6 +51,48 @@ class SocketMessageType(abc.ABC):
     @abc.abstractmethod
     def recv(self, socket):
         pass
+
+
+class RawByteSocketMessageType(SocketMessageType):
+    """
+    Class providing methods for sending and receiving raw bytes (not messages) via a given socket.
+    """
+
+    def __init__(self, maxByteCount=None):
+        self.maxByteCount = maxByteCount
+
+    @staticmethod
+    def _recvn(socket, byteCount=None):
+        """
+        Receive and return a fixed number of `byteCount` bytes from the socket.
+        """
+        b = io.BytesIO()
+        while True:
+            if byteCount is not None:
+                # there is a max byte count we want to receive
+                currentByteCount = b.getbuffer().nbytes
+                if currentByteCount >= byteCount:
+                    break
+                packet = socket.recv(byteCount - currentByteCount)
+            else:
+                # there is NO max byte count we want to receive
+                packet = socket.recv(1024)
+
+            if len(packet) > 0:
+                b.write(packet)
+            else:
+                break
+
+        if byteCount is not None:
+            return b.getvalue()[:byteCount]
+        else:
+            return b.getvalue()
+
+    def send(self, socket, b):
+        socket.sendall(b)
+
+    def recv(self, socket):
+        return self._recvn(socket, byteCount=self.maxByteCount)
 
 
 class ByteSocketMessageType(SocketMessageType):
@@ -62,21 +113,6 @@ class ByteSocketMessageType(SocketMessageType):
     def __init__(self, compress=False):
         self._compress = compress
 
-    def _recvn(self, socket, byteCount):
-        """
-        Receive and return a fixed number of `byteCount` bytes from the socket.
-        """
-        b = io.BytesIO()
-        while True:
-            currentByteCount = b.getbuffer().nbytes
-            if currentByteCount >= byteCount:
-                break
-            packet = socket.recv(byteCount - currentByteCount)
-            if len(packet) == 0:
-                return None
-            b.write(packet)
-        return b.getvalue()
-
     def send(self, socket, b):
         if self._compress:
             b = zlib.compress(b)
@@ -84,11 +120,17 @@ class ByteSocketMessageType(SocketMessageType):
         socket.sendall(header + b)
 
     def recv(self, socket):
-        header = self._recvn(socket, 4)
-        if header is None:
-            return None
+        # receive header which specifies the length of the message (in bytes)
+        header = RawByteSocketMessageType._recvn(socket, 4)
+        if len(header) != 4:
+            raise InvalidMessageHeaderError("Received invalid header ({})".format(header))
         length = struct.unpack(">I", header)[0]
-        b = self._recvn(socket, length)
+
+        # receive actual message
+        b = RawByteSocketMessageType._recvn(socket, length)
+        if len(b) != length:
+            raise InvalidMessageBodyError("Received message body of {} byte(s), but header specified {} byte(s)".format(len(b), length))
+
         if self._compress:
             b = zlib.decompress(b)
         return b
@@ -241,11 +283,12 @@ class SocketServer(abc.ABC):
             t0 = time.time()
             try:
                 self.communicate(MessageSocket(connectionSocket))
-                connectionSocket.close()
             except Exception as e:
                 self.logger.error("[request #{}]  {}: {}".format(self.requestCount, type(e).__name__, e))
             else:
                 self.logger.success("[request #{}]  Finished request from {}:{} after {} ms".format(self.requestCount, connectionAddress[0], connectionAddress[1], dh.utils.around((time.time() - t0) * 1000.0)))
+            finally:
+                connectionSocket.close()
 
     @abc.abstractmethod
     def communicate(self, socket):
@@ -375,7 +418,6 @@ class ImageProcessingServer2(SocketServer):
     """
 
     def communicate(self, socket):
-        # receive input image and parameters
         data = socket.mrecv(NumpySocketMessageType())
         params = socket.mrecv(JsonSocketMessageType())
 
