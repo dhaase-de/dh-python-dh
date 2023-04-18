@@ -17,6 +17,3 @@ dist/
 *.rst
 !README.rst
 
-# concrete config files
-.pypirc
-

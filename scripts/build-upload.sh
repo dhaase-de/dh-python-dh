@@ -8,4 +8,4 @@ set -o nounset
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source "$SCRIPT_DIR"/setenv.sh
 
-cd "$PACKAGE_DIR" && twine upload dist/dh-0.15.0-py3-none-any.whl --config-file=.pypirc
+cd "$PACKAGE_DIR" && twine upload dist/dh-*-py3-none-any.whl
