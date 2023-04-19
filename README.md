@@ -7,7 +7,6 @@ Python3 toolbox of Daniel Haase.
 Status
 ------
 
-[![Build Status](https://travis-ci.org/dhaase-de/dh-python-dh.svg?branch=master)](https://travis-ci.org/dhaase-de/dh-python-dh)
 [![License](https://img.shields.io/github/license/dhaase-de/dh-python-dh.svg)](LICENSE.txt)
 
 
@@ -36,6 +35,13 @@ which provides the `nosetests3` executable.
 
 Changelog
 =========
+
+0.15.3 (2023-04-19)
+-------------------
+
+* increase robustness of processing servers
+* simplify release process (version number specification, twine upload)
+
 
 0.15.2 (2023-02-27)
 -------------------
